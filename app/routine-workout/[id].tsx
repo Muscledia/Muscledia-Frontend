@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  TextInput,
   Alert,
   useColorScheme,
 } from 'react-native';
@@ -16,6 +17,7 @@ import { useCharacter } from '@/hooks/useCharacter';
 import { useRaid } from '@/hooks/useRaid';
 import { useLeagues } from '@/hooks/useLeagues';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useWorkouts } from '@/hooks/useWorkouts';
 
 export default function RoutineWorkoutScreen() {
   const { id } = useLocalSearchParams();
@@ -23,14 +25,16 @@ export default function RoutineWorkoutScreen() {
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { getRoutine, markSetCompleted, deleteRoutine, updateRoutine } = useRoutines();
-  const { incrementXP, character, canStartRoutineToday, registerRoutineStart, consumeHealth, applyHealthRegen } = useCharacter();
+  const { incrementXP, character, consumeHealth, applyHealthRegen } = useCharacter();
   const { contributeSets } = useRaid();
   const { addPoints } = useLeagues();
   const { impact } = useHaptics();
+  const { upsertTodayWorkout, workouts } = useWorkouts();
   
   const [routine, setRoutine] = useState<any>(null);
   const [expandedExercises, setExpandedExercises] = useState<string[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editingValues, setEditingValues] = useState<Record<string, { weight: string; reps: string }>>({});
 
   // Load routine and expand sections
   useEffect(() => {
@@ -43,18 +47,23 @@ export default function RoutineWorkoutScreen() {
     }
   }, [id]);
 
-  // On first load with routine, enforce daily limit and register start; also apply regen
+  // On first load with routine, apply regen (daily routine limit removed)
   useEffect(() => {
     if (!routine) return;
     applyHealthRegen();
-    if (!canStartRoutineToday(routine.id)) {
-      Alert.alert('Daily limit reached', 'You can only start 3 different routines per day.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-      return;
-    }
-    registerRoutineStart(routine.id);
   }, [routine]);
+
+  // Initialize editing values when entering edit mode
+  useEffect(() => {
+    if (!routine || !isEditMode) return;
+    const map: Record<string, { weight: string; reps: string }> = {};
+    routine.exercises.forEach((ex: any) => {
+      ex.sets.forEach((s: any) => {
+        map[s.id] = { weight: String(s.weight ?? ''), reps: String(s.reps ?? '') };
+      });
+    });
+    setEditingValues(map);
+  }, [routine, isEditMode]);
 
   const handleSetCompletion = async (exerciseId: string, setId: string, currentStatus: boolean) => {
     if (!routine) return;
@@ -97,6 +106,41 @@ export default function RoutineWorkoutScreen() {
         setRoutine(updatedRoutine);
       }
     }
+
+    // Upsert a detailed workout entry for today (by routine)
+    if (newStatus) {
+      let completedSets = 0;
+      let totalSets = 0;
+      const details = updatedRoutine.exercises.map((ex: any) => ({
+        exerciseId: ex.id,
+        name: ex.name,
+        sets: ex.sets.map((s: any) => {
+          totalSets++;
+          if (s.completed) completedSets++;
+          return {
+            id: s.id,
+            reps: Number(s.reps) || 0,
+            weight: Number(s.weight) || 0,
+            completed: !!s.completed,
+          };
+        })
+      }));
+      try {
+        await upsertTodayWorkout(
+          { name: routine.name, routineId: routine.id },
+          {
+            name: routine.name,
+            routineId: routine.id,
+            sets: `${completedSets}/${totalSets}`,
+            reps: '-',
+            weight: '-',
+            details,
+          }
+        );
+      } catch (e) {
+        // ignore logging errors
+      }
+    }
   };
 
   const toggleExerciseExpansion = (exerciseId: string) => {
@@ -105,6 +149,35 @@ export default function RoutineWorkoutScreen() {
         ? prev.filter(id => id !== exerciseId)
         : [...prev, exerciseId]
     );
+  };
+
+  const commitEdits = async () => {
+    if (!routine) return;
+    const newExercises = routine.exercises.map((ex: any) => ({
+      ...ex,
+      sets: ex.sets.map((s: any) => {
+        const ev = editingValues[s.id];
+        const nextWeight = ev ? Math.max(0, parseFloat(ev.weight) || 0) : s.weight;
+        const nextReps = ev ? Math.max(0, parseFloat(ev.reps) || 0) : s.reps;
+        return { ...s, weight: nextWeight, reps: nextReps };
+      }),
+    }));
+    await updateRoutine(routine.id, { exercises: newExercises });
+    setRoutine({ ...routine, exercises: newExercises });
+  };
+
+  const addSetToExercise = (exerciseId: string) => {
+    if (!routine) return;
+    const updated = { ...routine };
+    const ex = updated.exercises.find((e: any) => e.id === exerciseId);
+    if (!ex) return;
+    const newSet = { id: Date.now().toString(), reps: ex.sets[ex.sets.length - 1]?.reps || 10, weight: ex.sets[ex.sets.length - 1]?.weight || 0, completed: false };
+    ex.sets = [
+      ...ex.sets,
+      newSet,
+    ];
+    setRoutine(updated);
+    setEditingValues(prev => ({ ...prev, [newSet.id]: { weight: String(newSet.weight), reps: String(newSet.reps) } }));
   };
 
   const handleDeleteRoutine = () => {
@@ -192,8 +265,30 @@ export default function RoutineWorkoutScreen() {
             {exercise.sets.map((set: any, index: number) => (
               <View key={set.id} style={styles.setRow}>
                 <Text style={[styles.setNumber, { color: theme.text }]}>{index + 1}</Text>
-                <Text style={[styles.setValue, { color: theme.text }]}>{set.weight}kg</Text>
-                <Text style={[styles.setValue, { color: theme.text }]}>{set.reps}</Text>
+                {isEditMode ? (
+                  <TextInput
+                    style={[styles.setInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                    value={editingValues[set.id]?.weight ?? String(set.weight)}
+                    onChangeText={(v) => setEditingValues(prev => ({ ...prev, [set.id]: { weight: v, reps: prev[set.id]?.reps ?? String(set.reps) } }))}
+                    keyboardType="numeric"
+                    inputMode="numeric"
+                    blurOnSubmit={false}
+                  />
+                ) : (
+                  <Text style={[styles.setValue, { color: theme.text }]}>{set.weight}kg</Text>
+                )}
+                {isEditMode ? (
+                  <TextInput
+                    style={[styles.setInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                    value={editingValues[set.id]?.reps ?? String(set.reps)}
+                    onChangeText={(v) => setEditingValues(prev => ({ ...prev, [set.id]: { weight: prev[set.id]?.weight ?? String(set.weight), reps: v } }))}
+                    keyboardType="numeric"
+                    inputMode="numeric"
+                    blurOnSubmit={false}
+                  />
+                ) : (
+                  <Text style={[styles.setValue, { color: theme.text }]}>{set.reps}</Text>
+                )}
                 <TouchableOpacity
                   style={[
                     styles.checkBox,
@@ -202,12 +297,22 @@ export default function RoutineWorkoutScreen() {
                       borderColor: set.completed ? theme.accent : theme.border,
                     }
                   ]}
-                  onPress={() => handleSetCompletion(exercise.id, set.id, set.completed)}
+                  onPress={() => !isEditMode && handleSetCompletion(exercise.id, set.id, set.completed)}
                 >
                   {set.completed && <Check size={16} color={theme.cardText} />}
                 </TouchableOpacity>
               </View>
             ))}
+
+            {isEditMode && (
+              <TouchableOpacity
+                style={[styles.addSetBtn, { backgroundColor: theme.accent }]}
+                onPress={() => addSetToExercise(exercise.id)}
+              >
+                <Plus size={16} color={theme.cardText} />
+                <Text style={[styles.addSetLabel, { color: theme.cardText }]}>Add Set</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -224,7 +329,13 @@ export default function RoutineWorkoutScreen() {
         <Text style={[styles.title, { color: theme.text }]}>{routine.name}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity 
-            onPress={async () => { await impact('selection'); setIsEditMode(!isEditMode); }}
+            onPress={async () => { 
+              await impact('selection'); 
+              if (isEditMode) {
+                await commitEdits();
+              }
+              setIsEditMode(!isEditMode); 
+            }}
             style={[styles.editButton, { backgroundColor: isEditMode ? theme.accent : 'transparent' }]}
           >
             <Edit size={20} color={isEditMode ? theme.cardText : theme.text} />
@@ -253,7 +364,7 @@ export default function RoutineWorkoutScreen() {
       </View>
 
       {/* Exercises List */}
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="always" keyboardDismissMode="none">
         {routine.exercises.map((exercise: any) => (
           <ExerciseCard key={exercise.id} exercise={exercise} />
         ))}
@@ -392,6 +503,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
   },
+  setInput: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+    fontSize: 14,
+    marginHorizontal: 4,
+    borderWidth: 1,
+  },
   checkBox: {
     width: 24,
     height: 24,
@@ -420,5 +541,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 100,
+  },
+  addSetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+    marginTop: 4,
+    marginRight: 8,
+  },
+  addSetLabel: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 }); 

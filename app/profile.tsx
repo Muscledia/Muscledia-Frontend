@@ -8,6 +8,9 @@ import {
   TextInput,
   useColorScheme,
   Alert,
+  Linking,
+  Platform,
+  Switch,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useCharacter } from '@/hooks/useCharacter';
@@ -17,11 +20,12 @@ import ProgressBar from '@/components/ProgressBar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLeagues } from '@/hooks/useLeagues';
 import { useHaptics } from '@/hooks/useHaptics';
-import { ArrowLeft, Heart, Star, Settings, Bell, HelpCircle, LogOut, Camera } from 'lucide-react-native';
+import { ArrowLeft, Heart, Star, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import * as ImagePicker from 'expo-image-picker';
+ 
 import { useNotifications } from '@/hooks/useNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useWorkouts } from '@/hooks/useWorkouts';
 
 export default function ProfileScreen() {
   const { character, updateCharacter } = useCharacter();
@@ -29,16 +33,100 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
+  const { workouts, loading: workoutsLoading } = useWorkouts();
+  // Compute user initials for default avatar
+  const displayName = user?.email?.split('@')[0] || 'User';
+  const initials = (() => {
+    const parts = displayName.split(/[^A-Za-z0-9]+/).filter(Boolean);
+    if (parts.length === 0) return (displayName[0] || 'U').toUpperCase();
+    const letters = parts.slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    return letters || (displayName[0] || 'U').toUpperCase();
+  })();
   const { state: leagues, currentDivision, nextDivision, progressToNext, claimPendingReward, daysUntilReset } = useLeagues();
   const { impact } = useHaptics();
   const { isGranted, requestPermission, scheduleInSeconds, scheduleDailyReminder, cancelAll } = useNotifications();
 
-  const equipment = [
-    { name: 'Accessory', type: 'Earring', stat: 'Intelligence 7' },
-    { name: 'Head Gear', type: 'Hat', stat: 'Intelligence 10' },
-    { name: 'Shirt', type: 'Wolf Shirt', stat: 'Aura 23' },
-    { name: 'Pants', type: 'Shorts', stat: 'Speed 10' },
-  ];
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(false);
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+
+  const changeMonth = (delta: number) => {
+    const next = new Date(currentMonth);
+    next.setMonth(next.getMonth() + delta);
+    setCurrentMonth(next);
+  };
+
+  const getMonthGrid = (d: Date) => {
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const firstDayOfWeek = firstOfMonth.getDay(); // 0=Sun..6=Sat
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalCells = 42; // 6 weeks
+    const cells: Array<{ inMonth: boolean; date?: Date; dayNum?: number }> = [];
+    // Leading blanks
+    for (let i = 0; i < firstDayOfWeek; i++) cells.push({ inMonth: false });
+    // Month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      cells.push({ inMonth: true, date: new Date(year, month, day), dayNum: day });
+    }
+    // Trailing blanks
+    while (cells.length < totalCells) cells.push({ inMonth: false });
+    return cells;
+  };
+
+  // Build a map of dates with workouts
+  const workoutDatesSet = React.useMemo(() => {
+    const set = new Set<string>();
+    workouts.forEach(w => {
+      const d = new Date(w.timestamp);
+      set.add(formatDate(d));
+    });
+    return set;
+  }, [workouts]);
+
+  const selectedWorkouts = React.useMemo(() => {
+    return workouts.filter(w => formatDate(new Date(w.timestamp)) === selectedDate);
+  }, [workouts, selectedDate]);
+
+  React.useEffect(() => {
+    (async () => {
+      const stored = await AsyncStorage.getItem('notifications_enabled');
+      setNotifEnabled(stored === 'true');
+    })();
+  }, []);
+
+  const toggleNotifications = async () => {
+    const next = !notifEnabled;
+    setNotifEnabled(next);
+    await AsyncStorage.setItem('notifications_enabled', next ? 'true' : 'false');
+    if (next) {
+      const ok = isGranted ?? await requestPermission();
+      if (!ok) return;
+      await impact('success');
+      await scheduleDailyReminder(9, 0);
+    } else {
+      await impact('warning');
+      await cancelAll();
+    }
+  };
+
+  // Derived progress values with guards to avoid NaN/Infinity
+  const healthProgress = character.maxHealth > 0
+    ? Math.min(Math.max(character.currentHealth / character.maxHealth, 0), 1)
+    : 0;
+  const xpProgress = character.xpToNextLevel > 0
+    ? Math.min(Math.max(character.xp / character.xpToNextLevel, 0), 1)
+    : 0;
 
   const strength = Math.min(999, Math.floor(character.totalXP / 50) + character.level * 2);
   const stamina = Math.min(999, character.maxHealth + character.level * 3);
@@ -85,30 +173,15 @@ export default function ProfileScreen() {
         style={[styles.characterSection]}
       >
         <View style={styles.topRow}>
-          {/* Left: Avatar with edit button */}
+          {/* Left: Avatar (no editing) */}
           <View style={styles.avatarContainer}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={async () => {
-                const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                if (perm.status !== 'granted') return;
-                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
-                if (!result.canceled && result.assets?.[0]?.uri) {
-                  updateCharacter({ avatarUrl: result.assets[0].uri });
-                }
-              }}
-            >
-              <CharacterAvatar 
-                level={character.level} 
-                gender={character.gender} 
-                streak={character.streak}
-                size="large"
-                imageUrlOverride={character.avatarUrl || undefined}
-              />
-              <View style={styles.cameraBadge}>
-                <Camera size={16} color={theme.cardText} />
-              </View>
-            </TouchableOpacity>
+            <CharacterAvatar 
+              level={character.level} 
+              gender={character.gender} 
+              streak={character.streak}
+              size="large"
+              initials={initials}
+            />
           </View>
 
           {/* Right: Username and dates */}
@@ -123,38 +196,141 @@ export default function ProfileScreen() {
           {/* Health Bar */}
           <View style={styles.barItem}>
             <View style={styles.barTitleRow}><Heart size={14} color={theme.cardText} /><Text style={[styles.barLabel, { color: theme.cardText, marginLeft: 6 }]}>Health</Text></View>
-            <ProgressBar progress={character.currentHealth / character.maxHealth} color={theme.cardText} height={8} />
+            <ProgressBar progress={healthProgress} color={theme.health} height={8} />
             <Text style={[styles.barText, { color: theme.cardText }]}>{character.currentHealth}/{character.maxHealth}</Text>
           </View>
           {/* XP Bar */}
           <View style={styles.barItem}>
             <View style={styles.barTitleRow}><Star size={14} color={theme.cardText} /><Text style={[styles.barLabel, { color: theme.cardText, marginLeft: 6 }]}>Level {character.level}</Text></View>
-            <ProgressBar progress={character.xp / character.xpToNextLevel} color={theme.cardText} height={8} />
+            <ProgressBar progress={xpProgress} color={theme.xp} height={8} />
             <Text style={[styles.barText, { color: theme.cardText }]}>{character.xp}/{character.xpToNextLevel}</Text>
           </View>
         </View>
       </LinearGradient>
 
-      {/* Equipment Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Outfits</Text>
-      {equipment.map((item, index) => (
-        <LinearGradient
-          key={index}
-          colors={[theme.accent, theme.accentSecondary]}
-          locations={[0.55, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.equipmentCard]}
-        >
-          <Text style={[styles.equipmentName, { color: theme.cardText }]}>{item.name}</Text>
-          <Text style={[styles.equipmentType, { color: theme.cardText }]}>{item.type}</Text>
-          <Text style={[styles.equipmentStat, { color: theme.cardText }]}>{item.stat}</Text>
-        </LinearGradient>
-      ))}
+      {/* Workout History */}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Workout History</Text>
+      <View style={[styles.calendarContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.calendarHeader}>
+          <TouchableOpacity onPress={() => changeMonth(-1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}> 
+            <ChevronLeft size={18} color={theme.text} />
+          </TouchableOpacity>
+          <View style={styles.calendarTitleRow}>
+            <CalendarIcon size={16} color={theme.text} />
+            <Text style={[styles.calendarTitle, { color: theme.text }]}>
+              {currentMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => changeMonth(1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}> 
+            <ChevronRight size={18} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+        {/* Weekday labels */}
+        <View style={styles.weekRow}>
+          {['S','M','T','W','T','F','S'].map((d,i) => (
+            <Text key={i} style={[styles.weekLabel, { color: theme.textSecondary }]}>{d}</Text>
+          ))}
+        </View>
+        {/* Days grid */}
+        <View style={styles.daysGrid}>
+          {getMonthGrid(currentMonth).map((cell, idx) => {
+            if (!cell.inMonth) {
+              return <View key={idx} style={styles.dayCell} />;
+            }
+            const dateStr = formatDate(cell.date as Date);
+            const isSelected = selectedDate === dateStr;
+            const isToday = dateStr === formatDate(new Date());
+            const hasWorkout = workoutDatesSet.has(dateStr);
+            return (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.dayCell,
+                  isSelected && { backgroundColor: theme.accent },
+                  !isSelected && isToday && { borderColor: theme.accent, borderWidth: 1 },
+                ]}
+                activeOpacity={0.8}
+                onPress={() => setSelectedDate(dateStr)}
+              >
+                <Text style={[styles.dayNumber, { color: isSelected ? theme.cardText : theme.text }]}>
+                  {cell.dayNum}
+                </Text>
+                {hasWorkout && (
+                  <View style={[styles.dayDot, { backgroundColor: isSelected ? theme.cardText : theme.accent }]} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.calendarLegend}>
+          <View style={[styles.legendItem]}>
+            <View style={[styles.legendDot, { backgroundColor: theme.accent }]} />
+            <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Workouts</Text>
+          </View>
+          <View style={[styles.legendItem]}>
+            <View style={[styles.legendSquare, { borderColor: theme.accent }]} />
+            <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Today</Text>
+          </View>
+        </View>
+      </View>
 
-      {/* Show equipped items */}
+      {/* Workouts on selected date */}
       <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Equipped</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Selected Day</Text>
+        <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>
+          {new Date(selectedDate).toLocaleDateString()}
+        </Text>
+        {workoutsLoading ? (
+          <Text style={{ color: theme.textSecondary }}>Loading...</Text>
+        ) : selectedWorkouts.length === 0 ? (
+          <Text style={{ color: theme.textSecondary }}>No workouts on this day.</Text>
+        ) : (
+          <View style={styles.workoutList}>
+            {selectedWorkouts.map((w, i) => (
+              <View key={`${w.timestamp}-${i}`} style={[styles.workoutItem, { borderColor: theme.border }]}> 
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.workoutName, { color: theme.text }]} numberOfLines={1}>{w.name}</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                    {w.sets} sets
+                  </Text>
+                  {Array.isArray((w as any).details) && (w as any).details.length > 0 && (
+                    <View style={{ marginTop: 6, gap: 6 }}>
+                      {(w as any).details.map((ex: any) => (
+                        <View key={ex.exerciseId}>
+                          <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600' }}>{ex.name}</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                            {ex.sets.map((s: any, idx: number) => (
+                              <View key={s.id || idx} style={{
+                                borderWidth: 1,
+                                borderColor: theme.border,
+                                borderRadius: 8,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                backgroundColor: s.completed ? 'rgba(0,0,0,0.06)' : 'transparent',
+                              }}>
+                                <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                                  #{idx + 1} • {s.weight}kg × {s.reps}{s.completed ? ' ✓' : ''}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+                <Text style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8 }}>
+                  {new Date(w.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Equipment */}
+      <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Equipment</Text>
         <View style={styles.infoRow}><Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Shirt</Text><Text style={[styles.infoValue, { color: theme.text }]}>{character.equippedShirt || 'None'}</Text></View>
         <View style={styles.infoRow}><Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Pants</Text><Text style={[styles.infoValue, { color: theme.text }]}>{character.equippedPants || 'None'}</Text></View>
         <View style={styles.infoRow}><Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Equipment</Text><Text style={[styles.infoValue, { color: theme.text }]}>{character.equippedEquipment || 'None'}</Text></View>
@@ -218,18 +394,35 @@ export default function ProfileScreen() {
 
       {/* Skills removed per request */}
 
-      {/* Settings Options */}
-      <View style={styles.settingsSection}>
-        <LinearGradient
-          colors={[theme.accent, theme.accentSecondary]}
-          locations={[0.55, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.settingsOption]}
+      {/* Settings */}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Settings</Text>
+      <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
+        {/* Profile Settings */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={async () => {
+            await impact('selection');
+            router.push('/profile-settings');
+          }}
+          style={styles.settingRow}
         >
-          <Settings size={20} color={theme.text} />
-          <Text style={[styles.settingsText, { color: theme.text }]}>Settings</Text>
-        </LinearGradient>
+          <View style={styles.settingLeft}>
+            <Settings size={20} color={theme.text} />
+            <Text style={[styles.settingsText, { color: theme.text }]}>Profile Settings</Text>
+          </View>
+          <Text style={{ color: theme.textSecondary }}>{'›'}</Text>
+        </TouchableOpacity>
+
+        {/* Notifications toggle */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <Bell size={20} color={theme.text} />
+            <Text style={[styles.settingsText, { color: theme.text }]}>Daily Reminder (9:00)</Text>
+          </View>
+          <Switch value={notifEnabled} onValueChange={toggleNotifications} trackColor={{ true: theme.accent }} />
+        </View>
+
+        {/* Test Notification */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={async () => {
@@ -238,66 +431,56 @@ export default function ProfileScreen() {
             await impact('success');
             await scheduleInSeconds(3, 'Muscledia', 'This is a test notification.');
           }}
+          style={styles.settingRow}
         >
-          <LinearGradient
-            colors={[theme.accent, theme.accentSecondary]}
-            locations={[0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.settingsOption]}
-          >
+          <View style={styles.settingLeft}>
             <Bell size={20} color={theme.text} />
-            <Text style={[styles.settingsText, { color: theme.text }]}>Test Notification</Text>
-          </LinearGradient>
+            <Text style={[styles.settingsText, { color: theme.text }]}>Send Test Notification</Text>
+          </View>
+          <Text style={{ color: theme.textSecondary }}>{'›'}</Text>
         </TouchableOpacity>
 
+        {/* Support */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={async () => {
-            const ok = isGranted ?? await requestPermission();
-            if (!ok) return;
-            await impact('success');
-            // schedule daily reminder at 9:00 local time
-            await scheduleDailyReminder(9, 0);
+            await impact('selection');
+            const email = 'support@muscledia.app';
+            const subject = encodeURIComponent('Support Request');
+            const body = encodeURIComponent('Describe your issue here...');
+            Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
           }}
+          style={styles.settingRow}
         >
-          <LinearGradient
-            colors={[theme.accent, theme.accentSecondary]}
-            locations={[0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.settingsOption]}
-          >
-            <Bell size={20} color={theme.text} />
-            <Text style={[styles.settingsText, { color: theme.text }]}>Enable Daily Reminder (9:00)</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <LinearGradient
-          colors={[theme.accent, theme.accentSecondary]}
-          locations={[0.55, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.settingsOption]}
-        >
-          <HelpCircle size={20} color={theme.text} />
-          <Text style={[styles.settingsText, { color: theme.text }]}>Support</Text>
-        </LinearGradient>
-        <TouchableOpacity 
-          style={[styles.settingsOption, { backgroundColor: theme.surface }]}
-          onPress={logout}
-        >
-          <LogOut size={20} color={theme.error} />
-          <Text style={[styles.settingsText, { color: theme.error }]}>Logout</Text>
+          <View style={styles.settingLeft}>
+            <HelpCircle size={20} color={theme.text} />
+            <Text style={[styles.settingsText, { color: theme.text }]}>Support</Text>
+          </View>
+          <Text style={{ color: theme.textSecondary }}>{'›'}</Text>
         </TouchableOpacity>
 
+        {/* Logout */}
         <TouchableOpacity 
-          style={[styles.settingsOption, { backgroundColor: theme.surface }]}
+          style={styles.settingRow}
+          onPress={logout}
+        >
+          <View style={styles.settingLeft}>
+            <LogOut size={20} color={theme.error} />
+            <Text style={[styles.settingsText, { color: theme.error }]}>Logout</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Reset Onboarding */}
+        <TouchableOpacity 
+          style={styles.settingRow}
           onPress={async () => {
             await AsyncStorage.removeItem('onboarding_complete');
             Alert.alert('Onboarding reset', 'Close and reopen the app to see onboarding again.');
           }}
         >
-          <Text style={[styles.settingsText, { color: theme.text }]}>Reset Onboarding</Text>
+          <View style={styles.settingLeft}>
+            <Text style={[styles.settingsText, { color: theme.text }]}>Reset Onboarding</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -465,6 +648,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 12,
   },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   leaguesCard: {
     borderRadius: 16,
     padding: 16,
@@ -491,4 +685,65 @@ const styles = StyleSheet.create({
   claimButton: { marginTop: 12 },
   claimGradient: { paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
   claimText: { fontWeight: '700' },
+  // Calendar styles
+  calendarContainer: {
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  calendarTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  calendarTitle: { fontSize: 14, fontWeight: '700' },
+  calendarNavBtn: {
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
+  weekLabel: { width: `${100/7}%`, textAlign: 'center', fontSize: 12 },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dayCell: {
+    width: `${100/7}%`,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    marginVertical: 2,
+  },
+  dayNumber: { fontSize: 14, fontWeight: '600' },
+  dayDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 4,
+  },
+  calendarLegend: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendSquare: { width: 12, height: 12, borderRadius: 4, borderWidth: 1 },
+  workoutList: { gap: 8 },
+  workoutItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  workoutName: { fontSize: 14, fontWeight: '600' },
 }); 

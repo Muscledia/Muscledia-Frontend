@@ -330,23 +330,13 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     return remaining > 0;
   };
 
-  // Daily routine helpers
-  const canStartRoutineToday = (routineId: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const isSameDay = character.routinesDate === today;
-    const doneToday = isSameDay ? character.routinesDoneToday : [];
-    const isNewRoutine = !doneToday.includes(routineId);
-    if (isNewRoutine && doneToday.length >= 3) return false;
+  // Daily routine helpers (disabled)
+  const canStartRoutineToday = (_routineId: string) => {
     return true;
   };
 
-  const registerRoutineStart = (routineId: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const isSameDay = character.routinesDate === today;
-    const doneToday = isSameDay ? character.routinesDoneToday : [];
-    if (!doneToday.includes(routineId)) {
-      updateCharacter({ routinesDate: today, routinesDoneToday: [...doneToday, routineId] });
-    }
+  const registerRoutineStart = (_routineId: string) => {
+    // no-op: feature disabled
   };
 
   const equipItem = (category: 'Shirts'|'Pants'|'Equipment', name: string) => {

@@ -2,6 +2,12 @@
 
 A gamified fitness tracking mobile app built with React Native and Expo, featuring an RPG-style character progression system that motivates users to maintain consistent workout routines.
 
+## Developer Documentation
+
+For a full architecture and implementation guide, see `docs/ARCHITECTURE.md`.
+
+For server-side contracts, see `docs/BACKEND_API.md`.
+
 ## ✨ Features
 
 ### 🎮 Gamification System
