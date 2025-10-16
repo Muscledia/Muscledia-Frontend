@@ -1,0 +1,55 @@
+// API Response Types matching Spring Boot backend
+
+// Common API Response Wrapper
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}
+
+// Authentication Types
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  refreshToken: string;
+  user: User;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  birthDate: string;
+  gender: string;
+  height: number;
+  initialWeight: number;
+  goalType: 'BUILD_STRENGTH' | 'LOSE_WEIGHT' | 'MAINTAIN' | 'BUILD_MUSCLE';
+  initialAvatarType: 'WEREWOLF' | 'DRAGON' | 'PHOENIX' | 'TIGER';   //TODO: should we keep this or remove?
+}
+
+
+// Domain types
+
+// User Types
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  birthDate: string;
+  gender: string;
+  height: number;
+  weight: number;
+  goalType: string;
+  avatarType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+
+//Other types here
