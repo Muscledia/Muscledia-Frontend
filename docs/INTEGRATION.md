@@ -27,3 +27,6 @@ Security: Keep sensitive config separate
 
 services/
 Each service will handle one domain
+
+providers/
+QueryProvider.jsx - brain of the application, handles all API data, for example if we use the same fetch() func with this provider first one will be called, the second one will get data from smart caching (for example fetch(user with id:1);)

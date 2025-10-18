@@ -53,3 +53,14 @@ export interface User {
 
 
 //Other types here
+
+
+// Error Types
+export interface ApiError {
+  success: false;
+  message: string;
+  error: string;
+  timestamp: string;
+  path: string;
+  status: number;
+}
