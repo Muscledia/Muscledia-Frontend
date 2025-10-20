@@ -29,7 +29,6 @@ export interface RegisterRequest {
   height: number;
   initialWeight: number;
   goalType: 'BUILD_STRENGTH' | 'LOSE_WEIGHT' | 'MAINTAIN' | 'BUILD_MUSCLE';
-  initialAvatarType: 'WEREWOLF' | 'DRAGON' | 'PHOENIX' | 'TIGER';   //TODO: should we keep this or remove?
 }
 
 
@@ -45,7 +44,6 @@ export interface User {
   height: number;
   weight: number;
   goalType: string;
-  avatarType: string;
   createdAt: string;
   updatedAt: string;
 }
