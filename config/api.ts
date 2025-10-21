@@ -31,7 +31,6 @@ export const API_CONFIG = {
   // Storage keys
   STORAGE: {
     ACCESS_TOKEN: 'muscledia_access_token',
-    REFRESH_TOKEN: 'muscledia_refresh_token',
     USER_DATA: 'muscledia_user_data',
     OFFLINE_DATA: 'muscledia_offline_data',
   },

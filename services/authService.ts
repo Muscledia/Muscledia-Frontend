@@ -1,7 +1,7 @@
 import { apiPost } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
 import { LoginRequest, LoginResponse, RegisterRequest, User, ApiResponse } from '@/types/api';
-import { setAuthTokens } from './api';
+import { setAuthToken } from './api';
 
 export class AuthService {
   /**
@@ -14,8 +14,8 @@ export class AuthService {
     );
 
     if (response.success && response.data) {
-      // Store tokens securely
-      await setAuthTokens(response.data.token, response.data.refreshToken);
+      // Store access token securely
+      await setAuthToken(response.data.token);
       return response.data;
     }
 

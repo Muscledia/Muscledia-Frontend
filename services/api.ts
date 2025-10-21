@@ -61,39 +61,21 @@ const setupInterceptors = (client: AxiosInstance): void => {
     }
   );
 
-  // Response interceptor - Handle token refresh and errors
+  // Response interceptor - Handle errors
   client.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
     },
     async (error) => {
-      const originalRequest = error.config;
-
       // Handle 401 Unauthorized - Token expired
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-
+      if (error.response?.status === 401) {
+        // Clear stored token and redirect to login
         try {
-          const refreshToken = await AsyncStorage.getItem(API_CONFIG.STORAGE.REFRESH_TOKEN);
-          if (refreshToken) {
-            const response = await client.post(buildURL('/api/users/refresh'), {
-              refreshToken,
-            });
-
-            const { token, refreshToken: newRefreshToken } = response.data.data;
-            
-            await AsyncStorage.setItem(API_CONFIG.STORAGE.ACCESS_TOKEN, token);
-            await AsyncStorage.setItem(API_CONFIG.STORAGE.REFRESH_TOKEN, newRefreshToken);
-
-            // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return client(originalRequest);
-          }
-        } catch (refreshError) {
-          // Refresh failed, redirect to login
-          await clearAuthTokens();
+          await AsyncStorage.removeItem(API_CONFIG.STORAGE.ACCESS_TOKEN);
           // You might want to emit an event or use a navigation service here
-          console.error('Token refresh failed:', refreshError);
+          console.log('Token expired, redirecting to login');
+        } catch (clearError) {
+          console.error('Failed to clear auth token:', clearError);
         }
       }
 
@@ -102,26 +84,20 @@ const setupInterceptors = (client: AxiosInstance): void => {
   );
 };
 
-// Utility functions    -- maybe could be useful in the future for log out feature
-export const clearAuthTokens = async (): Promise<void> => {
+// Utility functions
+export const setAuthToken = async (accessToken: string): Promise<void> => {
   try {
-    await AsyncStorage.multiRemove([
-      API_CONFIG.STORAGE.ACCESS_TOKEN,
-      API_CONFIG.STORAGE.REFRESH_TOKEN,
-    ]);
+    await AsyncStorage.setItem(API_CONFIG.STORAGE.ACCESS_TOKEN, accessToken);
   } catch (error) {
-    console.error('Failed to clear auth tokens:', error);
+    console.error('Failed to set auth token:', error);
   }
 };
 
-export const setAuthTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
+export const clearAuthToken = async (): Promise<void> => {
   try {
-    await AsyncStorage.multiSet([
-      [API_CONFIG.STORAGE.ACCESS_TOKEN, accessToken],
-      [API_CONFIG.STORAGE.REFRESH_TOKEN, refreshToken],
-    ]);
+    await AsyncStorage.removeItem(API_CONFIG.STORAGE.ACCESS_TOKEN);
   } catch (error) {
-    console.error('Failed to set auth tokens:', error);
+    console.error('Failed to clear auth token:', error);
   }
 };
 

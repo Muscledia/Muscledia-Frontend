@@ -16,8 +16,10 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
-  refreshToken: string;
-  user: User;
+  username: string;
+  userId: string;
+  uuidString: string;
+  roles: string[];
 }
 
 export interface RegisterRequest {

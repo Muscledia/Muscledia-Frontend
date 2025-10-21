@@ -23,7 +23,6 @@ export const ENV = {
   // Storage Keys
   STORAGE_KEYS: {
     ACCESS_TOKEN: 'muscledia_access_token',
-    REFRESH_TOKEN: 'muscledia_refresh_token',
     USER_DATA: 'muscledia_user_data',
     OFFLINE_DATA: 'muscledia_offline_data',
     CACHE_DATA: 'muscledia_cache_data',
