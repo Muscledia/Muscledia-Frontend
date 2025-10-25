@@ -14,19 +14,25 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react-native';
+import { AuthService } from '@/services/authService';
+import { RegisterRequest } from '@/types/api';
 import { Colors, getThemeColors } from '@/constants/Colors';
 
 export default function RegisterScreen() {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | ''>('');
+  const [heightText, setHeightText] = useState('');
+  const [initialWeightText, setInitialWeightText] = useState('');
+  const [goalType, setGoalType] = useState<RegisterRequest['goalType'] | ''>('');
+  const [showGoalTypeOptions, setShowGoalTypeOptions] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -36,7 +42,7 @@ export default function RegisterScreen() {
     if (isLoading) return;
 
     // Validation
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+    if (!username.trim() || !email.trim() || !password || !confirmPassword || !birthDate.trim() || !gender || !heightText.trim() || !initialWeightText.trim() || !goalType) {
       Alert.alert('Error', 'All fields are required.');
       return;
     }
@@ -46,21 +52,54 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Birth date format YYYY-MM-DD
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(birthDate.trim())) {
+      Alert.alert('Error', 'Birth date must be in YYYY-MM-DD format.');
+      return;
+    }
+
+    // Numeric validations and length limits
+    const heightSanitized = heightText.replace(/[^0-9]/g, '');
+    const weightSanitized = initialWeightText.replace(/[^0-9]/g, '');
+    if (heightSanitized.length === 0 || weightSanitized.length === 0) {
+      Alert.alert('Error', 'Height and Initial Weight must be numeric.');
+      return;
+    }
+    if (heightSanitized.length > 5 || weightSanitized.length > 5) {
+      Alert.alert('Error', 'Height and Initial Weight cannot exceed 5 digits.');
+      return;
+    }
+    const height = parseInt(heightSanitized, 10);
+    const initialWeight = parseInt(weightSanitized, 10);
+    if (!Number.isFinite(height) || height <= 0 || !Number.isFinite(initialWeight) || initialWeight <= 0) {
+      Alert.alert('Error', 'Height and Initial Weight must be positive numbers.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await register(email.trim(), password, name.trim());
-      
-      if (result.success) {
-        Alert.alert(
-          'Success!', 
-          'Your account has been created successfully.',
-          [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
-        );
-      } else {
-        Alert.alert('Registration Failed', result.error || 'Please try again.');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      const payload: RegisterRequest = {
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        birthDate: birthDate.trim(),
+        gender,
+        height,
+        initialWeight,
+        goalType: goalType as RegisterRequest['goalType'],
+      };
+
+      await AuthService.register(payload);
+
+      Alert.alert(
+        'Success!', 
+        'Your account has been created successfully. Please sign in.',
+        [{ text: 'Go to Login', onPress: () => router.replace('/(auth)/login') }]
+      );
+    } catch (error: any) {
+      const message = error?.message || 'Registration failed. Please try again.';
+      Alert.alert('Registration Failed', message);
     } finally {
       setIsLoading(false);
     }
@@ -96,18 +135,18 @@ export default function RegisterScreen() {
           <View style={[styles.form, { backgroundColor: theme.surface }]}>
             <Text style={[styles.formTitle, { color: theme.text }]}>Create Account</Text>
             
-            {/* Name Input */}
+            {/* Username Input */}
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: theme.text }]}>Name</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Username</Text>
               <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
                 <User size={20} color={theme.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
-                  placeholder="Enter your name"
+                  placeholder="Choose a username"
                   placeholderTextColor={theme.textMuted}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
                   autoCorrect={false}
                 />
               </View>
@@ -129,6 +168,97 @@ export default function RegisterScreen() {
                   autoCorrect={false}
                 />
               </View>
+            </View>
+
+            {/* Birth Date Input */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Birth Date</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={theme.textMuted}
+                  value={birthDate}
+                  onChangeText={setBirthDate}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
+            {/* Gender Selector */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Gender</Text>
+              <View style={styles.chipRow}>
+                {(['Male','Female','Other'] as const).map((g) => (
+                  <TouchableOpacity
+                    key={g}
+                    style={[styles.chip, { borderColor: theme.border, backgroundColor: gender === g ? theme.accent : theme.surfaceLight }]}
+                    onPress={() => setGender(g)}
+                  >
+                    <Text style={[styles.chipText, { color: gender === g ? '#FFFFFF' : theme.text }]}>{g}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Height Input */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Height (cm)</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="e.g., 180"
+                  placeholderTextColor={theme.textMuted}
+                  value={heightText}
+                  onChangeText={(t) => setHeightText(t.replace(/[^0-9]/g, '').slice(0, 5))}
+                  keyboardType="number-pad"
+                  maxLength={5}
+                />
+              </View>
+            </View>
+
+            {/* Initial Weight Input */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Initial Weight (kg)</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="e.g., 75"
+                  placeholderTextColor={theme.textMuted}
+                  value={initialWeightText}
+                  onChangeText={(t) => setInitialWeightText(t.replace(/[^0-9]/g, '').slice(0, 5))}
+                  keyboardType="number-pad"
+                  maxLength={5}
+                />
+              </View>
+            </View>
+
+            {/* Goal Type Dropdown */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Goal</Text>
+              <TouchableOpacity
+                style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}
+                onPress={() => setShowGoalTypeOptions((s) => !s)}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: goalType ? theme.text : theme.textMuted, fontSize: 16 }}>
+                  {goalType || 'Select your goal'}
+                </Text>
+              </TouchableOpacity>
+              {showGoalTypeOptions && (
+                <View style={[styles.dropdownContainer, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
+                  {(['BUILD_STRENGTH','LOSE_WEIGHT','MAINTAIN','BUILD_MUSCLE'] as const).map((opt) => (
+                    <TouchableOpacity
+                      key={opt}
+                      style={styles.dropdownOption}
+                      onPress={() => { setGoalType(opt); setShowGoalTypeOptions(false); }}
+                    >
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{opt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
 
             {/* Password Input */}
@@ -315,5 +445,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6D28D9',
     fontWeight: '600',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  chip: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  dropdownOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)'
   },
 }); 
