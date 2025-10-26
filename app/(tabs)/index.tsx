@@ -13,7 +13,7 @@ import { useCharacter } from '@/hooks/useCharacter';
 import { useAuth } from '@/hooks/useAuth';
 import CharacterAvatar from '@/components/CharacterAvatar';
 import ProgressBar from '@/components/ProgressBar';
-import { Siren as Fire, Zap, Trophy, TrendingUp, Heart, Coins, Sparkles } from 'lucide-react-native';
+import { Siren as Fire, Zap, Trophy, TrendingUp, Heart, Coins, Pen } from 'lucide-react-native';
 import StatsCard from '@/components/StatsCard';
 import { getGreeting } from '@/utils/helpers';
 import { useWorkouts } from '@/hooks/useWorkouts';
@@ -110,20 +110,17 @@ export default function HomeScreen() {
 
       {/* Character Section (sprite + bars) */}
       <View style={[styles.characterSection, { backgroundColor: theme.surface }]}>
-        <View style={styles.characterHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Character</Text>
+      
+        <View style={styles.characterImageContainer}>
           <TouchableOpacity
             onPress={async () => { await impact('selection'); router.push('/customize'); }}
             style={styles.customizeBtn}
             activeOpacity={0.9}
           >
-            <LinearGradient colors={[theme.accent, theme.accentSecondary]} locations={[0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.customizeBtnInner}>
-              <Sparkles size={16} color={theme.cardText} />
-              <Text style={[styles.customizeText, { color: theme.cardText }]}>Customize</Text>
-            </LinearGradient>
+            <View style={[styles.customizeBtnInner, { backgroundColor: theme.accent }]}>
+              <Pen size={16} color={theme.cardText} />
+            </View>
           </TouchableOpacity>
-        </View>
-        <View style={styles.characterImageContainer}>
           {character.characterBackgroundUrl ? (
             <Image
               source={{ uri: character.characterBackgroundUrl }}
@@ -229,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    height: 240,
+      height: 468,
   },
   backgroundImage: {
     position: 'absolute',
@@ -241,26 +238,29 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   characterImage: {
-    width: 200,
-    height: 220,
+      width: 370,
+      height: 392,
   },
   barsContainer: {
-    width: '100%',
-    marginTop: 8,
+      width: '100%',
+      marginTop: 8,
+      alignItems: 'center',
   },
   barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 8,
+      width: '100%',
+      maxWidth: 420,
   },
   barLeftLabel: {
-    width: 56,
+      width: 100,
     fontSize: 12,
     textAlign: 'left',
   },
   barRightLabel: {
-    width: 80,
+      width: 60,
     fontSize: 12,
     textAlign: 'right',
   },
@@ -271,9 +271,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   characterHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
-  customizeBtn: { },
-  customizeBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  customizeText: { fontSize: 12, fontWeight: '700' },
+  customizeBtn: { position: 'absolute', top: 12, right: 12, zIndex: 2 },
+  customizeBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 10 },
+  customizeText: { fontSize: 11, fontWeight: '700' },
   routineCardWrapper: {
     marginBottom: 12,
     borderRadius: 16,

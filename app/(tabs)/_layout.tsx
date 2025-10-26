@@ -28,9 +28,9 @@ const FloatingActionButton = () => {
     >
       <LinearGradient
         colors={[theme.accent, theme.accentSecondary]}
-        locations={[0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        locations={[0, 1]}
+        start={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 0 }}
         style={{
           width: 56,
           height: 56,
