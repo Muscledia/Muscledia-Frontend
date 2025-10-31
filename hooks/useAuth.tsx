@@ -1,26 +1,21 @@
 import * as React from 'react';
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
+import { User, LoginResponse } from '@/types/api';
+import { AuthService } from '@/services';
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
-};
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (userData: any) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
-  updateName: (name: string) => Promise<{ success: boolean; error?: string }>;
-  updateEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
-  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  refreshAuth: () => Promise<void>;
+  // ADDED: Access to login response data
+  loginData: LoginResponse | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,39 +29,38 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Hash password using expo-crypto
-const hashPassword = async (password: string): Promise<string> => {
-  const salt = Math.random().toString(36).substring(2, 15);
-  const hash = await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    password + salt
-  );
-  return `${salt}:${hash}`;
-};
-
-// Verify password
-const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
-  const [salt, hash] = hashedPassword.split(':');
-  const inputHash = await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    password + salt
-  );
-  return inputHash === hash;
-};
-
-// Generate unique user ID
-const generateUserId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
-};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loginData, setLoginData] = useState<LoginResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load current user on app start
   useEffect(() => {
-    loadCurrentUser();
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      console.log('Checking authentication status...');
+      const isAuth = await AuthService.isAuthenticated();
+
+      if (isAuth) {
+        console.log('User has valid token');
+        // Note: We don't have user data here since we only stored the token
+        // You might want to fetch user profile from an endpoint or decode the JWT
+      } else {
+        console.log('User is not authenticated');
+        setUser(null);
+        setLoginData(null);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setUser(null);
+      setLoginData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadCurrentUser = async () => {
     try {
@@ -109,114 +103,72 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Validation
-      if (!email || !password || !name) {
-        return { success: false, error: 'All fields are required' };
-      }
+      console.log('useAuth: Attempting login for username:', username);
 
-      if (!isValidEmail(email)) {
-        return { success: false, error: 'Please enter a valid email address' };
-      }
+      // Use your backend AuthService with actual response handling
+      const loginResponse: LoginResponse = await AuthService.login(username, password);
 
-      if (password.length < 6) {
-        return { success: false, error: 'Password must be at least 6 characters long' };
-      }
+      console.log('useAuth: Login response received:', loginResponse);
 
-      if (name.trim().length < 2) {
-        return { success: false, error: 'Name must be at least 2 characters long' };
-      }
+      // Store the login response data
+      setLoginData(loginResponse);
 
-      // Check if user already exists
-      const users = await getUsersFromStorage();
-      const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (existingUser) {
-        return { success: false, error: 'An account with this email already exists' };
-      }
+      // Convert LoginResponse to User object using the actual backend format
+      const userObj: User = AuthService.loginResponseToUser(loginResponse);
 
-      // Create new user
-      const hashedPassword = await hashPassword(password);
-      const newUser = {
-        id: generateUserId(),
-        email: email.toLowerCase(),
-        name: name.trim(),
-        password: hashedPassword,
-        createdAt: new Date().toISOString(),
-      };
+      setUser(userObj);
 
-      // Save to users list
-      users.push(newUser);
-      await saveUsersToStorage(users);
-
-      // Create user object for context (without password)
-      const userForContext: User = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        createdAt: newUser.createdAt,
-      };
-
-      // Set as current user
-      await saveUser(userForContext);
+      console.log('useAuth: Login successful for user:', loginResponse.username);
+      console.log('useAuth: User object created:', userObj);
 
       return { success: true };
-    } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, error: 'Registration failed. Please try again.' };
+
+    } catch (error: any) {
+      console.error('useAuth: Login failed:', error);
+      setUser(null);
+      setLoginData(null);
+      return {
+        success: false,
+        error: error.message || 'Login failed. Please try again.'
+      };
     }
   };
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (userData: any): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Validation
-      if (!email || !password) {
-        return { success: false, error: 'Email and password are required' };
-      }
+      console.log('useAuth: Attempting registration for username:', userData.username);
 
-      if (!isValidEmail(email)) {
-        return { success: false, error: 'Please enter a valid email address' };
-      }
+      // Use your backend AuthService
+      const registeredUser: User = await AuthService.register(userData);
 
-      // Find user
-      const users = await getUsersFromStorage();
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (!user) {
-        return { success: false, error: 'Invalid email or password' };
-      }
-
-      // Verify password
-      const isPasswordValid = await verifyPassword(password, user.password);
-      if (!isPasswordValid) {
-        return { success: false, error: 'Invalid email or password' };
-      }
-
-      // Create user object for context (without password)
-      const userForContext: User = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt,
-      };
-
-      // Set as current user
-      await saveUser(userForContext);
+      setUser(registeredUser);
+      console.log('useAuth: Registration successful for user:', registeredUser.username);
 
       return { success: true };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Login failed. Please try again.' };
+
+    } catch (error: any) {
+      console.error('useAuth: Registration failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Registration failed. Please try again.'
+      };
     }
   };
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem(CURRENT_USER_KEY);
+      console.log('useAuth: Logging out user...');
+      await AuthService.logout();
       setUser(null);
+      setLoginData(null);
+      console.log('useAuth: Logout successful');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('useAuth: Logout error:', error);
+      // Still clear user state even if logout fails
+      setUser(null);
+      setLoginData(null);
     }
   };
 
@@ -224,92 +176,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return;
 
     try {
+      console.log('useAuth: Updating user profile...');
+      // Here you would call an API endpoint to update user profile
+      // const updatedUser = await AuthService.updateProfile(updates);
+
+      // For now, just update local state
       const updatedUser = { ...user, ...updates };
-      
-      // Update in users storage
-      const users = await getUsersFromStorage();
-      const userIndex = users.findIndex(u => u.id === user.id);
-      if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], ...updates };
-        await saveUsersToStorage(users);
-      }
-
-      // Update current user
-      await saveUser(updatedUser);
+      setUser(updatedUser);
+      console.log('useAuth: Profile updated successfully');
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('useAuth: Profile update error:', error);
     }
   };
 
-  // Update only the display name with validation
-  const updateName = async (name: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    const trimmed = name.trim();
-    if (trimmed.length < 2) return { success: false, error: 'Name must be at least 2 characters long' };
-    try {
-      const updates: Partial<User> = { name: trimmed };
-      await updateProfile(updates);
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: 'Failed to update name' };
-    }
-  };
-
-  // Update email with validation and uniqueness check
-  const updateEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    const normalized = email.trim().toLowerCase();
-    if (!isValidEmail(normalized)) return { success: false, error: 'Please enter a valid email address' };
-    try {
-      const users = await getUsersFromStorage();
-      const exists = users.find(u => u.email.toLowerCase() === normalized && u.id !== user.id);
-      if (exists) return { success: false, error: 'An account with this email already exists' };
-      // Update users storage
-      const idx = users.findIndex(u => u.id === user.id);
-      if (idx !== -1) {
-        users[idx] = { ...users[idx], email: normalized };
-        await saveUsersToStorage(users);
-      }
-      // Update current user
-      await saveUser({ ...user, email: normalized });
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: 'Failed to update email' };
-    }
-  };
-
-  // Change password verifying the old one and saving the new hashed password
-  const changePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    if (!oldPassword || !newPassword) return { success: false, error: 'Both fields are required' };
-    if (newPassword.length < 6) return { success: false, error: 'Password must be at least 6 characters long' };
-    try {
-      const users = await getUsersFromStorage();
-      const idx = users.findIndex(u => u.id === user.id);
-      if (idx === -1) return { success: false, error: 'User not found' };
-      const currentUserRecord = users[idx];
-      const ok = await verifyPassword(oldPassword, currentUserRecord.password);
-      if (!ok) return { success: false, error: 'Current password is incorrect' };
-      const hashedPassword = await hashPassword(newPassword);
-      users[idx] = { ...currentUserRecord, password: hashedPassword };
-      await saveUsersToStorage(users);
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: 'Failed to change password' };
-    }
+  const refreshAuth = async () => {
+    await checkAuthStatus();
   };
 
   const value: AuthContextType = {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!loginData,
     login,
     register,
     logout,
     updateProfile,
-    updateName,
-    updateEmail,
-    changePassword,
+    refreshAuth,
+    loginData, // Expose login data for access to token, roles, etc.
   };
 
   return (
@@ -325,4 +218,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};
