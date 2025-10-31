@@ -7,7 +7,7 @@ import { ApiResponse, ApiError } from '@/types/api';
 // Create axios instance with default configuration
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
-    baseURL: API_CONFIG.BASE_URL.development, // Will be dynamic based on environment
+    baseURL: API_CONFIG.BASE_URL, // Will be dynamic based on environment
     timeout: API_CONFIG.REQUEST.TIMEOUT,
     headers: {
       'Content-Type': 'application/json',
@@ -21,7 +21,7 @@ const createApiClient = (): AxiosInstance => {
     retryDelay: axiosRetry.exponentialDelay,
     retryCondition: (error) => {
       // Retry on network errors or 5xx status codes
-      return axiosRetry.isNetworkOrIdempotentRequestError(error) || 
+      return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
              ((error.response?.status ?? 0) >= 500 && (error.response?.status ?? 0) < 600);
     },
   });
@@ -51,6 +51,11 @@ const setupInterceptors = (client: AxiosInstance): void => {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        console.log('Request:', config.method?.toUpperCase(), config.url);
+        if (config.data) {
+          console.log('Request data:', JSON.stringify(config.data, null, 2));
+        }
       } catch (error) {
         console.warn('Failed to get auth token:', error);
       }
@@ -64,9 +69,12 @@ const setupInterceptors = (client: AxiosInstance): void => {
   // Response interceptor - Handle errors
   client.interceptors.response.use(
     (response: AxiosResponse) => {
+      console.log('Response:', response.status, response.config.url);
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
       return response;
     },
     async (error) => {
+      console.error('Response interceptor error:', error.response?.status, error.message);
       // Handle 401 Unauthorized - Token expired
       if (error.response?.status === 401) {
         // Clear stored token and redirect to login
@@ -88,6 +96,7 @@ const setupInterceptors = (client: AxiosInstance): void => {
 export const setAuthToken = async (accessToken: string): Promise<void> => {
   try {
     await AsyncStorage.setItem(API_CONFIG.STORAGE.ACCESS_TOKEN, accessToken);
+    console.log('Auth token stored successfully');
   } catch (error) {
     console.error('Failed to set auth token:', error);
   }
@@ -96,6 +105,7 @@ export const setAuthToken = async (accessToken: string): Promise<void> => {
 export const clearAuthToken = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(API_CONFIG.STORAGE.ACCESS_TOKEN);
+    console.log('Auth token cleared successfully');
   } catch (error) {
     console.error('Failed to clear auth token:', error);
   }
@@ -106,11 +116,29 @@ export const apiRequest = async <T>(
   config: AxiosRequestConfig
 ): Promise<ApiResponse<T>> => {
   const client = initializeApiClient();
-  
+
   try {
-    const response = await client.request<ApiResponse<T>>(config);
-    return response.data;
+    const response = await client.request<any>(config);
+
+    // IMPROVED: Handle different response formats
+    const data = response.data;
+
+    // If response is already in ApiResponse format
+    if (data.success !== undefined && data.data !== undefined) {
+      return data as ApiResponse<T>;
+    }
+
+    // If response is direct data, wrap it in ApiResponse format
+    return {
+      success: true,
+      message: 'Request successful',
+      data: data as T,
+      timestamp: new Date().toISOString()
+    } as ApiResponse<T>;
+
   } catch (error) {
+    console.error('API Request failed:', error);
+
     if (axios.isAxiosError(error)) {
       const apiError: ApiError = {
         success: false,
