@@ -1,4 +1,12 @@
-# MuscldDia v1 🏋️‍♂️
+# Muscledia BETA (PRE-RELASE) 🏋️‍♂️
+
+<img width="1170" height="2532" alt="resim" src="https://github.com/user-attachments/assets/984e4b5d-39c4-4e00-9ad1-3ab31dd782f7" />
+<img width="1170" height="2532" alt="resim" src="https://github.com/user-attachments/assets/6af74f90-497e-409f-9eaa-009c9b5c21b0" />
+<img width="1170" height="2532" alt="resim" src="https://github.com/user-attachments/assets/b68c8ebf-57ee-48ed-aafd-a099c58c385a" />
+<img width="1170" height="2532" alt="resim" src="https://github.com/user-attachments/assets/a38a0e26-6636-4acd-aa95-33eaaa58abf1" />
+<img width="1170" height="2532" alt="resim" src="https://github.com/user-attachments/assets/5afff34a-2672-4fbc-b526-d99db0f15bf4" />
+
+
 
 A gamified fitness tracking mobile app built with React Native and Expo, featuring an RPG-style character progression system that motivates users to maintain consistent workout routines.
 
