@@ -13,8 +13,7 @@ When testing the app in a **web browser**, you're getting "Network Error" becaus
 
 **Why this works:** Native apps don't have CORS restrictions.
 
-### Solution 2: Test on Physical Device
-
+### Solution 2: Test on Physical Devicenp
 1. Make sure your phone and computer are on the same WiFi network
 2. In your terminal where Expo is running, you'll see a QR code
 3. Scan it with your phone using:

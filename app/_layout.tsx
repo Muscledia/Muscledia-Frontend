@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { CharacterProvider } from '@/hooks/useCharacter';
 import { WorkoutsProvider } from '@/hooks/useWorkouts';
@@ -12,6 +13,11 @@ import { NotificationsProvider } from '@/hooks/useNotifications';
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  // Force dark mode system UI
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync('#0A0A0A');
+  }, []);
 
   return (
     <AuthProvider>
@@ -26,7 +32,7 @@ export default function RootLayout() {
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="+not-found" />
                   </Stack>
-                  <StatusBar style="auto" />
+                  <StatusBar style="light" />
                 </NotificationsProvider>
               </LeaguesProvider>
             </RaidProvider>

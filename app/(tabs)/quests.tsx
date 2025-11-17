@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCharacter } from '@/hooks/useCharacter';
@@ -15,9 +14,8 @@ import { dailyQuests, weeklyQuests, specialQuests } from '@/data/quests';
 import { useHaptics } from '@/hooks/useHaptics';
 
 export default function QuestsScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const theme = getThemeColors(isDark);
+  // Always use dark mode
+  const theme = getThemeColors();
   const { character, incrementXP, completeQuest } = useCharacter();
   const [completedQuests, setCompletedQuests] = useState<string[]>([]);
   const { impact } = useHaptics();

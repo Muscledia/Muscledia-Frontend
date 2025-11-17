@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCharacter } from '@/hooks/useCharacter';
@@ -25,15 +24,14 @@ import { useHaptics } from '@/hooks/useHaptics';
 export default function HomeScreen() {
   const { character, incrementXP } = useCharacter();
   const { user } = useAuth();
-  const colorScheme = useColorScheme();
   const [greeting, setGreeting] = useState('');
   const { workouts } = useWorkouts();
   const { routines } = useRoutines();
   const router = useRouter();
   const { impact } = useHaptics();
   
-  const isDark = colorScheme === 'dark';
-  const theme = getThemeColors(isDark);
+  // Always use dark mode
+  const theme = getThemeColors();
 
   // Helper to get start of week (Monday)
   function getStartOfWeek(date = new Date()) {
@@ -163,6 +161,8 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
+    
+
       {/* My Routines Section */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>My Routines ({routines.length})</Text>
       
@@ -185,6 +185,33 @@ export default function HomeScreen() {
         ))
       )}
 
+{/* Browse Public Routines Button */}{/* Browse Public Routines Button */}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Discover Public Routines</Text>
+      <TouchableOpacity
+        style={[styles.publicRoutinesButton, { backgroundColor: theme.accent }]}
+        onPress={async () => { await impact('medium'); router.push('/public-routines'); }}
+        activeOpacity={0.9}
+      >
+        <LinearGradient
+          colors={[theme.accent, theme.accentSecondary]}
+          locations={[0.55, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.publicRoutinesGradient}
+        >
+          <View style={styles.publicRoutinesContent}>
+            <View style={styles.publicRoutinesLeft}>
+              <Text style={[styles.publicRoutinesTitle, { color: theme.cardText }]}>
+                Browse Public Routines
+              </Text>
+              <Text style={[styles.publicRoutinesSubtitle, { color: theme.cardText }]}>
+                Discover community workout programs
+              </Text>
+            </View>
+            <TrendingUp size={28} color={theme.cardText} />
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
 
     </ScrollView>
   );
@@ -346,5 +373,37 @@ const styles = StyleSheet.create({
   routineArrow: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  publicRoutinesButton: {
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  publicRoutinesGradient: {
+    padding: 20,
+    borderRadius: 16,
+  },
+  publicRoutinesContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  publicRoutinesLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  publicRoutinesTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  publicRoutinesSubtitle: {
+    fontSize: 13,
+    opacity: 0.9,
   },
 });
