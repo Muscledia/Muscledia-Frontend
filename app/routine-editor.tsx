@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  useColorScheme,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -13,8 +14,9 @@ import { ArrowLeft, Plus, Trash2, ChevronDown } from 'lucide-react-native';
 import { useHaptics } from '@/hooks/useHaptics';
 
 export default function RoutineEditorScreen() {
-  // Always use dark mode
-  const theme = getThemeColors();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
 
   const [routineName, setRoutineName] = useState('Chest Day');

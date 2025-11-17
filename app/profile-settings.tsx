@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { getThemeColors } from '@/constants/Colors';
@@ -7,8 +7,9 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function ProfileSettingsScreen() {
   const { user, updateName, updateEmail, changePassword } = useAuth();
-  // Always use dark mode
-  const theme = getThemeColors();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const theme = getThemeColors(isDark);
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');

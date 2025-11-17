@@ -54,17 +54,6 @@ export interface User {
 
 //Other types here
 
-// Routine Folder Types
-export interface RoutineFolder {
-  id: string;
-  name: string;
-  description: string;
-  difficulty: string;
-  duration: string;
-  imageUrl?: string;
-  isPublic: boolean;
-  createdBy: string;
-}
 
 // Error Types
 export interface ApiError {

@@ -91,9 +91,8 @@ export const Colors = {
 };
 
 // Helper function to get theme colors
-// ALWAYS returns dark theme - dark mode is forced app-wide
-export const getThemeColors = (isDark?: boolean) => {
-  return Colors.dark; // Always return dark theme
+export const getThemeColors = (isDark: boolean) => {
+  return isDark ? Colors.dark : Colors.light;
 };
 
 // Helper function for opacity

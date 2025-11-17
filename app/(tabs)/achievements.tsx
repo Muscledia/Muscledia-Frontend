@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  useColorScheme,
 } from 'react-native';
 import { useCharacter } from '@/hooks/useCharacter';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -12,8 +13,9 @@ import { useRaid } from '@/hooks/useRaid';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function MuscleChampionsScreen() {
-  // Always use dark mode
-  const theme = getThemeColors();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const theme = getThemeColors(isDark);
   const { character } = useCharacter();
   const { state, resetForNewWeekIfNeeded } = useRaid();
 
