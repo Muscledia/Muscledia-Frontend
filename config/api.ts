@@ -44,6 +44,12 @@ export const API_CONFIG = {
       UPDATE_PROFILE: '/api/users/me',
       GET_USER: (id: string) => `/api/users/${id}`,
     },
+
+    // Routine Folders
+    ROUTINE_FOLDERS: {
+      PUBLIC: '/api/v1/routine-folders/public',
+      GET_BY_ID: (id: string) => `/api/v1/routine-folders/${id}`,
+    },
   },
 
   // Request configuration
