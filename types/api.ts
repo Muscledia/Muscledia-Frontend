@@ -98,6 +98,17 @@ export interface WorkoutPlanDetail extends WorkoutPlan {
   instructions?: string;
 }
 
+// Save Routine Types
+export interface SaveRoutineRequest {
+  publicRoutineId: string;
+}
+
+export interface SaveRoutineResponse {
+  routineFolder: RoutineFolder;
+  workoutPlans: WorkoutPlan[];
+  message: string;
+}
+
 // Error Types
 export interface ApiError {
   success: false;

@@ -88,12 +88,8 @@ export default function RoutineDetailScreen() {
     router.push(`/workout-plan-detail/${planId}`);
   };
 
-  // Handle save routine
-  const handleSaveRoutine = async (routineId: string) => {
-    // TODO: Implement actual save to user's routines logic
-    console.log('Save routine to user:', routineId);
-    await impact('success');
-  };
+  // Handle save routine (handled by SaveRoutineButton component)
+  const handleSaveRoutine = undefined; // Not needed - button handles its own logic
 
   // Loading state
   if (loading) {
@@ -160,7 +156,6 @@ export default function RoutineDetailScreen() {
         <SaveRoutineButton
           routineId={routine.id}
           routineName={routine.name}
-          onSave={handleSaveRoutine}
         />
 
         <View style={styles.divider} />
