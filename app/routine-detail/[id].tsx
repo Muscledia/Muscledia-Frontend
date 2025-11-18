@@ -85,8 +85,7 @@ export default function RoutineDetailScreen() {
   // Handle workout plan press
   const handlePlanPress = async (planId: string) => {
     await impact('selection');
-    // TODO: Navigate to workout plan details screen
-    console.log('Navigate to workout plan:', planId);
+    router.push(`/workout-plan-detail/${planId}`);
   };
 
   // Handle save routine

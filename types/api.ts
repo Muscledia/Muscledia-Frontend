@@ -77,6 +77,27 @@ export interface WorkoutPlan {
   exerciseCount: number;
 }
 
+// Exercise Types
+export interface Exercise {
+  id: string;
+  name: string;
+  description: string;
+  muscleGroups: string[];
+  equipment: string[];
+  difficulty: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  sets?: number;
+  reps?: number;
+  restTime?: number;
+}
+
+// Workout Plan Detail (includes exercises)
+export interface WorkoutPlanDetail extends WorkoutPlan {
+  exercises: Exercise[];
+  instructions?: string;
+}
+
 // Error Types
 export interface ApiError {
   success: false;

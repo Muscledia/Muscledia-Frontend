@@ -57,6 +57,22 @@ export default function RootLayout() {
                       },
                     }} 
                   />
+                  <Stack.Screen 
+                    name="workout-plan-detail/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Workout Plan',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
                   <Stack.Screen name="+not-found" />
                   </Stack>
                   <StatusBar style="light" />

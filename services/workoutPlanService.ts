@@ -1,5 +1,5 @@
 import { apiGet } from './api';
-import { ApiResponse, WorkoutPlan } from '@/types/api';
+import { ApiResponse, WorkoutPlan, WorkoutPlanDetail } from '@/types/api';
 
 /**
  * Workout Plan Service
@@ -16,12 +16,21 @@ export class WorkoutPlanService {
   }
 
   /**
-   * Fetch a specific workout plan by ID
+   * Fetch a specific workout plan by ID (basic info)
    * @param id - The workout plan ID
    * @returns Promise with workout plan details
    */
   static async getWorkoutPlanById(id: string): Promise<ApiResponse<WorkoutPlan>> {
     return apiGet<WorkoutPlan>(`/api/v1/workout-plans/${id}`);
+  }
+
+  /**
+   * Fetch a specific workout plan with full details including exercises
+   * @param id - The workout plan ID
+   * @returns Promise with workout plan detail including exercises
+   */
+  static async getWorkoutPlanDetailById(id: string): Promise<ApiResponse<WorkoutPlanDetail>> {
+    return apiGet<WorkoutPlanDetail>(`/api/v1/workout-plans/${id}`);
   }
 }
 
