@@ -82,8 +82,7 @@ export default function PublicRoutinesScreen() {
       activeOpacity={0.9}
       onPress={async () => {
         await impact('selection');
-        // TODO: Navigate to routine details screen with item.id
-        console.log('Navigate to routine:', item.id);
+        router.push(`/routine-detail/${item.id}`);
       }}
       style={styles.cardWrapper}
     >

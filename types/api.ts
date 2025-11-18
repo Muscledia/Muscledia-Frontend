@@ -66,6 +66,17 @@ export interface RoutineFolder {
   createdBy: string;
 }
 
+// Workout Plan Types
+export interface WorkoutPlan {
+  id: string;
+  name: string;
+  description: string;
+  targetMuscleGroups: string[];
+  estimatedDuration: number;
+  difficulty: string;
+  exerciseCount: number;
+}
+
 // Error Types
 export interface ApiError {
   success: false;

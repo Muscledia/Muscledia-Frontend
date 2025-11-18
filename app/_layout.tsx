@@ -41,6 +41,22 @@ export default function RootLayout() {
                       },
                     }} 
                   />
+                  <Stack.Screen 
+                    name="routine-detail/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Routine Details',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
                   <Stack.Screen name="+not-found" />
                   </Stack>
                   <StatusBar style="light" />

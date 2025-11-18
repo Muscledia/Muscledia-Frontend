@@ -1,5 +1,5 @@
 import { apiGet } from './api';
-import { ApiResponse, RoutineFolder } from '@/types/api';
+import { ApiResponse, RoutineFolder, WorkoutPlan } from '@/types/api';
 
 /**
  * Routine Service
@@ -21,6 +21,15 @@ export class RoutineService {
    */
   static async getRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
     return apiGet<RoutineFolder>(`/api/v1/routine-folders/${id}`);
+  }
+
+  /**
+   * Fetch all workout plans for a specific routine folder
+   * @param routineFolderId - The routine folder ID
+   * @returns Promise with array of workout plans
+   */
+  static async getWorkoutPlansByRoutineFolderId(routineFolderId: string): Promise<ApiResponse<WorkoutPlan[]>> {
+    return apiGet<WorkoutPlan[]>(`/api/v1/workout-plans?routineFolderId=${routineFolderId}`);
   }
 }
 
