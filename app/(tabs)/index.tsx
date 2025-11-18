@@ -13,7 +13,7 @@ import { useCharacter } from '@/hooks/useCharacter';
 import { useAuth } from '@/hooks/useAuth';
 import CharacterAvatar from '@/components/CharacterAvatar';
 import ProgressBar from '@/components/ProgressBar';
-import { Siren as Fire, Zap, Trophy, TrendingUp, Heart, Coins, Pen } from 'lucide-react-native';
+import { Siren as Fire, Zap, Trophy, TrendingUp, Heart, Coins, Pen, Compass } from 'lucide-react-native';
 import StatsCard from '@/components/StatsCard';
 import { getGreeting } from '@/utils/helpers';
 import { useWorkouts } from '@/hooks/useWorkouts';
@@ -185,6 +185,35 @@ export default function HomeScreen() {
         ))
       )}
 
+      {/* Discover Public Routines Button */}
+      <TouchableOpacity 
+        style={styles.discoverButtonWrapper}
+        onPress={async () => { await impact('medium'); router.push('/public-routines'); }}
+        activeOpacity={0.9}
+      >
+        <LinearGradient
+          colors={[theme.surface, theme.surfaceLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.discoverButton}
+        >
+          <View style={styles.discoverContent}>
+            <View style={[styles.iconCircle, { backgroundColor: theme.accent + '20' }]}>
+              <Compass size={24} color={theme.accent} />
+            </View>
+            <View style={styles.discoverTextContainer}>
+              <Text style={[styles.discoverTitle, { color: theme.text }]}>
+                Discover Workout Programs
+              </Text>
+              <Text style={[styles.discoverSubtitle, { color: theme.textSecondary }]}>
+                Browse pre-made routines from experts
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.discoverChevron, { color: theme.accent }]}>›</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
 
     </ScrollView>
   );
@@ -346,5 +375,48 @@ const styles = StyleSheet.create({
   routineArrow: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  discoverButtonWrapper: {
+    marginTop: 16,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  discoverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 16,
+  },
+  discoverContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  discoverTextContainer: {
+    flex: 1,
+  },
+  discoverTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  discoverSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  discoverChevron: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });

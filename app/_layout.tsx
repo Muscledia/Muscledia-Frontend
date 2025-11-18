@@ -9,6 +9,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { RaidProvider } from '@/hooks/useRaid';
 import { LeaguesProvider } from '@/hooks/useLeagues';
 import { NotificationsProvider } from '@/hooks/useNotifications';
+import { Colors } from '@/constants/Colors';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -24,6 +25,22 @@ export default function RootLayout() {
                   <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen 
+                    name="public-routines" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Discover Routines',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
                   <Stack.Screen name="+not-found" />
                   </Stack>
                   <StatusBar style="light" />

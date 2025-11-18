@@ -1,5 +1,6 @@
 export { AuthService } from './authService';
 export { UserService } from './userService';
+export { RoutineService } from './routineService';
 // export { WorkoutService } from './workoutService';    //uncomment in the future after implementing logic of those services
 // export { GamificationService } from './gamificationService';
 export { 
