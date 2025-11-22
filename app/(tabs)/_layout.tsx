@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Dumbbell, ShoppingBag, User, Plus } from 'lucide-react-native';
+import { House, Dumbbell, ShoppingBag, User, Plus, Target } from 'lucide-react-native';
 import { useColorScheme, TouchableOpacity, View, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -97,7 +97,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <House size={size} color={color} />,
           headerTitle: 'Muscledia',
                      headerLeft: () => (
             <TouchableOpacity 
@@ -111,11 +111,11 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen
-        name="quests"
+        name="challenges"
         options={{
-          title: 'Quests',
-          tabBarIcon: ({ color, size }) => <Dumbbell size={size} color={color} />,
-          headerTitle: 'Daily Quests',
+          title: 'Challenges',
+          tabBarIcon: ({ color, size }) => <Target size={size} color={color} />,
+          headerShown: false,
         }}
       />
       

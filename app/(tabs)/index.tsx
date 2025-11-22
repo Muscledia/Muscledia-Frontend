@@ -21,6 +21,7 @@ import { useRoutines } from '@/hooks/useRoutines';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
+import { DailyChallenges } from '@/components/challenges/DailyChallenges';
 
 export default function HomeScreen() {
   const { character, incrementXP } = useCharacter();
@@ -163,6 +164,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
+      
       {/* My Routines Section */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>My Routines ({routines.length})</Text>
       

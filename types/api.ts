@@ -54,6 +54,51 @@ export interface User {
 
 //Other types here
 
+// Challenge Types (Backend definitions)
+export type JourneyPhase = 'Foundation' | 'Building' | 'Mastery';
+
+export interface Challenge {
+  id: string;
+  name: string;
+  description: string;
+  type: string; // e.g., 'DAILY', 'WEEKLY' or specific types
+  objective: string;
+  targetValue: number;
+  rewardPoints: number;
+  unlockedQuestId?: string;
+  difficulty: string; // 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'
+  autoEnroll: boolean;
+  startDate: string;
+  endDate: string;
+  progressUnit: string;
+  formattedTarget: string;
+  estimatedDuration: string;
+  alreadyStarted: boolean;
+  active: boolean;
+}
+
+export interface ActiveChallenge {
+  id: string; // instance id
+  challengeId: string;
+  challengeName: string;
+  challengeType: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'FAILED';
+  currentProgress: number;
+  targetValue: number;
+  progressPercentage: number;
+  progressUnit: string;
+  startedAt: string;
+  completedAt?: string;
+  expiresAt: string;
+  pointsEarned: number;
+  statusDisplayName: string;
+  formattedProgress: string;
+  timeRemaining: string;
+  canComplete: boolean;
+  completionMessage?: string;
+}
+
+
 // Routine Folder Types
 export interface RoutineFolder {
   id: string;
