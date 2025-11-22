@@ -12,7 +12,28 @@ export class WorkoutPlanService {
    * @returns Promise with array of workout plans
    */
   static async getWorkoutPlansByRoutineFolderId(routineFolderId: string): Promise<ApiResponse<WorkoutPlan[]>> {
-    return apiGet<WorkoutPlan[]>(`/api/v1/workout-plans?routineFolderId=${routineFolderId}`);
+    try {
+      // Try the nested endpoint first
+      return await apiGet<WorkoutPlan[]>(`/api/v1/routine-folders/${routineFolderId}/workout-plans`);
+    } catch (error: any) {
+      // If 404/405, try alternative endpoint
+      if (error.status === 404 || error.status === 405) {
+        console.log('Nested endpoint not found, trying alternative...');
+        try {
+          return await apiGet<WorkoutPlan[]>(`/api/v1/workout-plans?routineFolderId=${routineFolderId}`);
+        } catch (altError: any) {
+          // If both fail, return empty array with message
+          console.warn('Both workout plan endpoints failed, returning empty array');
+          return {
+            success: true,
+            message: 'No workout plans available',
+            data: [],
+            timestamp: new Date().toISOString(),
+          } as ApiResponse<WorkoutPlan[]>;
+        }
+      }
+      throw error;
+    }
   }
 
   /**

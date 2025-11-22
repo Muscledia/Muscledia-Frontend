@@ -64,6 +64,7 @@ export interface RoutineFolder {
   imageUrl?: string;
   isPublic: boolean;
   createdBy: string;
+  workoutPlanIds?: string[];
 }
 
 // Workout Plan Types

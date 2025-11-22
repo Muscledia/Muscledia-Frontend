@@ -63,7 +63,10 @@ export default function PublicRoutinesScreen() {
   };
 
   // Difficulty badge color
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyColor = (difficulty?: string) => {
+    if (!difficulty) {
+      return theme.textMuted;
+    }
     switch (difficulty.toLowerCase()) {
       case 'beginner':
         return '#4CAF50';
@@ -82,7 +85,11 @@ export default function PublicRoutinesScreen() {
       activeOpacity={0.9}
       onPress={async () => {
         await impact('selection');
-        router.push(`/routine-detail/${item.id}`);
+        // Pass the routine data as a query parameter (encoded)
+        router.push({
+          pathname: `/routine-detail/${item.id}`,
+          params: { routineData: JSON.stringify(item) }
+        });
       }}
       style={styles.cardWrapper}
     >
@@ -130,7 +137,7 @@ export default function PublicRoutinesScreen() {
                     { color: getDifficultyColor(item.difficulty) },
                   ]}
                 >
-                  {item.difficulty}
+                  {item.difficulty || 'N/A'}
                 </Text>
               </View>
 

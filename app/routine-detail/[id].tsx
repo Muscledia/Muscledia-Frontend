@@ -23,14 +23,25 @@ import WorkoutPlanList from '@/components/routines/WorkoutPlanList';
 import SaveRoutineButton from '@/components/routines/SaveRoutineButton';
 
 export default function RoutineDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, routineData } = useLocalSearchParams<{ id: string; routineData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
 
-  const [routine, setRoutine] = useState<RoutineFolder | null>(null);
+  const [routine, setRoutine] = useState<RoutineFolder | null>(() => {
+    // Initialize with passed data if available
+    if (routineData) {
+      try {
+        return JSON.parse(routineData as string) as RoutineFolder;
+      } catch (e) {
+        console.error('Failed to parse routine data:', e);
+        return null;
+      }
+    }
+    return null;
+  });
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,24 +55,61 @@ export default function RoutineDetailScreen() {
       if (!isRefreshing) setLoading(true);
       setError(null);
 
-      // Fetch routine folder details and workout plans in parallel
-      const [routineResponse, plansResponse] = await Promise.all([
-        RoutineService.getRoutineFolderById(id),
-        WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id),
-      ]);
+      let currentRoutine = routine;
 
-      if (routineResponse.success && routineResponse.data) {
-        setRoutine(routineResponse.data);
-      } else {
-        setError(routineResponse.message || 'Failed to load routine details');
+      // Only fetch routine if we don't already have it (or if refreshing)
+      if (!currentRoutine || isRefreshing) {
+        try {
+          const routineResponse = await RoutineService.getRoutineFolderById(id);
+          if (routineResponse.success && routineResponse.data) {
+            currentRoutine = routineResponse.data;
+            setRoutine(currentRoutine);
+          } else {
+            // If fetch fails but we have cached data, use it
+            if (routine) {
+              console.warn('Failed to refresh routine, using cached data');
+              currentRoutine = routine;
+            } else {
+              setError(routineResponse.message || 'Failed to load routine details');
+              return;
+            }
+          }
+        } catch (err: any) {
+          // If fetch fails but we have cached data, use it
+          if (routine) {
+            console.warn('Failed to fetch routine, using cached data:', err);
+            currentRoutine = routine;
+          } else {
+            console.error('Error fetching routine data:', err);
+            setError(err.message || 'Routine not found. The backend may not support this endpoint.');
+            return;
+          }
+        }
       }
 
-      if (plansResponse.success && plansResponse.data) {
-        setWorkoutPlans(plansResponse.data);
+      // Now fetch workout plans using workoutPlanIds
+      if (currentRoutine?.workoutPlanIds && currentRoutine.workoutPlanIds.length > 0) {
+        const plansResponse = await RoutineService.getWorkoutPlansByIds(currentRoutine.workoutPlanIds);
+        
+        if (plansResponse.success && plansResponse.data) {
+          setWorkoutPlans(plansResponse.data);
+        } else {
+          console.warn('Failed to load workout plans:', plansResponse.message);
+          setWorkoutPlans([]);
+        }
       } else {
-        // If routine loads but plans fail, still show routine with empty plans
-        console.warn('Failed to load workout plans:', plansResponse.message);
-        setWorkoutPlans([]);
+        // No workout plan IDs, try fetching by routine folder ID
+        try {
+          const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
+          if (plansResponse.success && plansResponse.data) {
+            setWorkoutPlans(plansResponse.data);
+          } else {
+            setWorkoutPlans([]);
+          }
+        } catch (err) {
+          console.warn('Failed to fetch workout plans by folder ID:', err);
+          setWorkoutPlans([]);
+        }
       }
     } catch (err: any) {
       console.error('Error fetching routine data:', err);
