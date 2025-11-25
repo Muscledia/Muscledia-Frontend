@@ -1,159 +1,238 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Dimensions, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Dimensions, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
-import { Colors, getThemeColors } from '@/constants/Colors';
-import { ChallengeCard } from '@/components/challenges/ChallengeCard';
+import { getThemeColors } from '@/constants/Colors';
+import { InteractiveChallengeCard, ChallengeCardState } from '@/components/challenges/InteractiveChallengeCard';
+import { ActiveChallengeCard } from '@/components/challenges/ActiveChallengeCard';
+import { CelebrationScreen } from '@/components/challenges/CelebrationScreen';
+import { DUMMY_JOURNEY_NODES } from '@/data/dummyJourney';
+import { JourneyMap } from '@/components/journey/JourneyMap';
+import { Challenge, ActiveChallenge } from '@/types/api';
+import { Trophy, Calendar, Map as MapIcon } from 'lucide-react-native';
+import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
+
+// Hooks
 import { useDailyChallenges, useAcceptChallenge } from '@/hooks/useDailyChallenges';
 import { useWeeklyChallenges } from '@/hooks/useWeeklyChallenges';
-import { useActiveChallenges } from '@/hooks/useActiveChallenges';
-import { Challenge, ActiveChallenge } from '@/types/api';
-import { Trophy, Calendar, Zap, Clock } from 'lucide-react-native';
-import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useActiveChallenges, useUpdateChallengeProgress } from '@/hooks/useActiveChallenges';
 
 const { width } = Dimensions.get('window');
 
-type TabType = 'daily' | 'weekly' | 'active';
+type TabType = 'daily' | 'weekly' | 'active' | 'journey';
 
 export default function ChallengesScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Local state for journey (still dummy for now)
+  const [journeyNodes, setJourneyNodes] = useState(DUMMY_JOURNEY_NODES);
+  
+  // Celebration state
+  const [celebrationData, setCelebrationData] = useState<{ visible: boolean; name: string; points: number } | null>(null);
 
-  const { data: dailyChallenges, isLoading: loadingDaily, refetch: refetchDaily, isRefetching: refetchingDaily } = useDailyChallenges();
-  const { data: weeklyChallenges, isLoading: loadingWeekly, refetch: refetchWeekly, isRefetching: refetchingWeekly } = useWeeklyChallenges();
-  const { data: activeChallenges, isLoading: loadingActive, refetch: refetchActive, isRefetching: refetchingActive } = useActiveChallenges();
-  const { mutate: acceptChallenge } = useAcceptChallenge();
-
-  const handleAccept = useCallback((id: string) => {
-    acceptChallenge(id, {
-      onSuccess: () => {
-        Alert.alert('Challenge Accepted', 'Go crush it!');
-        // Ideally we switch to active tab or show some feedback
-      },
-      onError: (error: any) => {
-        Alert.alert('Error', error.message || 'Failed to accept challenge');
-      }
-    });
-  }, [acceptChallenge]);
-
-  const handleDismiss = useCallback((id: string) => {
-    // Just log for now
-    console.log('Dismissed', id);
-  }, []);
+  // Fetch Data
+  const { data: dailyChallenges = [], isLoading: loadingDaily, refetch: refetchDaily } = useDailyChallenges();
+  const { data: weeklyChallenges = [], isLoading: loadingWeekly, refetch: refetchWeekly } = useWeeklyChallenges();
+  const { data: activeChallenges = [], isLoading: loadingActive, refetch: refetchActive } = useActiveChallenges();
+  
+  const acceptChallenge = useAcceptChallenge();
+  const updateProgress = useUpdateChallengeProgress();
 
   const onRefresh = useCallback(() => {
-    if (activeTab === 'daily') refetchDaily();
-    else if (activeTab === 'weekly') refetchWeekly();
-    else refetchActive();
-  }, [activeTab, refetchDaily, refetchWeekly, refetchActive]);
+    setRefreshing(true);
+    Promise.all([refetchDaily(), refetchWeekly(), refetchActive()]).then(() => {
+      setRefreshing(false);
+    });
+  }, [refetchDaily, refetchWeekly, refetchActive]);
 
-  const isLoading = activeTab === 'daily' ? loadingDaily : activeTab === 'weekly' ? loadingWeekly : loadingActive;
-  const isRefetching = activeTab === 'daily' ? refetchingDaily : activeTab === 'weekly' ? refetchingWeekly : refetchingActive;
+  // Combine data for display
+  const getFilteredData = useMemo(() => {
+    // Helper to check status of a challenge
+    const getChallengeStatus = (challengeId: string): { state: ChallengeCardState, currentProgress: number } => {
+      const active = activeChallenges.find(a => a.challengeId === challengeId);
+      if (active) {
+        if (active.status === 'COMPLETED') return { state: 'completed', currentProgress: active.targetValue };
+        return { state: 'active', currentProgress: active.currentProgress };
+      }
+      return { state: 'available', currentProgress: 0 };
+    };
 
-  const renderActiveChallenge = ({ item, index }: { item: ActiveChallenge; index: number }) => (
-    <Animated.View 
-      entering={FadeInRight.delay(index * 100).springify()} 
-      layout={Layout.springify()}
-      style={[styles.activeCard, { backgroundColor: theme.surface }]}
-    >
-      <View style={styles.activeHeader}>
-        <View style={styles.activeTitleRow}>
-          <Trophy size={20} color={theme.accent} />
-          <Text style={[styles.activeTitle, { color: theme.text }]}>{item.challengeName}</Text>
-        </View>
-        <Text style={[styles.activeStatus, { color: theme.accent }]}>{item.status}</Text>
-      </View>
-      
-      <Text style={[styles.activeProgressText, { color: theme.textSecondary }]}>
-        {item.formattedProgress}
-      </Text>
-      
-      <View style={[styles.progressBarBg, { backgroundColor: theme.surfaceLight }]}>
-        <View 
-          style={[
-            styles.progressBarFill, 
-            { 
-              width: `${Math.min(item.progressPercentage * 100, 100)}%`, 
-              backgroundColor: theme.accent 
-            }
-          ]} 
-        />
-      </View>
-      
-      <View style={styles.activeFooter}>
-        <View style={styles.footerItem}>
-          <Clock size={14} color={theme.textMuted} />
-          <Text style={[styles.footerText, { color: theme.textMuted }]}>{item.timeRemaining}</Text>
-        </View>
-        <View style={styles.footerItem}>
-          <Zap size={14} color={theme.xp} />
-          <Text style={[styles.footerText, { color: theme.xp }]}>{item.pointsEarned} XP Earned</Text>
-        </View>
-      </View>
-    </Animated.View>
-  );
+    switch (activeTab) {
+      case 'daily':
+        return dailyChallenges
+          .map(c => {
+            const status = getChallengeStatus(c.id);
+            return { challenge: c, ...status };
+          })
+          .filter(item => item.challenge.type === 'DAILY' && item.state !== 'completed'); // Filter out completed?
+      case 'weekly':
+        return weeklyChallenges
+          .map(c => {
+            const status = getChallengeStatus(c.id);
+            return { challenge: c, ...status };
+          })
+          // Filter by type if needed, but endpoint already does it
+          .filter(item => item.state !== 'completed');
+      case 'active':
+        // For active tab, we map ActiveChallenge to the structure expected
+        return activeChallenges
+          .filter(a => a.status === 'ACTIVE')
+          .map(a => {
+            // Construct a Challenge object from ActiveChallenge
+            // Note: This is partial as ActiveChallenge doesn't have all details
+            const challenge: Challenge = {
+              id: a.challengeId,
+              name: a.challengeName,
+              description: 'Complete the objective to earn rewards!', // Placeholder
+              type: a.challengeType,
+              objective: `Target: ${a.targetValue} ${a.progressUnit}`,
+              targetValue: a.targetValue,
+              rewardPoints: a.pointsEarned || 0, // Points EARNED or REWARD? Using earned/potential
+              difficulty: 'INTERMEDIATE', // Placeholder
+              autoEnroll: false,
+              startDate: a.startedAt,
+              endDate: a.expiresAt,
+              progressUnit: a.progressUnit,
+              formattedTarget: `${a.targetValue} ${a.progressUnit}`,
+              estimatedDuration: a.timeRemaining,
+              alreadyStarted: true,
+              active: true,
+            };
+            return {
+              challenge,
+              state: 'active' as ChallengeCardState,
+              currentProgress: a.currentProgress
+            };
+          });
+      default:
+        return [];
+    }
+  }, [activeTab, dailyChallenges, weeklyChallenges, activeChallenges]);
+
+  const handleUpdateProgress = useCallback((id: string, newProgress: number) => {
+    // Optimistic update could happen here, but we use mutation
+    updateProgress.mutate({ challengeId: id, progress: newProgress }, {
+      onSuccess: () => {
+         // Check if completed - strictly we should check backend response
+         // For now, let react-query invalidate and refresh
+      }
+    });
+  }, [updateProgress]);
+
+  const handleAccept = useCallback((id: string) => {
+     acceptChallenge.mutate(id, {
+       onSuccess: () => {
+         Alert.alert(
+           'Challenge Accepted', 
+           'Go crush it! You can find this in your Active tab.',
+           [
+             { text: 'Stay Here', style: 'cancel' },
+             { text: 'Go to Active', onPress: () => setActiveTab('active') }
+           ]
+         );
+       },
+       onError: (error) => {
+         Alert.alert('Error', 'Failed to accept challenge. Please try again.');
+         console.error(error);
+       }
+     });
+  }, [acceptChallenge]);
+
+  const handleAbandon = useCallback((id: string) => {
+    Alert.alert(
+      'Abandon Challenge',
+      'Abandoning challenges is not yet supported by the server.',
+      [{ text: 'OK' }]
+    );
+  }, []);
+
+  const handleViewDetails = useCallback((id: string) => {
+    console.log('View details', id);
+    // TODO: Implement details modal
+  }, []);
+
+  const filteredData = getFilteredData;
+  const isLoading = loadingDaily || loadingWeekly || loadingActive;
 
   const renderContent = () => {
-    if (activeTab === 'active') {
-      if (activeChallenges?.length === 0 && !isLoading) {
+    if (activeTab === 'journey') {
         return (
-          <View style={styles.emptyState}>
-             <Trophy size={48} color={theme.textMuted} />
-             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No active challenges.</Text>
-             <TouchableOpacity onPress={() => setActiveTab('daily')}>
-               <Text style={[styles.linkText, { color: theme.accent }]}>Find some challenges!</Text>
-             </TouchableOpacity>
-          </View>
+            <JourneyMap 
+                nodes={journeyNodes} 
+                activeJourneyType="general-fitness"
+                onNodePress={(node) => {
+                    Alert.alert(node.title, `Status: ${node.status}\n${node.phase} Phase`);
+                }}
+            />
         );
-      }
+    }
+
+    if (isLoading && !refreshing && filteredData.length === 0) {
       return (
-        <FlatList
-          data={activeChallenges}
-          renderItem={renderActiveChallenge}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={theme.accent} />}
-        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.accent} />
+        </View>
       );
     }
 
-    const challenges = activeTab === 'daily' ? dailyChallenges : weeklyChallenges;
-    
-    if (challenges?.length === 0 && !isLoading) {
+    if (filteredData.length === 0) {
        return (
           <View style={styles.emptyState}>
-             <Calendar size={48} color={theme.textMuted} />
-             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No challenges available.</Text>
+             {activeTab === 'active' ? (
+                <Trophy size={48} color={theme.textMuted} />
+             ) : (
+                <Calendar size={48} color={theme.textMuted} />
+             )}
+             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+               {activeTab === 'active' ? 'No active challenges.' : 'No challenges available.'}
+             </Text>
+             {activeTab === 'active' && (
+               <TouchableOpacity onPress={() => setActiveTab('daily')}>
+                 <Text style={[styles.linkText, { color: theme.accent }]}>Find some challenges!</Text>
+               </TouchableOpacity>
+             )}
           </View>
         );
     }
 
     return (
       <FlatList
-        horizontal
-        data={challenges}
+        data={filteredData}
         renderItem={({ item, index }) => (
             <Animated.View 
                 entering={FadeInRight.delay(index * 100).springify()} 
                 layout={Layout.springify()}
                 style={styles.cardWrapper}
             >
-                <ChallengeCard
-                    challenge={item}
-                    onAccept={handleAccept}
-                    onDismiss={handleDismiss}
-                />
+                {activeTab === 'active' ? (
+                    <ActiveChallengeCard
+                        challenge={item.challenge}
+                        initialProgress={item.currentProgress}
+                        onUpdate={handleUpdateProgress}
+                        onAbandon={handleAbandon}
+                        onViewDetails={handleViewDetails}
+                    />
+                ) : (
+                    <InteractiveChallengeCard
+                        challenge={item.challenge}
+                        state={item.state}
+                        currentProgress={item.currentProgress}
+                        onAccept={() => handleAccept(item.challenge.id)}
+                        onViewDetails={() => handleViewDetails(item.challenge.id)}
+                        onAbandon={() => handleAbandon(item.challenge.id)}
+                        progressRealtime={true}
+                    />
+                )}
             </Animated.View>
         )}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.horizontalListContent}
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={width * 0.75 + 16}
-        decelerationRate="fast"
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={theme.accent} />}
+        keyExtractor={(item) => item.challenge.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
       />
     );
   };
@@ -166,30 +245,46 @@ export default function ChallengesScreen() {
       </View>
 
       <View style={styles.tabs}>
-        {(['daily', 'weekly', 'active'] as TabType[]).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[
-              styles.tab,
-              activeTab === tab && { backgroundColor: theme.accent + '20', borderColor: theme.accent }
-            ]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                { color: activeTab === tab ? theme.accent : theme.textSecondary }
-              ]}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScrollContent}>
+            {(['daily', 'weekly', 'active', 'journey'] as TabType[]).map((tab) => (
+            <TouchableOpacity
+                key={tab}
+                style={[
+                styles.tab,
+                activeTab === tab && { backgroundColor: theme.accent + '20', borderColor: theme.accent }
+                ]}
+                onPress={() => setActiveTab(tab)}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    {tab === 'journey' && <MapIcon size={14} color={activeTab === 'journey' ? theme.accent : theme.textSecondary} />}
+                    <Text
+                    style={[
+                        styles.tabText,
+                        { color: activeTab === tab ? theme.accent : theme.textSecondary }
+                    ]}
+                    >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+            ))}
+        </ScrollView>
       </View>
 
       <View style={styles.content}>
         {renderContent()}
       </View>
+
+      {celebrationData && (
+        <CelebrationScreen
+          visible={celebrationData.visible}
+          data={{
+            challengeName: celebrationData.name,
+            pointsEarned: celebrationData.points,
+          }}
+          onClose={() => setCelebrationData(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -211,9 +306,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  tabScrollContent: {
+    paddingHorizontal: 20,
     gap: 12,
   },
   tab: {
@@ -233,71 +329,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    gap: 16,
-  },
-  horizontalListContent: {
-    paddingHorizontal: 20,
+    alignItems: 'center',
     paddingBottom: 40,
   },
   cardWrapper: {
-      marginRight: 0, 
-  },
-  activeCard: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  activeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  activeTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  activeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  activeStatus: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  activeProgressText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  progressBarBg: {
-    height: 8,
-    borderRadius: 4,
-    width: '100%',
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  activeFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  footerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  footerText: {
-    fontSize: 12,
-    fontWeight: '500',
+      marginBottom: 16,
   },
   emptyState: {
     flex: 1,
@@ -313,6 +349,10 @@ const styles = StyleSheet.create({
   linkText: {
     marginTop: 8,
     fontWeight: 'bold',
-  }
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
-

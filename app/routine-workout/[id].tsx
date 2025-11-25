@@ -18,6 +18,7 @@ import { useRaid } from '@/hooks/useRaid';
 import { useLeagues } from '@/hooks/useLeagues';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useWorkouts } from '@/hooks/useWorkouts';
+import { SetType } from '@/types/workout.types';
 
 export default function RoutineWorkoutScreen() {
   const { id } = useLocalSearchParams();
@@ -171,7 +172,13 @@ export default function RoutineWorkoutScreen() {
     const updated = { ...routine };
     const ex = updated.exercises.find((e: any) => e.id === exerciseId);
     if (!ex) return;
-    const newSet = { id: Date.now().toString(), reps: ex.sets[ex.sets.length - 1]?.reps || 10, weight: ex.sets[ex.sets.length - 1]?.weight || 0, completed: false };
+    const newSet = { 
+      id: Date.now().toString(), 
+      reps: ex.sets[ex.sets.length - 1]?.reps || 10, 
+      weight: ex.sets[ex.sets.length - 1]?.weight || 0, 
+      completed: false,
+      setType: SetType.NORMAL
+    };
     ex.sets = [
       ...ex.sets,
       newSet,

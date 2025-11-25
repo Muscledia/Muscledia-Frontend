@@ -25,15 +25,27 @@ import ExerciseList from '@/components/workoutPlans/ExerciseList';
 import StartWorkoutButton from '@/components/workoutPlans/StartWorkoutButton';
 
 export default function WorkoutPlanDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, initialData } = useLocalSearchParams<{ id: string; initialData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
 
-  const [plan, setPlan] = useState<WorkoutPlanDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<WorkoutPlanDetail | null>(() => {
+    if (initialData) {
+      try {
+        const parsed = JSON.parse(initialData);
+        // Ensure it matches the type
+        return parsed as WorkoutPlanDetail;
+      } catch (e) {
+        console.warn('Failed to parse initialData', e);
+        return null;
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!plan);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -46,35 +58,57 @@ export default function WorkoutPlanDetailScreen() {
     if (!id) return;
 
     try {
-      if (!isRefreshing) setLoading(true);
+      if (!isRefreshing && !plan) setLoading(true);
       setError(null);
 
       // Try to fetch detailed workout plan (with exercises embedded)
-      const planResponse = await WorkoutPlanService.getWorkoutPlanDetailById(id);
+      try {
+        const planResponse = await WorkoutPlanService.getWorkoutPlanDetailById(id);
 
-      if (planResponse.success && planResponse.data) {
-        setPlan(planResponse.data);
-        
-        // If exercises are not embedded, fetch them separately
-        if (!planResponse.data.exercises || planResponse.data.exercises.length === 0) {
-          try {
-            const exercisesResponse = await ExerciseService.getExercisesByWorkoutPlanId(id);
-            if (exercisesResponse.success && exercisesResponse.data) {
-              setPlan(prev => prev ? { ...prev, exercises: exercisesResponse.data } : null);
-            }
-          } catch (exerciseError) {
-            console.warn('Failed to load exercises separately:', exerciseError);
+        if (planResponse.success && planResponse.data) {
+          setPlan(planResponse.data);
+          
+          // If exercises are not embedded, fetch them separately
+          if (!planResponse.data.exercises || planResponse.data.exercises.length === 0) {
+             await fetchExercisesSeparately(id);
+          }
+        } else {
+          // If fetch fails but we have initialData, try fetching just exercises
+          if (plan) {
+            console.warn('Failed to load full plan details, falling back to initial data + exercises fetch');
+            await fetchExercisesSeparately(id);
+          } else {
+            setError(planResponse.message || 'Failed to load workout plan');
           }
         }
-      } else {
-        setError(planResponse.message || 'Failed to load workout plan');
+      } catch (err: any) {
+        // If API fails (e.g. 405) but we have initialData, try fetching just exercises
+        if (plan) {
+           console.log('Main plan fetch failed (likely 405), trying to fetch exercises only');
+           await fetchExercisesSeparately(id);
+        } else {
+           throw err;
+        }
       }
     } catch (err: any) {
       console.error('Error fetching workout plan data:', err);
-      setError(err.message || 'An error occurred while loading the workout plan');
+      if (!plan) {
+        setError(err.message || 'An error occurred while loading the workout plan');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const fetchExercisesSeparately = async (planId: string) => {
+    try {
+      const exercisesResponse = await ExerciseService.getExercisesByWorkoutPlanId(planId);
+      if (exercisesResponse.success && exercisesResponse.data) {
+        setPlan(prev => prev ? { ...prev, exercises: exercisesResponse.data } : null);
+      }
+    } catch (exerciseError) {
+      console.warn('Failed to load exercises separately:', exerciseError);
     }
   };
 

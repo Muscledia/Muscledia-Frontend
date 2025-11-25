@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useHaptics } from '@/hooks/useHaptics';
+import { SetType } from '@/types/workout.types';
 
 const { width } = Dimensions.get('window');
 
@@ -95,6 +96,7 @@ export default function RoutineBuilder() {
         reps: 12,
         weight: 60,
         completed: false,
+        setType: SetType.NORMAL,
       }]
     };
 

@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { ArrowLeft, Plus, Trash2, ChevronDown } from 'lucide-react-native';
 import { useHaptics } from '@/hooks/useHaptics';
+import { SetType } from '@/types/workout.types';
 
 export default function RoutineEditorScreen() {
   const colorScheme = useColorScheme();
@@ -25,27 +26,27 @@ export default function RoutineEditorScreen() {
       id: 1,
       name: 'Bench Press (Barbell)',
       sets: [
-        { set: 1, kg: 40, reps: 12, completed: false },
-        { set: 2, kg: 42.5, reps: 12, completed: false },
-        { set: 3, kg: 45, reps: 12, completed: false },
+        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
       ]
     },
     {
       id: 2,
       name: 'Bench Press (Barbell)',
       sets: [
-        { set: 1, kg: 40, reps: 12, completed: false },
-        { set: 2, kg: 42.5, reps: 12, completed: false },
-        { set: 3, kg: 45, reps: 12, completed: false },
+        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
       ]
     },
     {
       id: 3,
       name: 'Bench Press (Barbell)',
       sets: [
-        { set: 1, kg: 40, reps: 12, completed: false },
-        { set: 2, kg: 42.5, reps: 12, completed: false },
-        { set: 3, kg: 45, reps: 12, completed: false },
+        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
+        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
       ]
     },
   ]);
@@ -61,7 +62,8 @@ export default function RoutineEditorScreen() {
             set: newSetNumber,
             kg: lastSet?.kg || 40,
             reps: lastSet?.reps || 12,
-            completed: false
+            completed: false,
+            setType: SetType.NORMAL
           }]
         };
       }

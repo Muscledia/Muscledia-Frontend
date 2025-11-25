@@ -87,29 +87,34 @@ export default function RoutineDetailScreen() {
         }
       }
 
-      // Now fetch workout plans using workoutPlanIds
+      // First try to fetch all workout plans for this folder (more efficient)
+      try {
+        const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
+        if (plansResponse.success && plansResponse.data && plansResponse.data.length > 0) {
+          setWorkoutPlans(plansResponse.data);
+          // If we successfully got plans, we don't need to fetch by IDs
+          setLoading(false);
+          setRefreshing(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch workout plans by folder ID:', err);
+        // Continue to fallback
+      }
+
+      // Fallback: Fetch workout plans using workoutPlanIds if available
       if (currentRoutine?.workoutPlanIds && currentRoutine.workoutPlanIds.length > 0) {
         const plansResponse = await RoutineService.getWorkoutPlansByIds(currentRoutine.workoutPlanIds);
         
         if (plansResponse.success && plansResponse.data) {
           setWorkoutPlans(plansResponse.data);
         } else {
-          console.warn('Failed to load workout plans:', plansResponse.message);
+          console.warn('Failed to load workout plans by IDs:', plansResponse.message);
           setWorkoutPlans([]);
         }
       } else {
-        // No workout plan IDs, try fetching by routine folder ID
-        try {
-          const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
-          if (plansResponse.success && plansResponse.data) {
-            setWorkoutPlans(plansResponse.data);
-          } else {
-            setWorkoutPlans([]);
-          }
-        } catch (err) {
-          console.warn('Failed to fetch workout plans by folder ID:', err);
-          setWorkoutPlans([]);
-        }
+        // No plans found via folder ID and no IDs in routine data
+        setWorkoutPlans([]);
       }
     } catch (err: any) {
       console.error('Error fetching routine data:', err);
@@ -133,7 +138,15 @@ export default function RoutineDetailScreen() {
   // Handle workout plan press
   const handlePlanPress = async (planId: string) => {
     await impact('selection');
-    router.push(`/workout-plan-detail/${planId}`);
+    const selectedPlan = workoutPlans.find(p => p.id === planId);
+    if (selectedPlan) {
+      router.push({
+        pathname: `/workout-plan-detail/${planId}`,
+        params: { initialData: JSON.stringify(selectedPlan) }
+      });
+    } else {
+      router.push(`/workout-plan-detail/${planId}`);
+    }
   };
 
   // Handle save routine (handled by SaveRoutineButton component)

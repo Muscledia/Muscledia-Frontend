@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChallengeService } from '@/services/challengeService';
 import { Challenge } from '@/types/api';
+import { useAuth } from './useAuth';
 
 const fetchDailyChallenges = async (): Promise<Challenge[]> => {
   try {
@@ -28,9 +29,13 @@ export const useDailyChallenges = () => {
 
 export const useAcceptChallenge = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
-    mutationFn: (challengeId: string) => ChallengeService.startChallenge(challengeId),
+    mutationFn: (challengeId: string) => {
+      if (!user?.id) throw new Error('User not logged in');
+      return ChallengeService.startChallenge(challengeId, user.id);
+    },
     onSuccess: () => {
       // Invalidate queries to refresh lists
       queryClient.invalidateQueries({ queryKey: ['challenges'] });
