@@ -1,184 +1,225 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  ScrollView, 
+  TextInput, 
+  Alert,
   useColorScheme,
+  SafeAreaView,
+  ActivityIndicator,
+  StyleSheet
 } from 'react-native';
-import { router } from 'expo-router';
+import { ArrowLeft, Save } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { ArrowLeft, Plus, Trash2, ChevronDown } from 'lucide-react-native';
 import { useHaptics } from '@/hooks/useHaptics';
-import { SetType } from '@/types/workout.types';
+import { RoutineService } from '@/services';
+import { LinearGradient } from 'expo-linear-gradient';
+import { RoutineFolder } from '@/types/api';
 
-export default function RoutineEditorScreen() {
+const DIFFICULTY_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+const EQUIPMENT_TYPES = ['Gym', 'Dumbbells', 'Bodyweight', 'Home Gym'];
+const WORKOUT_SPLITS = ['Upper/Lower', 'PPL', 'Full Body', 'Bro Split', 'Custom'];
+
+export default function RoutineEditor() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
+  const params = useLocalSearchParams();
+  
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    difficultyLevel: 'Intermediate',
+    equipmentType: 'Gym',
+    workoutSplit: 'Upper/Lower',
+    routineCount: '5'
+  });
 
-  const [routineName, setRoutineName] = useState('Chest Day');
-  const [exercises, setExercises] = useState([
-    {
-      id: 1,
-      name: 'Bench Press (Barbell)',
-      sets: [
-        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
-      ]
-    },
-    {
-      id: 2,
-      name: 'Bench Press (Barbell)',
-      sets: [
-        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
-      ]
-    },
-    {
-      id: 3,
-      name: 'Bench Press (Barbell)',
-      sets: [
-        { set: 1, kg: 40, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 2, kg: 42.5, reps: 12, completed: false, setType: SetType.NORMAL },
-        { set: 3, kg: 45, reps: 12, completed: false, setType: SetType.NORMAL },
-      ]
-    },
-  ]);
-
-  const addSet = (exerciseId: number) => {
-    setExercises(prev => prev.map(exercise => {
-      if (exercise.id === exerciseId) {
-        const newSetNumber = exercise.sets.length + 1;
-        const lastSet = exercise.sets[exercise.sets.length - 1];
-        return {
-          ...exercise,
-          sets: [...exercise.sets, {
-            set: newSetNumber,
-            kg: lastSet?.kg || 40,
-            reps: lastSet?.reps || 12,
-            completed: false,
-            setType: SetType.NORMAL
-          }]
-        };
+  useEffect(() => {
+    if (params.routineData) {
+      try {
+        const data = JSON.parse(params.routineData as string) as RoutineFolder;
+        setFormData({
+          title: data.title || data.name || '',
+          description: data.description || '',
+          difficultyLevel: data.difficultyLevel || 'Intermediate',
+          equipmentType: data.equipmentType || 'Gym',
+          workoutSplit: data.workoutSplit || 'Upper/Lower',
+          routineCount: (data.workoutPlanCount || 5).toString()
+        });
+      } catch (e) {
+        console.error('Failed to parse routine data', e);
       }
-      return exercise;
-    }));
-    impact('light');
+    }
+  }, [params.routineData]);
+
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const updateSet = (exerciseId: number, setIndex: number, field: 'kg' | 'reps', value: string) => {
-    setExercises(prev => prev.map(exercise => {
-      if (exercise.id === exerciseId) {
-        const updatedSets = [...exercise.sets];
-        updatedSets[setIndex] = {
-          ...updatedSets[setIndex],
-          [field]: parseFloat(value) || 0
-        };
-        return { ...exercise, sets: updatedSets };
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      impact('warning');
+      Alert.alert('Missing Title', 'Please enter a title for your routine collection.');
+      return;
+    }
+
+    const id = params.id as string;
+    if (!id) {
+        Alert.alert('Error', 'Routine ID not found');
+        return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await RoutineService.updatePersonalRoutine(id, {
+        title: formData.title,
+        description: formData.description,
+        difficultyLevel: formData.difficultyLevel,
+        equipmentType: formData.equipmentType,
+        workoutSplit: formData.workoutSplit,
+        workoutPlanCount: parseInt(formData.routineCount) || 5,
+      });
+
+      if (response.success) {
+        await impact('success');
+        Alert.alert('Success', 'Routine collection updated successfully!', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      } else {
+        throw new Error(response.message || 'Failed to update routine');
       }
-      return exercise;
-    }));
+    } catch (error: any) {
+      impact('error');
+      if (error.status === 409) {
+         Alert.alert('Duplicate Routine', 'A routine collection with this name already exists. Please choose a different title.');
+      } else {
+         Alert.alert('Error', error.message || 'Failed to update routine collection');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const ExerciseCard = ({ exercise }: { exercise: any }) => (
-    <View style={[styles.exerciseCard, { backgroundColor: theme.surface }]}>
-      <View style={styles.exerciseHeader}>
-        <View style={styles.exerciseIcon}>
-          <Text style={styles.iconText}>🏋️</Text>
-        </View>
-        <View style={styles.exerciseInfo}>
-          <Text style={[styles.exerciseName, { color: theme.text }]}>{exercise.name}</Text>
-          <Text style={[styles.exerciseSubtext, { color: theme.textSecondary }]}>
-            add details here
-          </Text>
-        </View>
-        <TouchableOpacity>
-          <ChevronDown size={20} color={theme.textMuted} />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={[styles.restTimer, { color: theme.textSecondary }]}>Rest Timer ⏱️</Text>
-
-      <View style={styles.setsHeader}>
-        <Text style={[styles.setLabel, { color: theme.textSecondary }]}>Set</Text>
-        <Text style={[styles.setLabel, { color: theme.textSecondary }]}>Kg</Text>
-        <Text style={[styles.setLabel, { color: theme.textSecondary }]}>Reps</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      {exercise.sets.map((set: any, index: number) => (
-        <View key={index} style={styles.setRow}>
-          <Text style={[styles.setNumber, { color: theme.text }]}>{set.set}</Text>
-          <TextInput
-            style={[styles.setInput, { backgroundColor: theme.background, color: theme.text }]}
-            value={set.kg.toString()}
-            onChangeText={(value) => updateSet(exercise.id, index, 'kg', value)}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={[styles.setInput, { backgroundColor: theme.background, color: theme.text }]}
-            value={set.reps.toString()}
-            onChangeText={(value) => updateSet(exercise.id, index, 'reps', value)}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity 
-            style={[styles.addSetButton, { backgroundColor: theme.accent }]}
-            onPress={() => addSet(exercise.id)}
+  const SelectButton = ({ label, value, options, onSelect }: any) => (
+    <View style={styles.selectGroup}>
+      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionsContainer}>
+        {options.map((opt: string) => (
+          <TouchableOpacity
+            key={opt}
+            style={[
+              styles.optionButton,
+              { 
+                backgroundColor: value === opt ? theme.accent : theme.surface,
+                borderColor: value === opt ? theme.accent : theme.border,
+                borderWidth: 1
+              }
+            ]}
+            onPress={async () => {
+              await impact('selection');
+              onSelect(opt);
+            }}
           >
-            <Plus size={16} color={theme.cardText} />
-            <Text style={[styles.addSetText, { color: theme.cardText }]}>Add Set</Text>
+            <Text style={[
+              styles.optionText,
+              { color: value === opt ? theme.cardText : theme.text }
+            ]}>{opt}</Text>
           </TouchableOpacity>
-        </View>
-      ))}
+        ))}
+      </ScrollView>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity onPress={async () => { await impact('selection'); router.back(); }}>
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>{routineName}</Text>
-        <TouchableOpacity onPress={async () => impact('success')}>
-          <Text style={[styles.saveButton, { color: theme.accent }]}>Save</Text>
-        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Collection</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* XP Bar at top */}
-      <View style={[styles.xpBar, { backgroundColor: theme.accent }]} />
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.formSection, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Collection Title</Text>
+          <TextInput
+            style={[styles.input, { color: theme.text, backgroundColor: theme.background, borderColor: theme.border }]}
+            placeholder="e.g., Summer Shred 2025"
+            placeholderTextColor={theme.textMuted}
+            value={formData.title}
+            onChangeText={(text) => updateField('title', text)}
+          />
 
-      <ScrollView style={styles.content}>
-        {exercises.map((exercise) => (
-          <ExerciseCard key={exercise.id} exercise={exercise} />
-        ))}
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.accent }]}
-            onPress={async () => impact('light')}
-          >
-            <Plus size={20} color={theme.cardText} />
-            <Text style={[styles.actionButtonText, { color: theme.cardText }]}>Add Exercise</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.error }]}
-            onPress={async () => impact('warning')}
-          >
-            <Text style={[styles.actionButtonText, { color: 'white' }]}>Discard Workout</Text>
-          </TouchableOpacity>
+          <Text style={[styles.label, { color: theme.text, marginTop: 16 }]}>Description</Text>
+          <TextInput
+            style={[styles.textArea, { color: theme.text, backgroundColor: theme.background, borderColor: theme.border }]}
+            placeholder="Describe your routine goal..."
+            placeholderTextColor={theme.textMuted}
+            multiline
+            numberOfLines={4}
+            value={formData.description}
+            onChangeText={(text) => updateField('description', text)}
+          />
         </View>
+
+        <SelectButton 
+          label="Difficulty Level" 
+          value={formData.difficultyLevel} 
+          options={DIFFICULTY_LEVELS} 
+          onSelect={(val: string) => updateField('difficultyLevel', val)} 
+        />
+
+        <SelectButton 
+          label="Equipment Type" 
+          value={formData.equipmentType} 
+          options={EQUIPMENT_TYPES} 
+          onSelect={(val: string) => updateField('equipmentType', val)} 
+        />
+
+        <SelectButton 
+          label="Workout Split" 
+          value={formData.workoutSplit} 
+          options={WORKOUT_SPLITS} 
+          onSelect={(val: string) => updateField('workoutSplit', val)} 
+        />
+
+        {/* Save Button */}
+        <TouchableOpacity
+          style={styles.saveButtonContainer}
+          onPress={handleSave}
+          disabled={loading}
+        >
+          <LinearGradient
+            colors={[theme.accent, theme.accentSecondary]}
+            locations={[0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.saveButtonGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color={theme.cardText} />
+            ) : (
+              <>
+                <Save size={20} color={theme.cardText} />
+                <Text style={[styles.saveButtonText, { color: theme.cardText }]}>Save Changes</Text>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -191,125 +232,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 8,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  saveButton: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  xpBar: {
-    height: 4,
-    marginHorizontal: 16,
-    borderRadius: 2,
   },
   content: {
     flex: 1,
-    padding: 16,
   },
-  exerciseCard: {
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  formSection: {
+    padding: 16,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 20,
   },
-  exerciseHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  exerciseIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconText: {
-    fontSize: 20,
-  },
-  exerciseInfo: {
-    flex: 1,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  exerciseSubtext: {
-    fontSize: 12,
-  },
-  restTimer: {
-    fontSize: 12,
-    marginBottom: 12,
-  },
-  setsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  setLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-  },
-  setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  setNumber: {
-    flex: 1,
-    textAlign: 'center',
+  label: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 8,
   },
-  setInput: {
-    flex: 1,
-    borderRadius: 8,
-    padding: 8,
-    textAlign: 'center',
-    fontSize: 14,
-    marginHorizontal: 4,
-  },
-  addSetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  addSetText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  actionButtons: {
-    marginTop: 20,
-    gap: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+  input: {
+    borderWidth: 1,
     borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  selectGroup: {
+    marginBottom: 20,
+  },
+  optionsContainer: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  optionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  optionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButtonContainer: {
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
     gap: 8,
   },
-  actionButtonText: {
-    fontSize: 16,
+  saveButtonText: {
+    fontSize: 18,
     fontWeight: 'bold',
   },
-}); 
+});

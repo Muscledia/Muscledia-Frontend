@@ -8,63 +8,19 @@ import {
   Alert,
   useColorScheme,
   SafeAreaView,
-  Dimensions
+  ActivityIndicator,
+  StyleSheet
 } from 'react-native';
-import { ArrowLeft, Search, Plus, Dumbbell } from 'lucide-react-native';
+import { ArrowLeft, Save } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { useRoutines } from '@/hooks/useRoutines';
 import { useHaptics } from '@/hooks/useHaptics';
-import { SetType } from '@/types/workout.types';
+import { RoutineService } from '@/services';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
-
-const categories = ['Popular', 'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'];
-
-const exercises = {
-  Popular: [
-    { id: 'bench', name: 'Bench Press', description: 'Classic chest exercise', icon: '🏋️', muscle: 'Chest' },
-    { id: 'squat', name: 'Squats', description: 'Fundamental leg exercise', icon: '💪', muscle: 'Legs' },
-    { id: 'deadlift', name: 'Deadlift', description: 'Full body compound movement', icon: '⚡', muscle: 'Back' },
-    { id: 'pull-up', name: 'Pull-ups', description: 'Upper body pulling exercise', icon: '🎯', muscle: 'Back' },
-  ],
-  Chest: [
-    { id: 'bench', name: 'Bench Press', description: 'Classic chest exercise', icon: '🏋️', muscle: 'Chest' },
-    { id: 'incline', name: 'Incline Press', description: 'Upper chest focus', icon: '📈', muscle: 'Chest' },
-    { id: 'dips', name: 'Dips', description: 'Bodyweight chest exercise', icon: '💎', muscle: 'Chest' },
-    { id: 'flyes', name: 'Chest Flyes', description: 'Isolation exercise', icon: '🔥', muscle: 'Chest' },
-  ],
-  Back: [
-    { id: 'deadlift', name: 'Deadlift', description: 'Full body compound movement', icon: '⚡', muscle: 'Back' },
-    { id: 'pull-up', name: 'Pull-ups', description: 'Upper body pulling exercise', icon: '🎯', muscle: 'Back' },
-    { id: 'rows', name: 'Barbell Rows', description: 'Middle back exercise', icon: '🚣', muscle: 'Back' },
-    { id: 'lat-pulldown', name: 'Lat Pulldown', description: 'Lat isolation', icon: '⬇️', muscle: 'Back' },
-  ],
-  Shoulders: [
-    { id: 'press', name: 'Shoulder Press', description: 'Overhead pressing', icon: '🔝', muscle: 'Shoulders' },
-    { id: 'lateral', name: 'Lateral Raises', description: 'Side delt isolation', icon: '🔄', muscle: 'Shoulders' },
-    { id: 'rear-delt', name: 'Rear Delt Flyes', description: 'Posterior deltoid', icon: '🔙', muscle: 'Shoulders' },
-    { id: 'upright', name: 'Upright Rows', description: 'Trap and delt exercise', icon: '📐', muscle: 'Shoulders' },
-  ],
-  Arms: [
-    { id: 'curls', name: 'Bicep Curls', description: 'Bicep isolation', icon: '💪', muscle: 'Arms' },
-    { id: 'tricep', name: 'Tricep Extensions', description: 'Tricep isolation', icon: '🔧', muscle: 'Arms' },
-    { id: 'hammer', name: 'Hammer Curls', description: 'Neutral grip curls', icon: '🔨', muscle: 'Arms' },
-    { id: 'close-grip', name: 'Close Grip Press', description: 'Tricep compound', icon: '🤝', muscle: 'Arms' },
-  ],
-  Legs: [
-    { id: 'squat', name: 'Squats', description: 'Fundamental leg exercise', icon: '💪', muscle: 'Legs' },
-    { id: 'lunges', name: 'Lunges', description: 'Single leg strength', icon: '🚶', muscle: 'Legs' },
-    { id: 'leg-press', name: 'Leg Press', description: 'Machine quad exercise', icon: '🦵', muscle: 'Legs' },
-    { id: 'calf-raise', name: 'Calf Raises', description: 'Calf isolation', icon: '👠', muscle: 'Legs' },
-  ],
-  Core: [
-    { id: 'plank', name: 'Plank', description: 'Core stability', icon: '🏗️', muscle: 'Core' },
-    { id: 'crunches', name: 'Crunches', description: 'Abdominal exercise', icon: '🔄', muscle: 'Core' },
-    { id: 'leg-raises', name: 'Leg Raises', description: 'Lower ab focus', icon: '🦵', muscle: 'Core' },
-    { id: 'russian', name: 'Russian Twists', description: 'Oblique exercise', icon: '🌪️', muscle: 'Core' },
-  ],
-};
+const DIFFICULTY_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+const EQUIPMENT_TYPES = ['Gym', 'Dumbbells', 'Bodyweight', 'Home Gym'];
+const WORKOUT_SPLITS = ['Upper/Lower', 'PPL', 'Full Body', 'Bro Split', 'Custom'];
 
 export default function RoutineBuilder() {
   const colorScheme = useColorScheme();
@@ -72,70 +28,87 @@ export default function RoutineBuilder() {
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
   
-  const [selectedCategory, setSelectedCategory] = useState('Popular');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedExercises, setSelectedExercises] = useState<any[]>([]);
-  const { addRoutine } = useRoutines();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    difficultyLevel: 'Intermediate',
+    equipmentType: 'Gym',
+    workoutSplit: 'Upper/Lower',
+    routineCount: '5'
+  });
 
-  const filteredExercises = exercises[selectedCategory as keyof typeof exercises].filter(
-    exercise => exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      impact('warning');
+      Alert.alert('Missing Title', 'Please enter a title for your routine collection.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await RoutineService.createPersonalRoutine({
+        title: formData.title,
+        description: formData.description,
+        difficultyLevel: formData.difficultyLevel,
+        equipmentType: formData.equipmentType,
+        workoutSplit: formData.workoutSplit,
+        workoutPlanCount: parseInt(formData.routineCount) || 5,
+      });
+
+      if (response.success) {
+        await impact('success');
+        Alert.alert('Success', 'Routine collection created successfully!', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      } else {
+        throw new Error(response.message || 'Failed to create routine');
+      }
+    } catch (error: any) {
+      impact('error');
+      if (error.status === 409) {
+        Alert.alert('Duplicate Routine', 'A routine collection with this name already exists. Please choose a different title.');
+      } else {
+        Alert.alert('Error', error.message || 'Failed to create routine collection');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const SelectButton = ({ label, value, options, onSelect }: any) => (
+    <View style={styles.selectGroup}>
+      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionsContainer}>
+        {options.map((opt: string) => (
+          <TouchableOpacity
+            key={opt}
+            style={[
+              styles.optionButton,
+              { 
+                backgroundColor: value === opt ? theme.accent : theme.surface,
+                borderColor: value === opt ? theme.accent : theme.border,
+                borderWidth: 1
+              }
+            ]}
+            onPress={async () => {
+              await impact('selection');
+              onSelect(opt);
+            }}
+          >
+            <Text style={[
+              styles.optionText,
+              { color: value === opt ? theme.cardText : theme.text }
+            ]}>{opt}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
-
-  const addExercise = (exercise: any) => {
-    const existingExercise = selectedExercises.find(ex => ex.id === exercise.id);
-    if (existingExercise) {
-      impact('warning');
-      Alert.alert('Already Added', `${exercise.name} is already in your routine`);
-      return;
-    }
-
-    const newExercise = {
-      ...exercise,
-      sets: [{
-        id: `${Date.now()}-1`,
-        reps: 12,
-        weight: 60,
-        completed: false,
-        setType: SetType.NORMAL,
-      }]
-    };
-
-    setSelectedExercises([...selectedExercises, newExercise]);
-    impact('light');
-    Alert.alert('Added!', `${exercise.name} added to routine`);
-  };
-
-  const handleSave = () => {
-    if (selectedExercises.length === 0) {
-      impact('warning');
-      Alert.alert('No Exercises', 'Please add at least one exercise to your routine');
-      return;
-    }
-
-    Alert.prompt(
-      'Name Your Routine',
-      'Enter a name for your workout routine:',
-      async (text) => {
-        if (text && text.trim()) {
-          try {
-                                      await addRoutine({
-               name: text.trim(),
-               exercises: selectedExercises,
-             });
-            impact('success');
-            Alert.alert('Success', 'Routine saved successfully!', [
-              { text: 'OK', onPress: () => router.back() }
-            ]);
-          } catch (error) {
-            impact('error');
-            Alert.alert('Error', 'Failed to save routine');
-          }
-        }
-      },
-      'plain-text',
-      'My Workout'
-    );
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -144,236 +117,163 @@ export default function RoutineBuilder() {
         <TouchableOpacity onPress={async () => { await impact('selection'); router.back(); }}>
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>Build Routine</Text>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={[styles.saveButton, { color: theme.accent }]}>Save</Text>
-        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Create Collection</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* Single ScrollView containing everything */}
       <ScrollView 
-        style={styles.mainScrollContainer}
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.mainScrollContent}
       >
-        {/* Search Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
-          <Search size={20} color={theme.textMuted} />
+        <View style={[styles.formSection, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Collection Title</Text>
           <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Search exercises..."
+            style={[styles.input, { color: theme.text, backgroundColor: theme.background, borderColor: theme.border }]}
+            placeholder="e.g., Summer Shred 2025"
             placeholderTextColor={theme.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={formData.title}
+            onChangeText={(text) => updateField('title', text)}
+          />
+
+          <Text style={[styles.label, { color: theme.text, marginTop: 16 }]}>Description</Text>
+          <TextInput
+            style={[styles.textArea, { color: theme.text, backgroundColor: theme.background, borderColor: theme.border }]}
+            placeholder="Describe your routine goal..."
+            placeholderTextColor={theme.textMuted}
+            multiline
+            numberOfLines={4}
+            value={formData.description}
+            onChangeText={(text) => updateField('description', text)}
           />
         </View>
 
-        {/* Category Tabs */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-          contentContainerStyle={styles.categoriesContent}
+        <SelectButton 
+          label="Difficulty Level" 
+          value={formData.difficultyLevel} 
+          options={DIFFICULTY_LEVELS} 
+          onSelect={(val: string) => updateField('difficultyLevel', val)} 
+        />
+
+        <SelectButton 
+          label="Equipment Type" 
+          value={formData.equipmentType} 
+          options={EQUIPMENT_TYPES} 
+          onSelect={(val: string) => updateField('equipmentType', val)} 
+        />
+
+        <SelectButton 
+          label="Workout Split" 
+          value={formData.workoutSplit} 
+          options={WORKOUT_SPLITS} 
+          onSelect={(val: string) => updateField('workoutSplit', val)} 
+        />
+
+        {/* Save Button */}
+        <TouchableOpacity
+          style={styles.saveButtonContainer}
+          onPress={handleSave}
+          disabled={loading}
         >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                { 
-                  backgroundColor: selectedCategory === category ? theme.accent : theme.surface,
-                }
-              ]}
-              onPress={async () => { await impact('selection'); setSelectedCategory(category); }}
-            >
-              <Text style={[
-                styles.categoryText,
-                { 
-                  color: selectedCategory === category ? theme.cardText : theme.text,
-                  fontWeight: selectedCategory === category ? '600' : '400',
-                }
-              ]}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Selected Exercises Counter */}
-        {selectedExercises.length > 0 && (
-          <View style={[styles.counterContainer, { backgroundColor: theme.accent }]}>
-            <Dumbbell size={16} color={theme.cardText} />
-            <Text style={[styles.counterText, { color: theme.cardText }]}>
-              {selectedExercises.length} exercise{selectedExercises.length !== 1 ? 's' : ''} added
-            </Text>
-          </View>
-        )}
-
-        {/* Exercises Grid - directly in the main scroll */}
-        <View style={styles.exercisesGrid}>
-          {filteredExercises.map((exercise) => {
-            const isSelected = selectedExercises.some(ex => ex.id === exercise.id);
-            return (
-              <TouchableOpacity
-                key={exercise.id}
-                style={[
-                  styles.exerciseCard,
-                  { 
-                    backgroundColor: isSelected ? theme.accent : theme.surface,
-                    opacity: isSelected ? 0.8 : 1,
-                  }
-                ]}
-                onPress={() => addExercise(exercise)}
-                disabled={isSelected}
-              >
-                <View style={styles.exerciseHeader}>
-                  <Text style={styles.exerciseIcon}>{exercise.icon}</Text>
-                  <View style={[
-                    styles.addButton,
-                    { 
-                      backgroundColor: isSelected ? theme.cardText : theme.accent,
-                      opacity: isSelected ? 0.5 : 1,
-                    }
-                  ]}>
-                    <Plus size={16} color={isSelected ? theme.accent : theme.cardText} />
-                  </View>
-                </View>
-                
-                <Text style={[
-                  styles.exerciseName,
-                  { color: isSelected ? theme.cardText : theme.text }
-                ]}>
-                  {exercise.name}
-                </Text>
-                
-                <Text style={[
-                  styles.exerciseDescription,
-                  { color: isSelected ? theme.cardText : theme.textMuted }
-                ]}>
-                  {exercise.description}
-                </Text>
-                
-                <View style={[
-                  styles.muscleTag,
-                  { backgroundColor: isSelected ? theme.cardText : theme.accent }
-                ]}>
-                  <Text style={[
-                    styles.muscleText,
-                    { color: isSelected ? theme.accent : theme.cardText }
-                  ]}>
-                    {exercise.muscle}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+          <LinearGradient
+            colors={[theme.accent, theme.accentSecondary]}
+            locations={[0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.saveButtonGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color={theme.cardText} />
+            ) : (
+              <>
+                <Save size={20} color={theme.cardText} />
+                <Text style={[styles.saveButtonText, { color: theme.cardText }]}>Create Routine Collection</Text>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     paddingTop: 8,
   },
-  title: {
+  headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold' as const,
+    fontWeight: 'bold',
+  },
+  content: {
     flex: 1,
-    textAlign: 'center' as const,
   },
-  saveButton: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  searchContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    marginHorizontal: 16,
-    marginTop: 0,
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontSize: 16 },
-  categoriesContainer: {
-    marginBottom: 0,
-    marginHorizontal: 0,
-    height: 44,
-  },
-  categoriesContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 0,
-    alignItems: 'center' as const,
-    gap: 8,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    height: 36,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-  },
-  categoryText: { fontSize: 14 },
-  counterContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginHorizontal: 16,
-    marginTop: 6,
-    marginBottom: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    gap: 6,
-  },
-  counterText: { fontSize: 12, fontWeight: '600' as const },
-  mainScrollContainer: { flex: 1 },
-  mainScrollContent: {
-    flexGrow: 0,
-    paddingBottom: 80,
-  },
-  exercisesGrid: {
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    justifyContent: 'space-between' as const,
-    gap: 12,
-    paddingHorizontal: 16,
-    marginTop: 8,
-  },
-  exerciseCard: {
-    width: (width - 44) / 2,
+  scrollContent: {
     padding: 16,
+    paddingBottom: 40,
+  },
+  formSection: {
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
     borderRadius: 12,
-    marginBottom: 12,
+    padding: 12,
+    fontSize: 16,
   },
-  exerciseHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    marginBottom: 12,
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
   },
-  exerciseIcon: { fontSize: 24 },
-  addButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+  selectGroup: {
+    marginBottom: 20,
   },
-  exerciseName: { fontSize: 16, fontWeight: '600' as const, marginBottom: 4 },
-  exerciseDescription: { fontSize: 12, marginBottom: 8, lineHeight: 16 },
-  muscleTag: { alignSelf: 'flex-start' as const, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  muscleText: { fontSize: 10, fontWeight: '600' as const },
-}; 
+  optionsContainer: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  optionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  optionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButtonContainer: {
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});

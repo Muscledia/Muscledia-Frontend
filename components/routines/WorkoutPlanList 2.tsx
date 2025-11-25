@@ -2,33 +2,33 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, useColorScheme } from 'react-native';
 import { Dumbbell } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { Exercise } from '@/types/api';
-import ExerciseCard from './ExerciseCard';
+import { WorkoutPlan } from '@/types/api';
+import WorkoutPlanCard from './WorkoutPlanCard';
 
-interface ExerciseListProps {
-  exercises: Exercise[];
-  onExercisePress: (exercise: Exercise) => void;
+interface WorkoutPlanListProps {
+  workoutPlans: WorkoutPlan[];
+  onPlanPress: (planId: string) => void;
   loading?: boolean;
 }
 
-export default function ExerciseList({
-  exercises,
-  onExercisePress,
+export default function WorkoutPlanList({
+  workoutPlans,
+  onPlanPress,
   loading = false,
-}: ExerciseListProps) {
+}: WorkoutPlanListProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
 
-  if (exercises.length === 0 && !loading) {
+  if (workoutPlans.length === 0 && !loading) {
     return (
       <View style={styles.emptyContainer}>
         <Dumbbell size={48} color={theme.textMuted} />
         <Text style={[styles.emptyTitle, { color: theme.text }]}>
-          No Exercises
+          No Workout Plans
         </Text>
         <Text style={[styles.emptyMessage, { color: theme.textSecondary }]}>
-          This workout plan doesn't have any exercises yet.
+          This routine doesn't have any workout plans yet.
         </Text>
       </View>
     );
@@ -38,25 +38,24 @@ export default function ExerciseList({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>
-          Exercises
+          Workout Plans
         </Text>
         <View style={[styles.countBadge, { backgroundColor: theme.accent + '20' }]}>
           <Text style={[styles.countText, { color: theme.accent }]}>
-            {exercises.length}
+            {workoutPlans.length}
           </Text>
         </View>
       </View>
 
       <FlatList
-        data={exercises}
-        renderItem={({ item, index }) => (
-          <ExerciseCard
-            exercise={item}
-            index={index}
-            onPress={() => onExercisePress(item)}
+        data={workoutPlans}
+        renderItem={({ item }) => (
+          <WorkoutPlanCard
+            workoutPlan={item}
+            onPress={() => onPlanPress(item.id)}
           />
         )}
-        keyExtractor={(item, index) => item.id || `exercise-${index}`}
+        keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
       />

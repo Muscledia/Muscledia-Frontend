@@ -53,57 +53,55 @@ export default function WorkoutPlanCard({ workoutPlan, onPress }: WorkoutPlanCar
           </Text>
 
           {/* Target Muscle Groups */}
-          {workoutPlan.targetMuscleGroups && workoutPlan.targetMuscleGroups.length > 0 ? (
-            <View style={styles.muscleGroupsContainer}>
-              {workoutPlan.targetMuscleGroups.slice(0, 3).map((muscle, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.muscleTag,
-                    { backgroundColor: theme.accent + '15' },
-                  ]}
-                >
-                  <Text style={[styles.muscleText, { color: theme.accent }]}>
-                    {muscle}
-                  </Text>
-                </View>
-              ))}
-              {workoutPlan.targetMuscleGroups.length > 3 && (
-                <Text style={[styles.moreText, { color: theme.textMuted }]}>
-                  +{workoutPlan.targetMuscleGroups.length - 3} more
+          <View style={styles.muscleGroupsContainer}>
+            {workoutPlan.targetMuscleGroups.slice(0, 3).map((muscle, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.muscleTag,
+                  { backgroundColor: theme.accent + '15' },
+                ]}
+              >
+                <Text style={[styles.muscleText, { color: theme.accent }]}>
+                  {muscle}
                 </Text>
-              )}
-            </View>
-          ) : null}
+              </View>
+            ))}
+            {workoutPlan.targetMuscleGroups.length > 3 && (
+              <Text style={[styles.moreText, { color: theme.textMuted }]}>
+                +{workoutPlan.targetMuscleGroups.length - 3} more
+              </Text>
+            )}
+          </View>
 
           {/* Metadata Footer */}
           <View style={styles.footer}>
             <View style={styles.metadataItem}>
               <TrendingUp
                 size={14}
-                color={getDifficultyColor(workoutPlan.difficulty || 'Intermediate')}
+                color={getDifficultyColor(workoutPlan.difficulty)}
               />
               <Text
                 style={[
                   styles.metadataText,
-                  { color: getDifficultyColor(workoutPlan.difficulty || 'Intermediate') },
+                  { color: getDifficultyColor(workoutPlan.difficulty) },
                 ]}
               >
-                {workoutPlan.difficulty || 'Intermediate'}
+                {workoutPlan.difficulty}
               </Text>
             </View>
 
             <View style={styles.metadataItem}>
               <Clock size={14} color={theme.textMuted} />
               <Text style={[styles.metadataText, { color: theme.textMuted }]}>
-                {workoutPlan.estimatedDuration || 45} min
+                {workoutPlan.estimatedDuration} min
               </Text>
             </View>
 
             <View style={styles.metadataItem}>
               <Dumbbell size={14} color={theme.textMuted} />
               <Text style={[styles.metadataText, { color: theme.textMuted }]}>
-                {workoutPlan.exerciseCount || 0} exercises
+                {workoutPlan.exerciseCount} exercises
               </Text>
             </View>
           </View>

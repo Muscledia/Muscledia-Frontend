@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   useColorScheme,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCharacter } from '@/hooks/useCharacter';
@@ -15,9 +16,10 @@ import ProgressBar from '@/components/ProgressBar';
 import { Coins, Pen, Compass } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useWorkouts } from '@/hooks/useWorkouts';
-import { useRoutines } from '@/hooks/useRoutines';
+import { RoutineService } from '@/services';
+import { RoutineFolder } from '@/types/api';
 import { getThemeColors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
 
 export default function HomeScreen() {
@@ -26,12 +28,31 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const [greeting, setGreeting] = useState('');
   const { workouts } = useWorkouts();
-  const { routines } = useRoutines();
+  
+  // State for API-based routines
+  const [routines, setRoutines] = useState<RoutineFolder[]>([]);
+  const [routinesLoading, setRoutinesLoading] = useState(true);
+
   const router = useRouter();
   const { impact } = useHaptics();
   
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
+
+  // Fetch routines from API
+  const fetchRoutines = async () => {
+    try {
+      setRoutinesLoading(true);
+      const response = await RoutineService.getPersonalRoutineFolders();
+      if (response.success && response.data) {
+        setRoutines(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch routines on home screen:', error);
+    } finally {
+      setRoutinesLoading(false);
+    }
+  };
 
   // Helper to get start of week (Monday)
   function getStartOfWeek(date = new Date()) {
@@ -54,11 +75,25 @@ export default function HomeScreen() {
 
   useEffect(() => {
     setGreeting(getGreeting());
+    fetchRoutines(); // Initial fetch
   }, []);
 
-  const RoutineCard = ({ routine }: { routine: any }) => (
+  // Refresh routines when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchRoutines();
+    }, [])
+  );
+
+  const RoutineCard = ({ routine }: { routine: RoutineFolder }) => (
     <TouchableOpacity 
-      onPress={async () => { await impact('selection'); router.push(`/routine-workout/${routine.id}`); }}
+      onPress={async () => { 
+        await impact('selection'); 
+        router.push({
+          pathname: `/routine-detail/${routine.id}`,
+          params: { routineData: JSON.stringify(routine) }
+        });
+      }}
       activeOpacity={0.9}
       style={styles.routineCardWrapper}
     >
@@ -71,17 +106,17 @@ export default function HomeScreen() {
       >
         <View style={styles.routineHeader}>
           <Text style={[styles.routineName, { color: theme.cardText }]} numberOfLines={1}>
-            {routine.name}
+            {routine.title || routine.name}
           </Text>
           <Text style={[styles.routineChevron, { color: theme.cardText }]}>›</Text>
         </View>
         <Text style={[styles.routineExercises, { color: theme.cardText }]} numberOfLines={2}>
-          {routine.exercises.map((ex: any) => ex.name).join(', ')}
+          {routine.description || 'No description'}
         </Text>
         <View style={styles.routineChipsRow}>
           <View style={[styles.chip, { backgroundColor: 'rgba(0,0,0,0.15)' }]}>
             <Text style={[styles.chipText, { color: theme.cardText }]}>
-              {routine.exercises.length} exercises
+              {routine.workoutPlanCount || 0} workouts
             </Text>
           </View>
           <View style={[styles.chip, { backgroundColor: 'rgba(0,0,0,0.15)' }]}>

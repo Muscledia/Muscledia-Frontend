@@ -56,7 +56,7 @@ export default function ExerciseList({
             onPress={() => onExercisePress(item)}
           />
         )}
-        keyExtractor={(item, index) => item.id || `exercise-${index}`}
+        keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
       />

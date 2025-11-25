@@ -20,7 +20,7 @@ import ProgressBar from '@/components/ProgressBar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLeagues } from '@/hooks/useLeagues';
 import { useHaptics } from '@/hooks/useHaptics';
-import { ArrowLeft, Heart, Star, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Heart, Star, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
  
 import { useNotifications } from '@/hooks/useNotifications';
@@ -207,6 +207,22 @@ export default function ProfileScreen() {
           </View>
         </View>
       </LinearGradient>
+
+      {/* My Routines Link */}
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={async () => {
+          await impact('selection');
+          router.push('/my-routines');
+        }}
+        style={[styles.settingRow, { backgroundColor: theme.surface, borderRadius: 12, marginBottom: 20, paddingHorizontal: 16 }]}
+      >
+        <View style={styles.settingLeft}>
+          <Dumbbell size={20} color={theme.text} />
+          <Text style={[styles.settingsText, { color: theme.text }]}>My Routine Collections</Text>
+        </View>
+        <ChevronRight size={20} color={theme.textSecondary} />
+      </TouchableOpacity>
 
       {/* Workout History */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Workout History</Text>

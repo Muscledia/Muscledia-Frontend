@@ -23,7 +23,7 @@ import WorkoutPlanList from '@/components/routines/WorkoutPlanList';
 import SaveRoutineButton from '@/components/routines/SaveRoutineButton';
 
 export default function RoutineDetailScreen() {
-  const { id, routineData, isPublic } = useLocalSearchParams<{ id: string; routineData?: string; isPublic?: string }>();
+  const { id, routineData } = useLocalSearchParams<{ id: string; routineData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -60,21 +60,10 @@ export default function RoutineDetailScreen() {
       // Only fetch routine if we don't already have it (or if refreshing)
       if (!currentRoutine || isRefreshing) {
         try {
-          const routineResponse = isPublic === 'true'
-            ? await RoutineService.getPublicRoutineFolderById(id)
-            : await RoutineService.getRoutineFolderById(id);
-
+          const routineResponse = await RoutineService.getRoutineFolderById(id);
           if (routineResponse.success && routineResponse.data) {
             currentRoutine = routineResponse.data;
             setRoutine(currentRoutine);
-
-            // If public routine returns workoutPlans directly, use them
-            if (isPublic === 'true' && currentRoutine.workoutPlans && currentRoutine.workoutPlans.length > 0) {
-              setWorkoutPlans(currentRoutine.workoutPlans);
-              setLoading(false);
-              setRefreshing(false);
-              return;
-            }
           } else {
             // If fetch fails but we have cached data, use it
             if (routine) {
@@ -99,28 +88,23 @@ export default function RoutineDetailScreen() {
       }
 
       // First try to fetch all workout plans for this folder (more efficient)
-      // Skip for public routines as the nested endpoint might not exist/be accessible
-      if (isPublic !== 'true') {
-        try {
-          const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
-          if (plansResponse.success && plansResponse.data && plansResponse.data.length > 0) {
-            setWorkoutPlans(plansResponse.data);
-            // If we successfully got plans, we don't need to fetch by IDs
-            setLoading(false);
-            setRefreshing(false);
-            return;
-          }
-        } catch (err) {
-          console.warn('Failed to fetch workout plans by folder ID:', err);
-          // Continue to fallback
+      try {
+        const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
+        if (plansResponse.success && plansResponse.data && plansResponse.data.length > 0) {
+          setWorkoutPlans(plansResponse.data);
+          // If we successfully got plans, we don't need to fetch by IDs
+          setLoading(false);
+          setRefreshing(false);
+          return;
         }
+      } catch (err) {
+        console.warn('Failed to fetch workout plans by folder ID:', err);
+        // Continue to fallback
       }
 
       // Fallback: Fetch workout plans using workoutPlanIds if available
       if (currentRoutine?.workoutPlanIds && currentRoutine.workoutPlanIds.length > 0) {
-        const plansResponse = isPublic === 'true'
-          ? await RoutineService.getPublicWorkoutPlansByIds(currentRoutine.workoutPlanIds)
-          : await RoutineService.getWorkoutPlansByIds(currentRoutine.workoutPlanIds);
+        const plansResponse = await RoutineService.getWorkoutPlansByIds(currentRoutine.workoutPlanIds);
         
         if (plansResponse.success && plansResponse.data) {
           setWorkoutPlans(plansResponse.data);

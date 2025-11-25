@@ -102,14 +102,28 @@ export interface ActiveChallenge {
 // Routine Folder Types
 export interface RoutineFolder {
   id: string;
-  name: string;
-  description: string;
-  difficulty: string;
-  duration: string;
-  imageUrl?: string;
+  hevyId?: number;
+  folderIndex?: number;
+  title: string;
+  workoutPlanIds?: string[];
+  difficultyLevel: string;
+  equipmentType: string;
+  workoutSplit: string;
   isPublic: boolean;
   createdBy: string;
-  workoutPlanIds?: string[];
+  usageCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  workoutPlanCount?: number;
+  personal?: boolean;
+  workoutPlans?: WorkoutPlan[];
+  
+  // Deprecated/Frontend compatibility fields (optional)
+  name?: string; 
+  description?: string;
+  duration?: string;
+  imageUrl?: string;
+  difficulty?: string;
 }
 
 // Workout Plan Types

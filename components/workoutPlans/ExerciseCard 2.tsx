@@ -73,7 +73,7 @@ export default function ExerciseCard({ exercise, index, onPress }: ExerciseCardP
             </Text>
 
             {/* Muscle Groups */}
-            {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
+            {exercise.muscleGroups.length > 0 && (
               <View style={styles.infoRow}>
                 <Target size={14} color={theme.accent} />
                 <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>
@@ -96,7 +96,7 @@ export default function ExerciseCard({ exercise, index, onPress }: ExerciseCardP
             )}
 
             {/* Equipment */}
-            {exercise.equipment && exercise.equipment.length > 0 && (
+            {exercise.equipment.length > 0 && (
               <View style={styles.infoRow}>
                 <Package size={14} color={theme.textMuted} />
                 <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>

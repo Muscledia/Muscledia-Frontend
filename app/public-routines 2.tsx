@@ -88,10 +88,7 @@ export default function PublicRoutinesScreen() {
         // Pass the routine data as a query parameter (encoded)
         router.push({
           pathname: `/routine-detail/${item.id}`,
-          params: { 
-            routineData: JSON.stringify(item),
-            isPublic: 'true'
-          }
+          params: { routineData: JSON.stringify(item) }
         });
       }}
       style={styles.cardWrapper}

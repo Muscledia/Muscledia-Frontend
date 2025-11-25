@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from './api';
+import { apiGet, apiPost } from './api';
 import { ApiResponse, RoutineFolder, WorkoutPlan, SaveRoutineResponse } from '@/types/api';
 
 /**
@@ -17,75 +17,18 @@ export class RoutineService {
     if (response.success && response.data) {
       response.data = response.data.map((item: any) => ({
         id: item.id,
-        hevyId: item.hevyId,
-        folderIndex: item.folderIndex,
-        title: item.title || item.name || 'Untitled Routine',
-        workoutPlanIds: item.workoutPlanIds || [],
-        difficultyLevel: item.difficultyLevel || 'INTERMEDIATE',
-        equipmentType: item.equipmentType || 'FULL_GYM',
-        workoutSplit: item.workoutSplit || 'BRO_SPLIT',
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        usageCount: item.usageCount,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        workoutPlanCount: item.workoutPlanCount,
-        personal: item.personal,
-
-        // Compat fields
         name: item.title || item.name || 'Untitled Routine',
         description: item.description || 'No description available',
         difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
         duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
         imageUrl: item.imageUrl,
+        isPublic: item.isPublic,
+        createdBy: item.createdBy?.toString() || 'Unknown',
+        workoutPlanIds: item.workoutPlanIds || [],
       }));
     }
     
     return response as ApiResponse<RoutineFolder[]>;
-  }
-
-  /**
-   * Fetch a specific public routine folder by ID
-   * @param id - The public routine folder ID
-   * @returns Promise with routine folder details
-   */
-  static async getPublicRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
-    const response = await apiGet<any>(`/api/v1/routine-folders/public/${id}`);
-    
-    // Map backend fields to frontend format
-    if (response.success && response.data) {
-      const item = response.data;
-      // If the backend returns workouts embedded, we might want to handle them here
-      // But for now, let's map the routine folder properties
-      response.data = {
-        id: item.id,
-        hevyId: item.hevyId,
-        folderIndex: item.folderIndex,
-        title: item.title || item.name || 'Untitled Routine',
-        workoutPlanIds: item.workoutPlanIds || [],
-        difficultyLevel: item.difficultyLevel || 'INTERMEDIATE',
-        equipmentType: item.equipmentType || 'FULL_GYM',
-        workoutSplit: item.workoutSplit || 'BRO_SPLIT',
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        usageCount: item.usageCount,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        workoutPlanCount: item.workoutPlanCount,
-        personal: item.personal,
-        // Check if workoutPlans are returned directly
-        workoutPlans: item.workoutPlans,
-
-        // Compat fields
-        name: item.title || item.name || 'Untitled Routine',
-        description: item.description || 'No description available',
-        difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
-        duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
-        imageUrl: item.imageUrl,
-      };
-    }
-    
-    return response as ApiResponse<RoutineFolder>;
   }
 
   /**
@@ -98,30 +41,16 @@ export class RoutineService {
     
     // Map backend fields to frontend format
     if (response.success && response.data) {
-      const item = response.data;
       response.data = {
-        id: item.id,
-        hevyId: item.hevyId,
-        folderIndex: item.folderIndex,
-        title: item.title || item.name || 'Untitled Routine',
-        workoutPlanIds: item.workoutPlanIds || [],
-        difficultyLevel: item.difficultyLevel || 'INTERMEDIATE',
-        equipmentType: item.equipmentType || 'FULL_GYM',
-        workoutSplit: item.workoutSplit || 'BRO_SPLIT',
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        usageCount: item.usageCount,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        workoutPlanCount: item.workoutPlanCount,
-        personal: item.personal,
-
-        // Compat fields
-        name: item.title || item.name || 'Untitled Routine',
-        description: item.description || 'No description available',
-        difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
-        duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
-        imageUrl: item.imageUrl,
+        id: response.data.id,
+        name: response.data.title || response.data.name || 'Untitled Routine',
+        description: response.data.description || 'No description available',
+        difficulty: response.data.difficultyLevel?.toLowerCase() || 'intermediate',
+        duration: response.data.duration || `${response.data.workoutPlanCount || 0} workouts`,
+        imageUrl: response.data.imageUrl,
+        isPublic: response.data.isPublic,
+        createdBy: response.data.createdBy?.toString() || 'Unknown',
+        workoutPlanIds: response.data.workoutPlanIds || [],
       };
     }
     
@@ -206,99 +135,20 @@ export class RoutineService {
   }
 
   /**
-   * Fetch public workout plans by their IDs
-   * @param planIds - Array of workout plan IDs
-   * @returns Promise with array of workout plans
-   */
-  static async getPublicWorkoutPlansByIds(planIds: string[]): Promise<ApiResponse<WorkoutPlan[]>> {
-    if (!planIds || planIds.length === 0) {
-      return {
-        success: true,
-        message: 'No workout plan IDs provided',
-        data: [],
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    }
-
-    try {
-      // Fetch all plans in parallel using the public endpoint
-      const planPromises = planIds.map(id => 
-        apiGet<WorkoutPlan>(`/api/v1/workout-plans/public/${id}`)
-      );
-
-      const results = await Promise.allSettled(planPromises);
-      
-      // Filter successful results
-      // Note: The public endpoint returns the object directly, not wrapped in ApiResponse
-      // So we need to handle that. apiGet usually wraps it if the backend returns raw data?
-      // Actually apiGet expects ApiResponse<T> usually. 
-      // Let's look at apiGet implementation or assume it returns what the backend returns.
-      // If backend returns raw object, apiGet might return it as is.
-      // Based on other methods, apiGet seems to return the parsed JSON.
-      
-      const successfulPlans = results
-        .filter((result): result is PromiseFulfilledResult<ApiResponse<WorkoutPlan>> => 
-          result.status === 'fulfilled' && result.value.success
-        )
-        .map(result => result.value.data);
-
-      return {
-        success: true,
-        message: `Fetched ${successfulPlans.length} of ${planIds.length} workout plans`,
-        data: successfulPlans,
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    } catch (error: any) {
-      console.error('Error fetching public workout plans by IDs:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to fetch public workout plans',
-        data: [],
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    }
-  }
-
-  /**
    * Create a new personal routine folder
    * @param data - Routine folder data
    */
   static async createPersonalRoutine(data: Partial<RoutineFolder>): Promise<ApiResponse<RoutineFolder>> {
     // Map frontend fields to backend expectation
     const payload = {
-      title: data.title || data.name,
+      name: data.name,
       description: data.description,
-      difficultyLevel: data.difficultyLevel || data.difficulty?.toUpperCase() || 'INTERMEDIATE', 
-      equipmentType: data.equipmentType || 'Gym',
-      workoutSplit: data.workoutSplit || 'Upper/Lower',
-      routineCount: data.workoutPlanCount || 5,
+      difficultyLevel: data.difficulty?.toUpperCase() || 'INTERMEDIATE', 
       isPublic: false,
-      workoutPlanIds: data.workoutPlanIds || [],
-      // Generate hevyId if not present to avoid conflicts
-      hevyId: data.hevyId || Date.now()
+      workoutPlanIds: data.workoutPlanIds || []
     };
     
     return apiPost<RoutineFolder>('/api/v1/routine-folders/personal', payload);
-  }
-
-  /**
-   * Update an existing personal routine folder
-   * @param id - Routine folder ID
-   * @param data - Routine folder data to update
-   */
-  static async updatePersonalRoutine(id: string, data: Partial<RoutineFolder>): Promise<ApiResponse<RoutineFolder>> {
-    const payload = {
-      title: data.title || data.name,
-      description: data.description,
-      difficultyLevel: data.difficultyLevel || data.difficulty?.toUpperCase() || 'INTERMEDIATE', 
-      equipmentType: data.equipmentType || 'Gym',
-      workoutSplit: data.workoutSplit || 'Upper/Lower',
-      routineCount: data.workoutPlanCount || 5,
-      isPublic: data.isPublic ?? false,
-      workoutPlanIds: data.workoutPlanIds
-    };
-    
-    return apiPut<RoutineFolder>(`/api/v1/routine-folders/${id}`, payload);
   }
 
   /**
@@ -356,27 +206,14 @@ export class RoutineService {
     if (response.success && response.data) {
       response.data = response.data.map((item: any) => ({
         id: item.id,
-        hevyId: item.hevyId,
-        folderIndex: item.folderIndex,
-        title: item.title || item.name || 'Untitled Routine',
-        workoutPlanIds: item.workoutPlanIds || [],
-        difficultyLevel: item.difficultyLevel || 'INTERMEDIATE',
-        equipmentType: item.equipmentType || 'FULL_GYM',
-        workoutSplit: item.workoutSplit || 'BRO_SPLIT',
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        usageCount: item.usageCount,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        workoutPlanCount: item.workoutPlanCount,
-        personal: item.personal,
-
-        // Compat fields
         name: item.title || item.name || 'Untitled Routine',
         description: item.description || 'No description available',
         difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
         duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
         imageUrl: item.imageUrl,
+        isPublic: item.isPublic,
+        createdBy: item.createdBy?.toString() || 'Unknown',
+        workoutPlanIds: item.workoutPlanIds || [],
       }));
     }
     

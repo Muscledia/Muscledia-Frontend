@@ -36,7 +36,7 @@ export default function PlanHeader({ plan }: PlanHeaderProps) {
         </Text>
 
         {/* Target Muscle Groups */}
-        {plan.targetMuscleGroups && plan.targetMuscleGroups.length > 0 && (
+        {plan.targetMuscleGroups.length > 0 && (
           <View style={styles.muscleGroupsContainer}>
             <Target size={16} color={theme.accent} />
             <Text style={[styles.muscleGroupsLabel, { color: theme.textSecondary }]}>
@@ -65,20 +65,20 @@ export default function PlanHeader({ plan }: PlanHeaderProps) {
           <View
             style={[
               styles.metadataBadge,
-              { backgroundColor: getDifficultyColor(plan.difficulty || 'Intermediate') + '20' },
+              { backgroundColor: getDifficultyColor(plan.difficulty) + '20' },
             ]}
           >
             <TrendingUp
               size={16}
-              color={getDifficultyColor(plan.difficulty || 'Intermediate')}
+              color={getDifficultyColor(plan.difficulty)}
             />
             <Text
               style={[
                 styles.metadataText,
-                { color: getDifficultyColor(plan.difficulty || 'Intermediate') },
+                { color: getDifficultyColor(plan.difficulty) },
               ]}
             >
-              {plan.difficulty || 'Intermediate'}
+              {plan.difficulty}
             </Text>
           </View>
 
@@ -90,7 +90,7 @@ export default function PlanHeader({ plan }: PlanHeaderProps) {
           >
             <Clock size={16} color={theme.accent} />
             <Text style={[styles.metadataText, { color: theme.accent }]}>
-              {plan.estimatedDuration || 45} min
+              {plan.estimatedDuration} min
             </Text>
           </View>
 
@@ -102,7 +102,7 @@ export default function PlanHeader({ plan }: PlanHeaderProps) {
           >
             <Dumbbell size={16} color={theme.textMuted} />
             <Text style={[styles.metadataText, { color: theme.textMuted }]}>
-              {plan.exerciseCount || 0} exercises
+              {plan.exerciseCount} exercises
             </Text>
           </View>
         </View>
