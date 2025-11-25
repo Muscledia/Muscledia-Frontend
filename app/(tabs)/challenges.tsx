@@ -135,10 +135,21 @@ export default function ChallengesScreen() {
            ]
          );
        },
-       onError: (error) => {
-         Alert.alert('Error', 'Failed to accept challenge. Please try again.');
-         console.error(error);
-       }
+      onError: (error: any) => {
+        if (error?.message?.includes('already in progress')) {
+          Alert.alert(
+            'Already Active',
+            'You have already started this challenge! Check your Active tab.',
+            [
+              { text: 'Stay Here', style: 'cancel' },
+              { text: 'Go to Active', onPress: () => setActiveTab('active') }
+            ]
+          );
+          return;
+        }
+        Alert.alert('Error', 'Failed to accept challenge. Please try again.');
+        console.error(error);
+      }
      });
   }, [acceptChallenge]);
 

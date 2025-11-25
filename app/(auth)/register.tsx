@@ -12,9 +12,10 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, User, Calendar } from 'lucide-react-native';
 import { AuthService } from '@/services/authService';
 import { RegisterRequest } from '@/types/api';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -25,6 +26,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | ''>('');
   const [heightText, setHeightText] = useState('');
   const [initialWeightText, setInitialWeightText] = useState('');
@@ -109,6 +112,25 @@ export default function RegisterScreen() {
     router.push('/(auth)/login');
   };
 
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+        setShowDatePicker(false);
+    }
+
+    if (event.type === 'dismissed') {
+        return;
+    }
+
+    if (selectedDate) {
+        setDate(selectedDate);
+        // Format to YYYY-MM-DD
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        setBirthDate(`${year}-${month}-${day}`);
+    }
+  };
+
   return (
     <LinearGradient
       colors={isDark ? [theme.background, theme.surface] : [theme.surface, theme.background]}
@@ -173,17 +195,27 @@ export default function RegisterScreen() {
             {/* Birth Date Input */}
             <View style={styles.inputContainer}>
               <Text style={[styles.label, { color: theme.text }]}>Birth Date</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
-                <TextInput
-                  style={[styles.input, { color: theme.text }]}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={theme.textMuted}
-                  value={birthDate}
-                  onChangeText={setBirthDate}
-                  autoCapitalize="none"
-                  autoCorrect={false}
+              <TouchableOpacity
+                style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}
+                onPress={() => setShowDatePicker(!showDatePicker)}
+              >
+                <Calendar size={20} color={theme.textMuted} style={styles.inputIcon} />
+                <Text style={[styles.input, { color: birthDate ? theme.text : theme.textMuted, height: undefined }]}>
+                    {birthDate || 'YYYY-MM-DD'}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={date}
+                    mode="date"
+                    is24Hour={true}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                    textColor={theme.text}
                 />
-              </View>
+              )}
             </View>
 
             {/* Gender Selector */}

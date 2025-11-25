@@ -14,14 +14,13 @@ For server-side contracts, see `docs/BACKEND_API.md`.
 - **Character Avatar**: Visual representation that evolves with your fitness level
 - **Level Progression**: Gain XP through workouts and level up your character
 - **Streak System**: Build workout streaks with visual flame effects
-- **Daily/Weekly/Special Quests**: Complete challenges for XP rewards
 - **Achievement Badges**: Unlock accomplishments as you progress
 
 ### 💪 Workout Tracking
 - **Exercise Library**: Browse and track various exercises
 - **Workout History**: View your recent workout sessions
 - **Progress Tracking**: Monitor sets, reps, and weights
-- **Personalized Stats**: Track total XP, quest completions, and level ups
+- **Personalized Stats**: Track total XP and level ups
 
 ### 📱 User Experience
 - **Dark/Light Mode**: Automatic theme switching based on system preferences
@@ -66,7 +65,7 @@ For server-side contracts, see `docs/BACKEND_API.md`.
 ### Main Screens
 - **Home**: Dashboard with character status, stats, and recent workouts
 - **Exercises**: Browse exercise library and track workouts  
-- **Quests**: View and complete daily, weekly, and special challenges
+- **Challenges**: View and complete daily, weekly, and interactive challenges
 - **Achievements**: Display unlocked badges and progress
 - **Profile**: Character customization and personal stats
 
@@ -90,7 +89,7 @@ For server-side contracts, see `docs/BACKEND_API.md`.
 ### Leveling
 - Start at Level 1 with 100 XP needed for Level 2
 - XP requirements increase by 20% each level
-- Complete workouts and quests to gain XP
+- Complete workouts and challenges to gain XP
 
 ### Streaks
 - Track consecutive workout days
@@ -104,25 +103,6 @@ For server-side contracts, see `docs/BACKEND_API.md`.
   - Advanced (Levels 15-29)
   - Master (Level 30+)
 
-## 🎯 Quest System
-
-### Daily Quests
-- Morning Warm-Up (50 XP)
-- Lunch Break Stretching (30 XP)
-- Evening Strength Session (80 XP)
-- Cardio Challenge (100 XP)
-- Core Crusher (70 XP)
-- Hydration Hero (40 XP)
-
-### Weekly Challenges
-- Distance Runner (200 XP)
-- Strength Master (250 XP)
-- Consistency King (300 XP)
-
-### Special Events
-- Mountain Climber (350 XP)
-- Marathon Milestone (500 XP)
-
 ## 🗂️ Project Structure
 
 ```
@@ -131,7 +111,7 @@ musclediav1/
 │   ├── (tabs)/
 │   │   ├── index.tsx           # Home screen
 │   │   ├── exercises/          # Exercise screens
-│   │   ├── quests.tsx          # Quest screen
+│   │   ├── challenges.tsx      # Challenges screen
 │   │   ├── achievements.tsx    # Achievements screen
 │   │   └── profile.tsx         # Profile screen
 │   └── _layout.tsx
@@ -144,7 +124,6 @@ musclediav1/
 │   ├── useWorkouts.tsx         # Workout tracking
 │   └── useFrameworkReady.ts    # App initialization
 ├── data/
-│   ├── quests.ts               # Quest definitions
 │   └── badges.ts               # Achievement badges
 └── utils/
     └── helpers.ts              # Utility functions
@@ -159,7 +138,6 @@ musclediav1/
 - Metro bundler configuration
 
 ### Customization
-- Modify quest definitions in `data/quests.ts`
 - Add new achievements in `data/badges.ts`
 - Customize character avatars in `components/CharacterAvatar.tsx`
 - Adjust XP calculations in `hooks/useCharacter.tsx`

@@ -12,7 +12,6 @@ type Character = {
   totalXP: number;
   streak: number;
   lastWorkout: string | null;
-  questsCompleted: number;
   gender: Gender;
   height?: number;
   weight?: number;
@@ -49,7 +48,6 @@ type CharacterContextType = {
   character: Character;
   updateCharacter: (updatedCharacter: Partial<Character>) => void;
   incrementXP: (amount: number) => void;
-  completeQuest: (questId: string, xpReward: number) => void;
   resetCharacter: () => void;
   // Health helpers
   applyHealthRegen: () => void;
@@ -70,7 +68,6 @@ const DEFAULT_CHARACTER: Character = {
   totalXP: 0,
   streak: 0,
   lastWorkout: null,
-  questsCompleted: 0,
   gender: 'male',
   maxHealth: 50,
   currentHealth: 50,
@@ -285,38 +282,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   };
 
-  const completeQuest = (questId: string, xpReward: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    const lastWorkout = character.lastWorkout;
-    
-    let newStreak = character.streak;
-    
-    if (lastWorkout !== today) {
-      if (!lastWorkout) {
-        newStreak = 1;
-      } else {
-        const lastWorkoutDate = new Date(lastWorkout);
-        const currentDate = new Date(today);
-        
-        const timeDiff = currentDate.getTime() - lastWorkoutDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-        
-        if (daysDiff === 1) {
-          newStreak += 1;
-        } else if (daysDiff > 1) {
-          newStreak = 1;
-        }
-      }
-    }
-    
-    incrementXP(xpReward);
-    updateCharacter({
-      questsCompleted: character.questsCompleted + 1,
-      lastWorkout: today,
-      streak: newStreak,
-    });
-  };
-
   // Health helpers
   const consumeHealth = (amount: number) => {
     if (character.currentHealth <= 0) return false;
@@ -397,7 +362,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         character,
         updateCharacter,
         incrementXP,
-        completeQuest,
         resetCharacter,
         applyHealthRegen,
         consumeHealth,

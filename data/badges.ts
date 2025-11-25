@@ -4,7 +4,7 @@ export type Badge = {
   description: string;
   unlockCriteria: string;
   imageUrl: string;
-  criteriaType: 'level' | 'streak' | 'quests' | 'special';
+  criteriaType: 'level' | 'streak' | 'challenges' | 'special';
   criteriaValue: number;
 };
 
@@ -13,9 +13,9 @@ export const badges: Badge[] = [
     id: 'badge1',
     name: 'First Steps',
     description: 'You\'ve taken your first steps on your fitness journey!',
-    unlockCriteria: 'Complete your first quest',
+    unlockCriteria: 'Complete your first challenge',
     imageUrl: 'https://images.pexels.com/photos/3621104/pexels-photo-3621104.jpeg?auto=compress&cs=tinysrgb&w=200',
-    criteriaType: 'quests',
+    criteriaType: 'challenges',
     criteriaValue: 1,
   },
   {
@@ -38,11 +38,11 @@ export const badges: Badge[] = [
   },
   {
     id: 'badge4',
-    name: 'Quest Hunter',
-    description: 'You\'ve completed 10 quests!',
-    unlockCriteria: 'Complete 10 quests',
+    name: 'Challenge Hunter',
+    description: 'You\'ve completed 10 challenges!',
+    unlockCriteria: 'Complete 10 challenges',
     imageUrl: 'https://images.pexels.com/photos/6551088/pexels-photo-6551088.jpeg?auto=compress&cs=tinysrgb&w=200',
-    criteriaType: 'quests',
+    criteriaType: 'challenges',
     criteriaValue: 10,
   },
   {

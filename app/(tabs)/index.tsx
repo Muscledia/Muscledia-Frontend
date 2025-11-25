@@ -11,17 +11,14 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCharacter } from '@/hooks/useCharacter';
 import { useAuth } from '@/hooks/useAuth';
-import CharacterAvatar from '@/components/CharacterAvatar';
 import ProgressBar from '@/components/ProgressBar';
-import { Siren as Fire, Zap, Trophy, TrendingUp, Heart, Coins, Pen, Compass } from 'lucide-react-native';
-import StatsCard from '@/components/StatsCard';
+import { Coins, Pen, Compass } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useRoutines } from '@/hooks/useRoutines';
-import { Colors, getThemeColors } from '@/constants/Colors';
+import { getThemeColors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
-import { DailyChallenges } from '@/components/challenges/DailyChallenges';
 
 export default function HomeScreen() {
   const { character, incrementXP } = useCharacter();
