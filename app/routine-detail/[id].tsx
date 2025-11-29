@@ -1,4 +1,4 @@
-// app/routine-detail/[id].tsx
+// app/routine-detail/[planId].tsx
 
 import React, { useState, useEffect } from 'react';
 import {
