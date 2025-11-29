@@ -38,7 +38,7 @@ export class RoutineService {
       updatedAt: data.updatedAt || new Date().toISOString(),
       folderIndex: data.folderIndex,
 
-      // Workout Plans - use arrow function to maintain context
+      // Workout Plans
       workoutPlanIds: data.workoutPlanIds || [],
       workoutPlans: data.workoutPlans
         ? data.workoutPlans.map((plan: any) => RoutineService.normalizeWorkoutPlan(plan))
@@ -59,7 +59,7 @@ export class RoutineService {
       folderId: data.folderId,
       description: data.description || '',
 
-      // Exercises - use arrow function to maintain context
+      // Exercises
       exercises: data.exercises
         ? data.exercises.map((ex: any) => RoutineService.normalizePlannedExercise(ex))
         : [],
@@ -138,27 +138,6 @@ export class RoutineService {
   }
 
   /**
-   * Fetch a specific personal routine folder by ID (WITH workout plans and exercises)
-   */
-  static async getPersonalRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
-    const response = await apiGet<any>(`/api/v1/routine-folders/personal/${id}`);
-
-    if (response.success && response.data) {
-      response.data = RoutineService.normalizeRoutineFolder(response.data);
-    }
-
-    return response as ApiResponse<RoutineFolder>;
-  }
-
-  /**
-   * DEPRECATED: Use getPublicRoutineFolderById or getPersonalRoutineFolderById
-   */
-  static async getRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
-    console.warn('getRoutineFolderById is deprecated. Use getPublicRoutineFolderById or getPersonalRoutineFolderById instead.');
-    return RoutineService.getPublicRoutineFolderById(id);
-  }
-
-  /**
    * Create a new personal routine folder
    */
   static async createPersonalRoutine(data: Partial<RoutineFolder>): Promise<ApiResponse<RoutineFolder>> {
@@ -187,18 +166,37 @@ export class RoutineService {
       const response = await apiPost<any>(`/api/v1/routine-folders/save/${publicRoutineId}`);
 
       if (response.success && response.data) {
-        const normalized = {
-          routineFolder: RoutineService.normalizeRoutineFolder(response.data.routineFolder),
-          workoutPlans: response.data.workoutPlans
-            ? response.data.workoutPlans.map((plan: any) => RoutineService.normalizeWorkoutPlan(plan))
-            : [],
-          message: response.data.message || 'Routine saved successfully'
-        };
+        // Backend returns the routine folder directly, not wrapped
+        // Check if response has routineFolder property (old format) or is the folder itself (new format)
+        const isWrappedFormat = response.data.routineFolder !== undefined;
 
-        return {
-          ...response,
-          data: normalized
-        } as ApiResponse<SaveRoutineResponse>;
+        if (isWrappedFormat) {
+          // Old format: { routineFolder: {...}, workoutPlans: [...] }
+          const normalized = {
+            routineFolder: RoutineService.normalizeRoutineFolder(response.data.routineFolder),
+            workoutPlans: response.data.workoutPlans
+              ? response.data.workoutPlans.map((plan: any) => RoutineService.normalizeWorkoutPlan(plan))
+              : [],
+            message: response.data.message || 'Routine saved successfully'
+          };
+
+          return {
+            ...response,
+            data: normalized
+          } as ApiResponse<SaveRoutineResponse>;
+        } else {
+          // New format: Backend returns routine folder directly
+          const normalizedFolder = RoutineService.normalizeRoutineFolder(response.data);
+
+          return {
+            ...response,
+            data: {
+              routineFolder: normalizedFolder,
+              workoutPlans: normalizedFolder.workoutPlans || [],
+              message: 'Routine saved successfully'
+            }
+          } as ApiResponse<SaveRoutineResponse>;
+        }
       }
 
       return response as ApiResponse<SaveRoutineResponse>;
