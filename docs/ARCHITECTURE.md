@@ -118,7 +118,7 @@ Stat effects (current pass):
 - Categories, search, and add exercises; defaults to 1 set.
 - Save prompts for a name; persists via `useRoutines`.
 
-### Routine Workout (app/routine-workout/[id].tsx)
+### Routine Workout (app/routine-workout/[planId].tsx)
 - Execute routines; toggle edit mode for sets.
 - Per-set completion with checkmark; awards XP, contributes to raid, and to leagues points.
 - Enforces health and daily routine limit; calls `consumeHealth` and regeneration.
@@ -158,7 +158,7 @@ Stat effects (current pass):
 ## Extending Stat Effects
 - Agility → affect Leagues point boosts or progress thresholds.
 - Focus → chance to avoid stamina cost and small chance for 1.5x XP on set completion.
-- Implement in `routine-workout/[id].tsx` around the set completion logic (e.g., before calling `consumeHealth` or `incrementXP`).
+- Implement in `routine-workout/[planId].tsx` around the set completion logic (e.g., before calling `consumeHealth` or `incrementXP`).
 
 ## Adding New Inventory/Equipment
 1. Define new items in Shop or a central catalog.
