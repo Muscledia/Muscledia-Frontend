@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)">
-      <change afterPath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/workout-session/[planId].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routine-detail/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/routine-detail/[id].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-plan-detail/[id].tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ARCHITECTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/routineService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/routineService.ts" afterDir="false" />
-    </list>
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="chore: update IDE workspace configuration" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -95,7 +86,7 @@
       <workItem from="1764086923052" duration="4702000" />
       <workItem from="1764339601531" duration="8372000" />
       <workItem from="1764397630620" duration="344000" />
-      <workItem from="1764437499034" duration="10884000" />
+      <workItem from="1764437499034" duration="11207000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />
@@ -153,7 +144,63 @@
       <option name="project" value="LOCAL" />
       <updated>1764397890854</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)">
+      <option name="closed" value="true" />
+      <created>1764454661643</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454661643</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat(workouts): add workout plan detail screen&#10;&#10;- Create Hevy-style workout plan detail view&#10;- Display workout stats (duration, exercises, sets)&#10;- Show exercise list with sets, reps, and rest timers&#10;- Add Start Routine button&#10;- Include share and edit options&#10;- Show username instead of user ID">
+      <option name="closed" value="true" />
+      <created>1764454681086</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454681086</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(workouts): implement workout session tracking screen&#10;&#10;- Create exercise-by-exercise workout flow&#10;- Add set logging with weight and reps inputs&#10;- Implement completion checkboxes for sets&#10;- Add rest timer modal&#10;- Include progress bar and navigation&#10;- Support warmup, normal, and failure set types">
+      <option name="closed" value="true" />
+      <created>1764454705583</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454705583</updated>
+    </task>
+    <task id="LOCAL-00011" summary="fix(services): handle multiple response formats in savePublicRoutine&#10;&#10;- Support both wrapped and direct response formats&#10;- Add fallback mechanism for 404/405 errors&#10;- Improve error handling and logging&#10;- Maintain backward compatibility">
+      <option name="closed" value="true" />
+      <created>1764454722046</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454722046</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat(workouts): add workout plan detail screen with exercise breakdown&#10;&#10;- Create Hevy-style workout plan detail view with stats&#10;- Display duration, exercise count, and total sets&#10;- Show complete exercise list with sets and rep ranges&#10;- Add Start Routine button with navigation to session&#10;- Include share and edit options in header&#10;- Display creator username instead of user ID&#10;- Add exercise cards with rest timers and notes&#10;- Support warmup sets and rep ranges display">
+      <option name="closed" value="true" />
+      <created>1764454885132</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454885132</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(routines): add public routine detail screen">
+      <option name="closed" value="true" />
+      <created>1764454906350</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454906350</updated>
+    </task>
+    <task id="LOCAL-00014" summary="chore: update IDE workspace configuration">
+      <option name="closed" value="true" />
+      <created>1764454925166</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454925166</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -179,6 +226,12 @@
     <MESSAGE value="deps: update dependencies for backend authentication&#10;&#10;- Update axios and related networking dependencies&#10;- Ensure compatibility with React Native and Expo&#10;- Lock dependency versions for stable authentication flow" />
     <MESSAGE value="feat: implement enriched routine folder API integration&quot; -m &quot;Add support for single-call routine folder endpoints that return complete workout plan details with exercises.&quot; -m &quot;Changes:&#10;- Add enriched routine folder endpoints (public/{id}, personal)&#10;- Create WorkoutPlanCard component with Hevy-style exercise previews&#10;- Create PlannedExerciseCard for workout plan exercise display&#10;- Update RoutineService to normalize enriched API responses&#10;- Add proper type definitions for PlannedExercise and WorkoutPlan&#10;- Update routine detail screen to use embedded workout plan data&#10;- Fix type compatibility between Exercise and PlannedExercise" />
     <MESSAGE value="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)" />
+    <MESSAGE value="feat(workouts): add workout plan detail screen&#10;&#10;- Create Hevy-style workout plan detail view&#10;- Display workout stats (duration, exercises, sets)&#10;- Show exercise list with sets, reps, and rest timers&#10;- Add Start Routine button&#10;- Include share and edit options&#10;- Show username instead of user ID" />
+    <MESSAGE value="feat(workouts): implement workout session tracking screen&#10;&#10;- Create exercise-by-exercise workout flow&#10;- Add set logging with weight and reps inputs&#10;- Implement completion checkboxes for sets&#10;- Add rest timer modal&#10;- Include progress bar and navigation&#10;- Support warmup, normal, and failure set types" />
+    <MESSAGE value="fix(services): handle multiple response formats in savePublicRoutine&#10;&#10;- Support both wrapped and direct response formats&#10;- Add fallback mechanism for 404/405 errors&#10;- Improve error handling and logging&#10;- Maintain backward compatibility" />
+    <MESSAGE value="feat(workouts): add workout plan detail screen with exercise breakdown&#10;&#10;- Create Hevy-style workout plan detail view with stats&#10;- Display duration, exercise count, and total sets&#10;- Show complete exercise list with sets and rep ranges&#10;- Add Start Routine button with navigation to session&#10;- Include share and edit options in header&#10;- Display creator username instead of user ID&#10;- Add exercise cards with rest timers and notes&#10;- Support warmup sets and rep ranges display" />
+    <MESSAGE value="feat(routines): add public routine detail screen" />
+    <MESSAGE value="chore: update IDE workspace configuration" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: update IDE workspace configuration" />
   </component>
 </project>
