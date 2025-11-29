@@ -45,7 +45,7 @@ export default function RoutineHeader({ routine }: RoutineHeaderProps) {
 
       <View style={styles.content}>
         <Text style={[styles.title, { color: theme.text }]}>{routine.name}</Text>
-        
+
         <Text style={[styles.description, { color: theme.textSecondary }]}>
           {routine.description}
         </Text>
@@ -85,12 +85,6 @@ export default function RoutineHeader({ routine }: RoutineHeaderProps) {
             </View>
           </View>
 
-          <View style={[styles.authorContainer, { backgroundColor: theme.surface }]}>
-            <User size={14} color={theme.textMuted} />
-            <Text style={[styles.authorText, { color: theme.textMuted }]}>
-              Created by {routine.createdBy}
-            </Text>
-          </View>
         </View>
       </View>
 

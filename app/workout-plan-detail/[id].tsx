@@ -1,3 +1,5 @@
+// app/workout-plan-detail/[id].tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,14 +11,13 @@ import {
   Text,
   RefreshControl,
   Modal,
-  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AlertCircle, X, Play } from 'lucide-react-native';
+import { AlertCircle, X } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { WorkoutPlanService, ExerciseService } from '@/services';
-import { WorkoutPlanDetail, Exercise } from '@/types/api';
+import { WorkoutPlanService } from '@/services';
+import { WorkoutPlanDetail, PlannedExercise } from '@/types/api';
 import { useHaptics } from '@/hooks/useHaptics';
 
 // Components
@@ -35,8 +36,8 @@ export default function WorkoutPlanDetailScreen() {
   const [plan, setPlan] = useState<WorkoutPlanDetail | null>(() => {
     if (initialData) {
       try {
-        const parsed = JSON.parse(initialData);
-        // Ensure it matches the type
+        const parsed = JSON.parse(initialData as string);
+        console.log('Loaded plan from initialData:', parsed.title, 'with', parsed.exercises?.length || 0, 'exercises');
         return parsed as WorkoutPlanDetail;
       } catch (e) {
         console.warn('Failed to parse initialData', e);
@@ -45,12 +46,13 @@ export default function WorkoutPlanDetailScreen() {
     }
     return null;
   });
+
   const [loading, setLoading] = useState(!plan);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal state for exercise details
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<PlannedExercise | null>(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
 
   // Fetch workout plan details
@@ -61,33 +63,27 @@ export default function WorkoutPlanDetailScreen() {
       if (!isRefreshing && !plan) setLoading(true);
       setError(null);
 
-      // Try to fetch detailed workout plan (with exercises embedded)
+      // Try to fetch detailed workout plan
       try {
         const planResponse = await WorkoutPlanService.getWorkoutPlanDetailById(id);
 
         if (planResponse.success && planResponse.data) {
+          console.log('Fetched plan:', planResponse.data.title, 'with', planResponse.data.exercises?.length || 0, 'exercises');
           setPlan(planResponse.data);
-          
-          // If exercises are not embedded, fetch them separately
-          if (!planResponse.data.exercises || planResponse.data.exercises.length === 0) {
-             await fetchExercisesSeparately(id);
-          }
         } else {
-          // If fetch fails but we have initialData, try fetching just exercises
+          // If fetch fails but we have initialData, keep using it
           if (plan) {
-            console.warn('Failed to load full plan details, falling back to initial data + exercises fetch');
-            await fetchExercisesSeparately(id);
+            console.warn('Failed to load full plan details, using cached data');
           } else {
             setError(planResponse.message || 'Failed to load workout plan');
           }
         }
       } catch (err: any) {
-        // If API fails (e.g. 405) but we have initialData, try fetching just exercises
+        // If API fails but we have initialData, keep using it
         if (plan) {
-           console.log('Main plan fetch failed (likely 405), trying to fetch exercises only');
-           await fetchExercisesSeparately(id);
+          console.log('API failed, continuing with cached plan data');
         } else {
-           throw err;
+          throw err;
         }
       }
     } catch (err: any) {
@@ -101,19 +97,13 @@ export default function WorkoutPlanDetailScreen() {
     }
   };
 
-  const fetchExercisesSeparately = async (planId: string) => {
-    try {
-      const exercisesResponse = await ExerciseService.getExercisesByWorkoutPlanId(planId);
-      if (exercisesResponse.success && exercisesResponse.data) {
-        setPlan(prev => prev ? { ...prev, exercises: exercisesResponse.data } : null);
-      }
-    } catch (exerciseError) {
-      console.warn('Failed to load exercises separately:', exerciseError);
-    }
-  };
-
   useEffect(() => {
-    fetchWorkoutPlanData();
+    // Only fetch if we don't have plan data from initialData
+    if (!plan) {
+      fetchWorkoutPlanData();
+    } else {
+      console.log('Using initialData, skipping initial fetch');
+    }
   }, [id]);
 
   // Pull to refresh handler
@@ -122,11 +112,12 @@ export default function WorkoutPlanDetailScreen() {
     fetchWorkoutPlanData(true);
   };
 
-  // Handle exercise press - show modal
-  const handleExercisePress = async (exercise: Exercise) => {
+  // Handle exercise press - show modal or details
+  const handleExercisePress = async (exercise: PlannedExercise) => {
     await impact('selection');
     setSelectedExercise(exercise);
     setShowExerciseModal(true);
+    console.log('Exercise pressed:', exercise.title);
   };
 
   // Close modal
@@ -207,12 +198,13 @@ export default function WorkoutPlanDetailScreen() {
 
         <StartWorkoutButton
           workoutPlanId={plan.id}
-          workoutPlanName={plan.name}
+          workoutPlanName={plan.title || plan.name}
           onStart={handleStartWorkout}
         />
 
         <View style={styles.divider} />
 
+        {/* Use exercises from the plan data */}
         <ExerciseList
           exercises={plan.exercises || []}
           onExercisePress={handleExercisePress}
@@ -242,85 +234,49 @@ export default function WorkoutPlanDetailScreen() {
 
             {selectedExercise && (
               <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Exercise Image */}
-                {selectedExercise.imageUrl && (
-                  <Image
-                    source={{ uri: selectedExercise.imageUrl }}
-                    style={styles.modalImage}
-                    resizeMode="cover"
-                  />
-                )}
-
                 <View style={styles.modalBody}>
                   <Text style={[styles.modalTitle, { color: theme.text }]}>
-                    {selectedExercise.name}
+                    {selectedExercise.title || selectedExercise.name}
                   </Text>
 
-                  <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>
-                    {selectedExercise.description}
-                  </Text>
+                  {selectedExercise.notes && (
+                    <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>
+                      {selectedExercise.notes}
+                    </Text>
+                  )}
 
-                  {/* Muscle Groups */}
-                  {selectedExercise.muscleGroups.length > 0 && (
+                  {/* Sets Information */}
+                  {selectedExercise.sets && selectedExercise.sets.length > 0 && (
                     <View style={styles.modalSection}>
                       <Text style={[styles.modalSectionTitle, { color: theme.text }]}>
-                        Target Muscles
+                        Sets ({selectedExercise.sets.length})
                       </Text>
-                      <View style={styles.modalTagsContainer}>
-                        {selectedExercise.muscleGroups.map((muscle, idx) => (
-                          <View
-                            key={idx}
-                            style={[styles.modalTag, { backgroundColor: theme.accent + '20' }]}
-                          >
-                            <Text style={[styles.modalTagText, { color: theme.accent }]}>
-                              {muscle}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
+                      {selectedExercise.sets.map((set, idx) => (
+                        <View
+                          key={idx}
+                          style={[styles.setRow, { backgroundColor: theme.surface }]}
+                        >
+                          <Text style={[styles.setNumber, { color: theme.accent }]}>
+                            {idx + 1}
+                          </Text>
+                          <Text style={[styles.setText, { color: theme.text }]}>
+                            {set.type === 'warmup' ? 'Warmup' : set.effectiveReps}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
                   )}
 
-                  {/* Equipment */}
-                  {selectedExercise.equipment.length > 0 && (
+                  {/* Rest Time */}
+                  {selectedExercise.restSeconds > 0 && (
                     <View style={styles.modalSection}>
                       <Text style={[styles.modalSectionTitle, { color: theme.text }]}>
-                        Equipment Needed
+                        Rest Time
                       </Text>
-                      <View style={styles.modalTagsContainer}>
-                        {selectedExercise.equipment.map((item, idx) => (
-                          <View
-                            key={idx}
-                            style={[styles.modalTag, { backgroundColor: theme.textMuted + '20' }]}
-                          >
-                            <Text style={[styles.modalTagText, { color: theme.textMuted }]}>
-                              {item}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
+                      <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>
+                        {selectedExercise.restSeconds} seconds
+                      </Text>
                     </View>
-                  )}
-
-                  {/* Video link placeholder */}
-                  {selectedExercise.videoUrl && (
-                    <TouchableOpacity
-                      style={styles.videoButton}
-                      onPress={() => console.log('Play video:', selectedExercise.videoUrl)}
-                    >
-                      <LinearGradient
-                        colors={[theme.accent, theme.accentSecondary]}
-                        locations={[0.55, 1]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.videoButtonGradient}
-                      >
-                        <Play size={20} color={theme.cardText} fill={theme.cardText} />
-                        <Text style={[styles.videoButtonText, { color: theme.cardText }]}>
-                          Watch Demo Video
-                        </Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
                   )}
                 </View>
               </ScrollView>
@@ -387,7 +343,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '90%',
+    maxHeight: '80%',
     overflow: 'hidden',
   },
   closeButton: {
@@ -401,13 +357,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  modalImage: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#1C1C1C',
-  },
   modalBody: {
     padding: 20,
+    paddingTop: 60,
   },
   modalTitle: {
     fontSize: 24,
@@ -427,37 +379,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
   },
-  modalTagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  modalTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  modalTagText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  videoButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  videoButtonGradient: {
+  setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  videoButtonText: {
+  setNumber: {
     fontSize: 16,
     fontWeight: 'bold',
+    width: 30,
+  },
+  setText: {
+    fontSize: 14,
+    flex: 1,
   },
 });
-

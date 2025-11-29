@@ -1,21 +1,23 @@
+// components/workoutPlans/ExerciseList.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, useColorScheme } from 'react-native';
 import { Dumbbell } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { Exercise } from '@/types/api';
-import ExerciseCard from './ExerciseCard';
+import { PlannedExercise } from '@/types/api';
+import PlannedExerciseCard from '../exercises/PlannedExerciseCard';
 
 interface ExerciseListProps {
-  exercises: Exercise[];
-  onExercisePress: (exercise: Exercise) => void;
+  exercises: PlannedExercise[];
+  onExercisePress: (exercise: PlannedExercise) => void;
   loading?: boolean;
 }
 
 export default function ExerciseList({
-  exercises,
-  onExercisePress,
-  loading = false,
-}: ExerciseListProps) {
+                                       exercises,
+                                       onExercisePress,
+                                       loading = false,
+                                     }: ExerciseListProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
@@ -50,13 +52,13 @@ export default function ExerciseList({
       <FlatList
         data={exercises}
         renderItem={({ item, index }) => (
-          <ExerciseCard
+          <PlannedExerciseCard
             exercise={item}
             index={index}
             onPress={() => onExercisePress(item)}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.exerciseTemplateId || `exercise-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
       />
@@ -104,4 +106,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

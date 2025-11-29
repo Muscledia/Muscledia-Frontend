@@ -1,11 +1,13 @@
+// components/workoutPlans/PlanHeader.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
-import { Clock, TrendingUp, Dumbbell, Target } from 'lucide-react-native';
-import { Colors, getThemeColors } from '@/constants/Colors';
-import { WorkoutPlanDetail } from '@/types/api';
+import { getThemeColors } from '@/constants/Colors';
+import { WorkoutPlanDetail, WorkoutPlan } from '@/types/api';
+import { Target, Dumbbell, Clock } from 'lucide-react-native';
 
 interface PlanHeaderProps {
-  plan: WorkoutPlanDetail;
+  plan: WorkoutPlanDetail | WorkoutPlan;
 }
 
 export default function PlanHeader({ plan }: PlanHeaderProps) {
@@ -13,128 +15,80 @@ export default function PlanHeader({ plan }: PlanHeaderProps) {
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
+  // Get difficulty color with null safety
+  const getDifficultyColor = (difficulty?: string) => {
+    if (!difficulty) return theme.textMuted;
+
+    const level = difficulty.toLowerCase();
+    switch (level) {
       case 'beginner':
-        return '#4CAF50';
+        return '#4CAF50'; // Green
       case 'intermediate':
-        return '#FFA500';
+        return '#FF9800'; // Orange
       case 'advanced':
-        return '#F44336';
+        return '#F44336'; // Red
       default:
         return theme.textMuted;
     }
   };
 
+  const exerciseCount = plan.exercises?.length || 0;
+  const duration = plan.estimatedDurationMinutes || plan.estimatedDuration || 0;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.text }]}>{plan.name}</Text>
-        
+    <View style={styles.header}>
+      {/* Title */}
+      <Text style={[styles.title, { color: theme.text }]}>
+        {plan.title || plan.name}
+      </Text>
+
+      {/* Description */}
+      {plan.description && (
         <Text style={[styles.description, { color: theme.textSecondary }]}>
           {plan.description}
         </Text>
+      )}
 
-        {/* Target Muscle Groups */}
-        {plan.targetMuscleGroups.length > 0 && (
-          <View style={styles.muscleGroupsContainer}>
-            <Target size={16} color={theme.accent} />
-            <Text style={[styles.muscleGroupsLabel, { color: theme.textSecondary }]}>
-              Target Muscles:
+      {/* Metadata badges */}
+      <View style={styles.badgeContainer}>
+        {/* Exercise count */}
+        <View style={[styles.badge, { backgroundColor: theme.accent + '20' }]}>
+          <Dumbbell size={14} color={theme.accent} />
+          <Text style={[styles.badgeText, { color: theme.accent }]}>
+            {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
+          </Text>
+        </View>
+
+        {/* Duration */}
+        {duration > 0 && (
+          <View style={[styles.badge, { backgroundColor: theme.textMuted + '20' }]}>
+            <Clock size={14} color={theme.textMuted} />
+            <Text style={[styles.badgeText, { color: theme.textMuted }]}>
+              ~{duration} min
             </Text>
-            <View style={styles.muscleTagsContainer}>
-              {plan.targetMuscleGroups.map((muscle, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.muscleTag,
-                    { backgroundColor: theme.accent + '20' },
-                  ]}
-                >
-                  <Text style={[styles.muscleTagText, { color: theme.accent }]}>
-                    {muscle}
-                  </Text>
-                </View>
-              ))}
-            </View>
           </View>
         )}
 
-        {/* Metadata Row */}
-        <View style={styles.metadataContainer}>
-          <View
-            style={[
-              styles.metadataBadge,
-              { backgroundColor: getDifficultyColor(plan.difficulty) + '20' },
-            ]}
-          >
-            <TrendingUp
-              size={16}
-              color={getDifficultyColor(plan.difficulty)}
-            />
-            <Text
-              style={[
-                styles.metadataText,
-                { color: getDifficultyColor(plan.difficulty) },
-              ]}
-            >
+        {/* Difficulty (only show if available) */}
+        {plan.difficulty && (
+          <View style={[styles.badge, { backgroundColor: getDifficultyColor(plan.difficulty) + '20' }]}>
+            <Target size={14} color={getDifficultyColor(plan.difficulty)} />
+            <Text style={[styles.badgeText, { color: getDifficultyColor(plan.difficulty) }]}>
               {plan.difficulty}
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.metadataBadge,
-              { backgroundColor: theme.accent + '20' },
-            ]}
-          >
-            <Clock size={16} color={theme.accent} />
-            <Text style={[styles.metadataText, { color: theme.accent }]}>
-              {plan.estimatedDuration} min
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.metadataBadge,
-              { backgroundColor: theme.textMuted + '20' },
-            ]}
-          >
-            <Dumbbell size={16} color={theme.textMuted} />
-            <Text style={[styles.metadataText, { color: theme.textMuted }]}>
-              {plan.exerciseCount} exercises
-            </Text>
-          </View>
-        </View>
-
-        {/* Instructions */}
-        {plan.instructions && (
-          <View style={[styles.instructionsContainer, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.instructionsTitle, { color: theme.text }]}>
-              Instructions
-            </Text>
-            <Text style={[styles.instructionsText, { color: theme.textSecondary }]}>
-              {plan.instructions}
             </Text>
           </View>
         )}
       </View>
-
-      {/* Golden accent line */}
-      <View style={[styles.accentLine, { backgroundColor: theme.accent }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  content: {
+  header: {
     padding: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
   },
@@ -143,39 +97,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 16,
   },
-  muscleGroupsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  muscleGroupsLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  muscleTagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    flex: 1,
-  },
-  muscleTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  muscleTagText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  metadataContainer: {
+  badgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
   },
-  metadataBadge: {
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -183,26 +110,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
-  metadataText: {
-    fontSize: 13,
+  badgeText: {
+    fontSize: 12,
     fontWeight: '600',
-  },
-  instructionsContainer: {
-    padding: 12,
-    borderRadius: 12,
-  },
-  instructionsTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  instructionsText: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  accentLine: {
-    height: 4,
-    width: '100%',
+    textTransform: 'capitalize',
   },
 });
-

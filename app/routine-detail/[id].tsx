@@ -1,3 +1,5 @@
+// app/routine-detail/[id].tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -13,41 +15,32 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AlertCircle } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { RoutineService, WorkoutPlanService } from '@/services';
-import { RoutineFolder, WorkoutPlan } from '@/types/api';
+import { RoutineService } from '@/services';
+import { RoutineFolder } from '@/types/api';
 import { useHaptics } from '@/hooks/useHaptics';
 
 // Components
 import RoutineHeader from '@/components/routines/RoutineHeader';
-import WorkoutPlanList from '@/components/routines/WorkoutPlanList';
+import WorkoutPlanCard from '@/components/routines/WorkoutPlanCard';
 import SaveRoutineButton from '@/components/routines/SaveRoutineButton';
 
 export default function RoutineDetailScreen() {
-  const { id, routineData } = useLocalSearchParams<{ id: string; routineData?: string }>();
+  const { id, isPublic } = useLocalSearchParams<{ id: string; isPublic?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
 
-  const [routine, setRoutine] = useState<RoutineFolder | null>(() => {
-    // Initialize with passed data if available
-    if (routineData) {
-      try {
-        return JSON.parse(routineData as string) as RoutineFolder;
-      } catch (e) {
-        console.error('Failed to parse routine data:', e);
-        return null;
-      }
-    }
-    return null;
-  });
-  const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
+  const [routine, setRoutine] = useState<RoutineFolder | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch routine details and workout plans
+  // Determine if this is a public or personal routine
+  const isPublicRoutine = isPublic === 'true' || isPublic === undefined;
+
+  // Fetch routine with embedded workout plans
   const fetchRoutineData = async (isRefreshing = false) => {
     if (!id) return;
 
@@ -55,66 +48,16 @@ export default function RoutineDetailScreen() {
       if (!isRefreshing) setLoading(true);
       setError(null);
 
-      let currentRoutine = routine;
+      // Single API call gets everything (routine + workout plans + exercises)!
+      const routineResponse = isPublicRoutine
+        ? await RoutineService.getPublicRoutineFolderById(id)
+        : await RoutineService.getPersonalRoutineFolderById(id);
 
-      // Only fetch routine if we don't already have it (or if refreshing)
-      if (!currentRoutine || isRefreshing) {
-        try {
-          const routineResponse = await RoutineService.getRoutineFolderById(id);
-          if (routineResponse.success && routineResponse.data) {
-            currentRoutine = routineResponse.data;
-            setRoutine(currentRoutine);
-          } else {
-            // If fetch fails but we have cached data, use it
-            if (routine) {
-              console.warn('Failed to refresh routine, using cached data');
-              currentRoutine = routine;
-            } else {
-              setError(routineResponse.message || 'Failed to load routine details');
-              return;
-            }
-          }
-        } catch (err: any) {
-          // If fetch fails but we have cached data, use it
-          if (routine) {
-            console.warn('Failed to fetch routine, using cached data:', err);
-            currentRoutine = routine;
-          } else {
-            console.error('Error fetching routine data:', err);
-            setError(err.message || 'Routine not found. The backend may not support this endpoint.');
-            return;
-          }
-        }
-      }
-
-      // First try to fetch all workout plans for this folder (more efficient)
-      try {
-        const plansResponse = await WorkoutPlanService.getWorkoutPlansByRoutineFolderId(id);
-        if (plansResponse.success && plansResponse.data && plansResponse.data.length > 0) {
-          setWorkoutPlans(plansResponse.data);
-          // If we successfully got plans, we don't need to fetch by IDs
-          setLoading(false);
-          setRefreshing(false);
-          return;
-        }
-      } catch (err) {
-        console.warn('Failed to fetch workout plans by folder ID:', err);
-        // Continue to fallback
-      }
-
-      // Fallback: Fetch workout plans using workoutPlanIds if available
-      if (currentRoutine?.workoutPlanIds && currentRoutine.workoutPlanIds.length > 0) {
-        const plansResponse = await RoutineService.getWorkoutPlansByIds(currentRoutine.workoutPlanIds);
-        
-        if (plansResponse.success && plansResponse.data) {
-          setWorkoutPlans(plansResponse.data);
-        } else {
-          console.warn('Failed to load workout plans by IDs:', plansResponse.message);
-          setWorkoutPlans([]);
-        }
+      if (routineResponse.success && routineResponse.data) {
+        setRoutine(routineResponse.data);
+        console.log('Loaded routine with', routineResponse.data.workoutPlans?.length || 0, 'workout plans');
       } else {
-        // No plans found via folder ID and no IDs in routine data
-        setWorkoutPlans([]);
+        setError(routineResponse.message || 'Failed to load routine details');
       }
     } catch (err: any) {
       console.error('Error fetching routine data:', err);
@@ -138,7 +81,8 @@ export default function RoutineDetailScreen() {
   // Handle workout plan press
   const handlePlanPress = async (planId: string) => {
     await impact('selection');
-    const selectedPlan = workoutPlans.find(p => p.id === planId);
+    const selectedPlan = routine?.workoutPlans.find(p => p.id === planId);
+
     if (selectedPlan) {
       router.push({
         pathname: `/workout-plan-detail/${planId}`,
@@ -148,9 +92,6 @@ export default function RoutineDetailScreen() {
       router.push(`/workout-plan-detail/${planId}`);
     }
   };
-
-  // Handle save routine (handled by SaveRoutineButton component)
-  const handleSaveRoutine = undefined; // Not needed - button handles its own logic
 
   // Loading state
   if (loading) {
@@ -212,20 +153,42 @@ export default function RoutineDetailScreen() {
           />
         }
       >
+        {/* Routine Header */}
         <RoutineHeader routine={routine} />
-        
-        <SaveRoutineButton
-          routineId={routine.id}
-          routineName={routine.name}
-        />
+
+        {/* Save Button (only for public routines) */}
+        {isPublicRoutine && (
+          <SaveRoutineButton
+            routineId={routine.id}
+            routineName={routine.title}
+          />
+        )}
 
         <View style={styles.divider} />
 
-        <WorkoutPlanList
-          workoutPlans={workoutPlans}
-          onPlanPress={handlePlanPress}
-          loading={loading}
-        />
+        {/* Workout Plans Section */}
+        <View style={styles.plansSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Workout Plans ({routine.workoutPlans?.length || 0})
+          </Text>
+
+          {routine.workoutPlans && routine.workoutPlans.length > 0 ? (
+            routine.workoutPlans.map((plan, index) => (
+              <WorkoutPlanCard
+                key={plan.id}
+                plan={plan}
+                index={index}
+                onPress={() => handlePlanPress(plan.id)}
+              />
+            ))
+          ) : (
+            <View style={[styles.emptyState, { backgroundColor: theme.surface }]}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                No workout plans in this routine yet
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* Bottom padding */}
         <View style={styles.bottomPadding} />
@@ -275,10 +238,26 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginVertical: 8,
+    marginVertical: 16,
+  },
+  plansSection: {
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   bottomPadding: {
     height: 24,
   },
 });
-

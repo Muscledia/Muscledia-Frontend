@@ -4,11 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="deps: update dependencies for backend authentication&#10;&#10;- Update axios and related networking dependencies&#10;- Ensure compatibility with React Native and Expo&#10;- Lock dependency versions for stable authentication flow" />
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="deps: update dependencies for backend authentication&#10;&#10;- Update axios and related networking dependencies&#10;- Ensure compatibility with React Native and Expo&#10;- Lock dependency versions for stable authentication flow">
+      <change afterPath="$PROJECT_DIR$/components/exercises/PlannedExerciseCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routine-detail/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/routine-detail/[id].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-plan-detail/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plan-detail/[id].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/routines/RoutineHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/routines/RoutineHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/routines/WorkoutPlanCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/routines/WorkoutPlanCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workoutPlans/ExerciseList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/workoutPlans/ExerciseList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workoutPlans/PlanHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/workoutPlans/PlanHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workoutPlans/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/components/workoutPlans/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/routineService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/routineService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/api.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript JSX File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -74,7 +93,10 @@
       <workItem from="1763042053415" duration="1244000" />
       <workItem from="1763376147839" duration="2251000" />
       <workItem from="1763408895840" duration="3543000" />
-      <workItem from="1763418335427" duration="705000" />
+      <workItem from="1763418335427" duration="1977000" />
+      <workItem from="1763653301570" duration="756000" />
+      <workItem from="1764086923052" duration="4702000" />
+      <workItem from="1764339601531" duration="8372000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />

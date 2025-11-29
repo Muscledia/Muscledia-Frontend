@@ -1,242 +1,249 @@
+// services/RoutineService.ts
+
 import { apiGet, apiPost } from './api';
-import { ApiResponse, RoutineFolder, WorkoutPlan, SaveRoutineResponse } from '@/types/api';
+import { ApiResponse, RoutineFolder, WorkoutPlan, SaveRoutineResponse, PlannedExercise } from '@/types/api';
 
 /**
  * Routine Service
- * Handles all routine-related API calls
+ * Handles all routine-related API calls with proper endpoint routing
  */
 export class RoutineService {
   /**
-   * Fetch all public routine folders
-   * @returns Promise with array of public routine folders
+   * Normalize backend response to frontend format
+   */
+  private static normalizeRoutineFolder(data: any): RoutineFolder {
+    return {
+      // Core fields
+      id: data.id,
+      hevyId: data.hevyId,
+      title: data.title || data.name || 'Untitled Routine',
+      name: data.title || data.name || 'Untitled Routine',
+      description: data.description || 'No description available',
+
+      // Difficulty & Equipment
+      difficultyLevel: data.difficultyLevel,
+      difficulty: data.difficultyLevel?.toLowerCase() || 'intermediate',
+      equipmentType: data.equipmentType,
+      workoutSplit: data.workoutSplit,
+
+      // Duration
+      duration: data.duration || `${data.workoutPlanCount || 0} workouts`,
+
+      // Metadata
+      imageUrl: data.imageUrl,
+      isPublic: data.isPublic ?? true,
+      createdBy: data.createdBy?.toString() || 'Unknown',
+      usageCount: data.usageCount || 0,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString(),
+      folderIndex: data.folderIndex,
+
+      // Workout Plans - use arrow function to maintain context
+      workoutPlanIds: data.workoutPlanIds || [],
+      workoutPlans: data.workoutPlans
+        ? data.workoutPlans.map((plan: any) => RoutineService.normalizeWorkoutPlan(plan))
+        : [],
+      workoutPlanCount: data.workoutPlanCount || data.workoutPlans?.length || 0,
+      personal: data.personal ?? !data.isPublic,
+    };
+  }
+
+  /**
+   * Normalize workout plan response
+   */
+  private static normalizeWorkoutPlan(data: any): WorkoutPlan {
+    return {
+      id: data.id,
+      title: data.title || data.name || 'Untitled Workout',
+      name: data.title || data.name || 'Untitled Workout',
+      folderId: data.folderId,
+      description: data.description || '',
+
+      // Exercises - use arrow function to maintain context
+      exercises: data.exercises
+        ? data.exercises.map((ex: any) => RoutineService.normalizePlannedExercise(ex))
+        : [],
+
+      // Duration
+      estimatedDurationMinutes: data.estimatedDurationMinutes,
+      estimatedDuration: data.estimatedDurationMinutes || 0,
+
+      // Metadata
+      isPublic: data.isPublic ?? true,
+      createdBy: data.createdBy || 0,
+      usageCount: data.usageCount || 0,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString(),
+
+      // Computed fields
+      exerciseCount: data.exercises?.length || 0,
+      difficulty: data.difficulty,
+      targetMuscleGroups: data.targetMuscleGroups || [],
+    };
+  }
+
+  /**
+   * Normalize planned exercise
+   */
+  private static normalizePlannedExercise(data: any): PlannedExercise {
+    return {
+      index: data.index ?? 0,
+      title: data.title || 'Exercise',
+      name: data.title || 'Exercise',
+      notes: data.notes,
+      exerciseTemplateId: data.exerciseTemplateId,
+      supersetId: data.supersetId,
+      restSeconds: data.restSeconds ?? 60,
+      sets: data.sets || [],
+    };
+  }
+
+  /**
+   * Fetch all public routine folders (WITHOUT workout plans)
    */
   static async getPublicRoutineFolders(): Promise<ApiResponse<RoutineFolder[]>> {
     const response = await apiGet<any[]>('/api/v1/routine-folders/public');
-    
-    // Map backend fields to frontend format
+
     if (response.success && response.data) {
-      response.data = response.data.map((item: any) => ({
-        id: item.id,
-        name: item.title || item.name || 'Untitled Routine',
-        description: item.description || 'No description available',
-        difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
-        duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
-        imageUrl: item.imageUrl,
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        workoutPlanIds: item.workoutPlanIds || [],
-      }));
+      response.data = response.data.map((item: any) => RoutineService.normalizeRoutineFolder(item));
     }
-    
+
     return response as ApiResponse<RoutineFolder[]>;
   }
 
   /**
-   * Fetch a specific routine folder by ID
-   * @param id - The routine folder ID
-   * @returns Promise with routine folder details
+   * Fetch a specific public routine folder by ID (WITH workout plans and exercises)
    */
-  static async getRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
-    const response = await apiGet<any>(`/api/v1/routine-folders/${id}`);
-    
-    // Map backend fields to frontend format
+  static async getPublicRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
+    const response = await apiGet<any>(`/api/v1/routine-folders/public/${id}`);
+
     if (response.success && response.data) {
-      response.data = {
-        id: response.data.id,
-        name: response.data.title || response.data.name || 'Untitled Routine',
-        description: response.data.description || 'No description available',
-        difficulty: response.data.difficultyLevel?.toLowerCase() || 'intermediate',
-        duration: response.data.duration || `${response.data.workoutPlanCount || 0} workouts`,
-        imageUrl: response.data.imageUrl,
-        isPublic: response.data.isPublic,
-        createdBy: response.data.createdBy?.toString() || 'Unknown',
-        workoutPlanIds: response.data.workoutPlanIds || [],
-      };
+      response.data = RoutineService.normalizeRoutineFolder(response.data);
     }
-    
+
     return response as ApiResponse<RoutineFolder>;
   }
 
   /**
-   * Fetch all workout plans for a specific routine folder
-   * @param routineFolderId - The routine folder ID
-   * @returns Promise with array of workout plans
-   */
-  static async getWorkoutPlansByRoutineFolderId(routineFolderId: string): Promise<ApiResponse<WorkoutPlan[]>> {
-    try {
-      // Try the nested endpoint first
-      return await apiGet<WorkoutPlan[]>(`/api/v1/routine-folders/${routineFolderId}/workout-plans`);
-    } catch (error: any) {
-      // If 404/405, try alternative endpoint
-      if (error.status === 404 || error.status === 405) {
-        console.log('Nested endpoint not found, trying alternative...');
-        try {
-          return await apiGet<WorkoutPlan[]>(`/api/v1/workout-plans?routineFolderId=${routineFolderId}`);
-        } catch (altError: any) {
-          // If both fail, return empty array with message
-          console.warn('Both workout plan endpoints failed, returning empty array');
-          return {
-            success: true,
-            message: 'No workout plans available',
-            data: [],
-            timestamp: new Date().toISOString(),
-          } as ApiResponse<WorkoutPlan[]>;
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch workout plans by their IDs
-   * @param planIds - Array of workout plan IDs
-   * @returns Promise with array of workout plans
-   */
-  static async getWorkoutPlansByIds(planIds: string[]): Promise<ApiResponse<WorkoutPlan[]>> {
-    if (!planIds || planIds.length === 0) {
-      return {
-        success: true,
-        message: 'No workout plan IDs provided',
-        data: [],
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    }
-
-    try {
-      // Fetch all plans in parallel
-      const planPromises = planIds.map(id => 
-        apiGet<WorkoutPlan>(`/api/v1/workout-plans/${id}`)
-      );
-
-      const results = await Promise.allSettled(planPromises);
-      
-      // Filter successful results
-      const successfulPlans = results
-        .filter((result): result is PromiseFulfilledResult<ApiResponse<WorkoutPlan>> => 
-          result.status === 'fulfilled' && result.value.success
-        )
-        .map(result => result.value.data);
-
-      return {
-        success: true,
-        message: `Fetched ${successfulPlans.length} of ${planIds.length} workout plans`,
-        data: successfulPlans,
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    } catch (error: any) {
-      console.error('Error fetching workout plans by IDs:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to fetch workout plans',
-        data: [],
-        timestamp: new Date().toISOString(),
-      } as ApiResponse<WorkoutPlan[]>;
-    }
-  }
-
-  /**
-   * Create a new personal routine folder
-   * @param data - Routine folder data
-   */
-  static async createPersonalRoutine(data: Partial<RoutineFolder>): Promise<ApiResponse<RoutineFolder>> {
-    // Map frontend fields to backend expectation
-    const payload = {
-      name: data.name,
-      description: data.description,
-      difficultyLevel: data.difficulty?.toUpperCase() || 'INTERMEDIATE', 
-      isPublic: false,
-      workoutPlanIds: data.workoutPlanIds || []
-    };
-    
-    return apiPost<RoutineFolder>('/api/v1/routine-folders/personal', payload);
-  }
-
-  /**
-   * Save a public routine folder to user's personal collection
-   * @param publicRoutineId - The public routine folder ID to save
-   * @returns Promise with saved routine folder and workout plans
-   */
-  static async savePublicRoutine(publicRoutineId: string): Promise<ApiResponse<SaveRoutineResponse>> {
-    try {
-      return await apiPost<SaveRoutineResponse>(`/api/v1/routine-folders/save/${publicRoutineId}`);
-    } catch (error: any) {
-      console.log('Save routine endpoint failed, attempting fallback creation...', error.status);
-      
-      // Fallback: If 404/405, try to manually copy by creating a new personal routine
-      if (error.status === 404 || error.status === 405) {
-        try {
-          // 1. Get public routine details
-          const routineResponse = await this.getRoutineFolderById(publicRoutineId);
-          
-          if (routineResponse.success && routineResponse.data) {
-            const routine = routineResponse.data;
-            
-            // 2. Create personal routine
-            const createResponse = await this.createPersonalRoutine(routine);
-            
-            if (createResponse.success && createResponse.data) {
-               return {
-                 success: true,
-                 message: 'Routine saved to collection',
-                 data: {
-                   routineFolder: createResponse.data,
-                   workoutPlans: [], // We don't have the full objects returned here
-                   message: 'Routine saved successfully'
-                 },
-                 timestamp: new Date().toISOString()
-               };
-            }
-          }
-        } catch (fallbackError) {
-           console.warn('Fallback save failed:', fallbackError);
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch all personal routine folders
-   * @returns Promise with array of personal routine folders
+   * Fetch all personal routine folders (WITH workout plans and exercises)
    */
   static async getPersonalRoutineFolders(): Promise<ApiResponse<RoutineFolder[]>> {
     const response = await apiGet<any[]>('/api/v1/routine-folders/personal');
-    
-    // Map backend fields to frontend format
+
     if (response.success && response.data) {
-      response.data = response.data.map((item: any) => ({
-        id: item.id,
-        name: item.title || item.name || 'Untitled Routine',
-        description: item.description || 'No description available',
-        difficulty: item.difficultyLevel?.toLowerCase() || 'intermediate',
-        duration: item.duration || `${item.workoutPlanCount || 0} workouts`,
-        imageUrl: item.imageUrl,
-        isPublic: item.isPublic,
-        createdBy: item.createdBy?.toString() || 'Unknown',
-        workoutPlanIds: item.workoutPlanIds || [],
-      }));
+      response.data = response.data.map((item: any) => RoutineService.normalizeRoutineFolder(item));
     }
-    
+
     return response as ApiResponse<RoutineFolder[]>;
   }
 
   /**
+   * Fetch a specific personal routine folder by ID (WITH workout plans and exercises)
+   */
+  static async getPersonalRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
+    const response = await apiGet<any>(`/api/v1/routine-folders/personal/${id}`);
+
+    if (response.success && response.data) {
+      response.data = RoutineService.normalizeRoutineFolder(response.data);
+    }
+
+    return response as ApiResponse<RoutineFolder>;
+  }
+
+  /**
+   * DEPRECATED: Use getPublicRoutineFolderById or getPersonalRoutineFolderById
+   */
+  static async getRoutineFolderById(id: string): Promise<ApiResponse<RoutineFolder>> {
+    console.warn('getRoutineFolderById is deprecated. Use getPublicRoutineFolderById or getPersonalRoutineFolderById instead.');
+    return RoutineService.getPublicRoutineFolderById(id);
+  }
+
+  /**
+   * Create a new personal routine folder
+   */
+  static async createPersonalRoutine(data: Partial<RoutineFolder>): Promise<ApiResponse<RoutineFolder>> {
+    const payload = {
+      name: data.title || data.name,
+      description: data.description,
+      difficultyLevel: data.difficultyLevel || data.difficulty?.toUpperCase() || 'INTERMEDIATE',
+      isPublic: false,
+      workoutPlanIds: data.workoutPlanIds || []
+    };
+
+    const response = await apiPost<any>('/api/v1/routine-folders/personal', payload);
+
+    if (response.success && response.data) {
+      response.data = RoutineService.normalizeRoutineFolder(response.data);
+    }
+
+    return response as ApiResponse<RoutineFolder>;
+  }
+
+  /**
+   * Save a public routine folder to user's personal collection
+   */
+  static async savePublicRoutine(publicRoutineId: string): Promise<ApiResponse<SaveRoutineResponse>> {
+    try {
+      const response = await apiPost<any>(`/api/v1/routine-folders/save/${publicRoutineId}`);
+
+      if (response.success && response.data) {
+        const normalized = {
+          routineFolder: RoutineService.normalizeRoutineFolder(response.data.routineFolder),
+          workoutPlans: response.data.workoutPlans
+            ? response.data.workoutPlans.map((plan: any) => RoutineService.normalizeWorkoutPlan(plan))
+            : [],
+          message: response.data.message || 'Routine saved successfully'
+        };
+
+        return {
+          ...response,
+          data: normalized
+        } as ApiResponse<SaveRoutineResponse>;
+      }
+
+      return response as ApiResponse<SaveRoutineResponse>;
+    } catch (error: any) {
+      console.log('Save routine endpoint failed, attempting fallback...', error.status);
+
+      if (error.status === 404 || error.status === 405) {
+        try {
+          const routineResponse = await RoutineService.getPublicRoutineFolderById(publicRoutineId);
+
+          if (routineResponse.success && routineResponse.data) {
+            const routine = routineResponse.data;
+            const createResponse = await RoutineService.createPersonalRoutine(routine);
+
+            if (createResponse.success && createResponse.data) {
+              return {
+                success: true,
+                message: 'Routine saved to collection',
+                data: {
+                  routineFolder: createResponse.data,
+                  workoutPlans: routine.workoutPlans || [],
+                  message: 'Routine saved successfully'
+                },
+                timestamp: new Date().toISOString()
+              };
+            }
+          }
+        } catch (fallbackError) {
+          console.warn('Fallback save failed:', fallbackError);
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Check if a routine is already saved by the user
-   * @param publicRoutineId - The public routine folder ID
-   * @returns Promise with boolean indicating if routine is saved
    */
   static async isRoutineSaved(publicRoutineId: string): Promise<ApiResponse<{ isSaved: boolean }>> {
     try {
-      // Workaround: Fetch all personal routines and check if the ID exists
-      // This assumes the ID is preserved or linked. If the backend creates a new ID
-      // without linking, this check might fail (return false), but it prevents the 404/405 error.
-      const response = await this.getPersonalRoutineFolders();
-      
+      const response = await RoutineService.getPersonalRoutineFolders();
+
       if (response.success && response.data) {
-        // Check if any personal routine matches the public routine ID
-        // We might need to check other fields if ID changes, but for now checking ID
         const isSaved = response.data.some(routine => routine.id === publicRoutineId);
-        
+
         return {
           success: true,
           message: 'Save status checked successfully',
@@ -244,22 +251,21 @@ export class RoutineService {
           timestamp: new Date().toISOString()
         };
       }
-      
+
       return {
         success: false,
-        message: 'Failed to fetch personal routines to check status',
+        message: 'Failed to fetch personal routines',
         data: { isSaved: false },
         timestamp: new Date().toISOString()
       };
     } catch (error: any) {
-      console.warn('Failed to check save status via personal list:', error);
+      console.warn('Failed to check save status:', error);
       return {
         success: false,
         message: 'Failed to check save status',
-        data: { isSaved: false }, // Default to not saved on error
+        data: { isSaved: false },
         timestamp: new Date().toISOString()
       };
     }
   }
 }
-

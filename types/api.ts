@@ -1,3 +1,5 @@
+// types/api.ts
+
 // API Response Types matching Spring Boot backend
 
 // Common API Response Wrapper
@@ -33,9 +35,6 @@ export interface RegisterRequest {
   goalType: 'BUILD_STRENGTH' | 'LOSE_WEIGHT' | 'MAINTAIN' | 'BUILD_MUSCLE';
 }
 
-
-// Domain types
-
 // User Types
 export interface User {
   id: number;
@@ -50,10 +49,6 @@ export interface User {
   updatedAt: string;
 }
 
-
-
-//Other types here
-
 // Challenge Types (Backend definitions)
 export type JourneyPhase = 'Foundation' | 'Building' | 'Mastery';
 
@@ -61,12 +56,12 @@ export interface Challenge {
   id: string;
   name: string;
   description: string;
-  type: string; // e.g., 'DAILY', 'WEEKLY' or specific types
+  type: string;
   objective: string;
   targetValue: number;
   rewardPoints: number;
   unlockedQuestId?: string;
-  difficulty: string; // 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'
+  difficulty: string;
   autoEnroll: boolean;
   startDate: string;
   endDate: string;
@@ -78,7 +73,7 @@ export interface Challenge {
 }
 
 export interface ActiveChallenge {
-  id: string; // instance id
+  id: string;
   challengeId: string;
   challengeName: string;
   challengeType: string;
@@ -98,32 +93,95 @@ export interface ActiveChallenge {
   completionMessage?: string;
 }
 
+// ============================================
+// ROUTINE FOLDER & WORKOUT PLAN TYPES
+// ============================================
 
-// Routine Folder Types
+/**
+ * Routine Folder - Enriched response includes embedded workout plans
+ */
 export interface RoutineFolder {
   id: string;
-  name: string;
+  hevyId?: number;
+  title: string;
+  name: string; // Alias for title (for backward compatibility)
   description: string;
-  difficulty: string;
+  difficultyLevel?: string;
+  difficulty: string; // Normalized field
+  equipmentType?: string;
+  workoutSplit?: string;
   duration: string;
   imageUrl?: string;
   isPublic: boolean;
-  createdBy: string;
-  workoutPlanIds?: string[];
+  createdBy: number | string;
+  usageCount: number;
+  createdAt: string;
+  updatedAt: string;
+  workoutPlanIds: string[];
+  workoutPlans: WorkoutPlan[]; // Embedded workout plans
+  workoutPlanCount: number;
+  personal: boolean;
+  folderIndex?: number;
 }
 
-// Workout Plan Types
+/**
+ * Workout Plan - Matches backend structure with embedded exercises
+ */
 export interface WorkoutPlan {
   id: string;
-  name: string;
-  description: string;
-  targetMuscleGroups: string[];
-  estimatedDuration: number;
-  difficulty: string;
+  title: string;
+  name: string; // Alias for title (for backward compatibility)
+  folderId?: string;
+  description?: string;
+  exercises: PlannedExercise[]; // Embedded exercises
+  estimatedDurationMinutes?: number;
+  estimatedDuration: number; // Normalized field
+  isPublic: boolean;
+  createdBy: number;
+  usageCount: number;
+  createdAt: string;
+  updatedAt: string;
+
+  // Computed fields for UI
   exerciseCount: number;
+  difficulty?: string;
+  targetMuscleGroups?: string[];
 }
 
-// Exercise Types
+/**
+ * Planned Exercise - Exercise within a workout plan
+ */
+export interface PlannedExercise {
+  index: number;
+  title: string;
+  name: string; // Alias for title
+  notes?: string;
+  exerciseTemplateId: string;
+  supersetId?: string | null;
+  restSeconds: number;
+  sets: PlannedSet[];
+}
+
+/**
+ * Planned Set - Individual set configuration
+ */
+export interface PlannedSet {
+  index: number;
+  type: string;
+  weightKg?: number | null;
+  reps?: number | null;
+  distanceMeters?: number | null;
+  durationSeconds?: number | null;
+  repRangeStart?: number | null;
+  repRangeEnd?: number | null;
+  repRangeString?: string | null;
+  effectiveReps: string;
+}
+
+// ============================================
+// EXERCISE TYPES (for Exercise Library)
+// ============================================
+
 export interface Exercise {
   id: string;
   name: string;
@@ -138,13 +196,15 @@ export interface Exercise {
   restTime?: number;
 }
 
-// Workout Plan Detail (includes exercises)
+// Workout Plan Detail (simplified - exercises are always PlannedExercise now)
 export interface WorkoutPlanDetail extends WorkoutPlan {
-  exercises: Exercise[];
   instructions?: string;
 }
 
-// Save Routine Types
+// ============================================
+// SAVE ROUTINE TYPES
+// ============================================
+
 export interface SaveRoutineRequest {
   publicRoutineId: string;
 }
@@ -155,7 +215,10 @@ export interface SaveRoutineResponse {
   message: string;
 }
 
-// Error Types
+// ============================================
+// ERROR TYPES
+// ============================================
+
 export interface ApiError {
   success: false;
   message: string;
