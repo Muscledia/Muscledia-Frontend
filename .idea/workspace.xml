@@ -1,18 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
+    <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="chore: update IDE workspace configuration" />
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators">
+      <change afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/add-exercise.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/workout-plans/create.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/workout-session/add-exercise.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/workout/SetRow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-session/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-session/[planId].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/BACKEND_API.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/INTEGRATION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/SAVE_ROUTINE_FEATURE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/WorkoutService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/WorkoutService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/workoutPlanService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/workoutPlanService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/workout.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/workout.types.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
       </list>
     </option>
@@ -48,15 +70,21 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;integration-branch&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/ericm/spring-boot-Uni/Muscledia-Frontend&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
     &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\ericm\\spring-boot-Uni\\Muscledia-Frontend\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -86,7 +114,13 @@
       <workItem from="1764086923052" duration="4702000" />
       <workItem from="1764339601531" duration="8372000" />
       <workItem from="1764397630620" duration="344000" />
-      <workItem from="1764437499034" duration="11207000" />
+      <workItem from="1764437499034" duration="11249000" />
+      <workItem from="1764528612585" duration="6997000" />
+      <workItem from="1764576401239" duration="1742000" />
+      <workItem from="1764619031334" duration="5871000" />
+      <workItem from="1764693674826" duration="16969000" />
+      <workItem from="1764757893235" duration="11044000" />
+      <workItem from="1764790785258" duration="8516000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />
@@ -200,7 +234,39 @@
       <option name="project" value="LOCAL" />
       <updated>1764454925166</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="chore: update IDE workspace configuration">
+      <option name="closed" value="true" />
+      <created>1764455007492</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1764455007492</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat(workout-session): add rest timers, warmup controls, and cancel button&#10;&#10;- Implement adjustable rest timer (1-5 min) with modal settings per exercise&#10;- Add warmup timer with play/pause/reset functionality&#10;- Add cancel workout button at bottom with confirmation&#10;- Fix workout duration to use local time and format with hours&#10;- Add rest timer countdown modal with +15/-15 second adjustments&#10;- Improve timer state management with separate refs for each timer type">
+      <option name="closed" value="true" />
+      <created>1764627729431</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627729431</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat(services): add personalRecords field to WorkoutSet type&#10;&#10;- Add personalRecords?: string[] field to WorkoutSet interface&#10;- Enable PR type tracking for individual sets&#10;- Support backend PR detection response structure">
+      <option name="closed" value="true" />
+      <created>1764627752310</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627752310</updated>
+    </task>
+    <task id="LOCAL-00018" summary="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators">
+      <option name="closed" value="true" />
+      <created>1764627763931</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627763931</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -232,6 +298,9 @@
     <MESSAGE value="feat(workouts): add workout plan detail screen with exercise breakdown&#10;&#10;- Create Hevy-style workout plan detail view with stats&#10;- Display duration, exercise count, and total sets&#10;- Show complete exercise list with sets and rep ranges&#10;- Add Start Routine button with navigation to session&#10;- Include share and edit options in header&#10;- Display creator username instead of user ID&#10;- Add exercise cards with rest timers and notes&#10;- Support warmup sets and rep ranges display" />
     <MESSAGE value="feat(routines): add public routine detail screen" />
     <MESSAGE value="chore: update IDE workspace configuration" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: update IDE workspace configuration" />
+    <MESSAGE value="feat(workout-session): add rest timers, warmup controls, and cancel button&#10;&#10;- Implement adjustable rest timer (1-5 min) with modal settings per exercise&#10;- Add warmup timer with play/pause/reset functionality&#10;- Add cancel workout button at bottom with confirmation&#10;- Fix workout duration to use local time and format with hours&#10;- Add rest timer countdown modal with +15/-15 second adjustments&#10;- Improve timer state management with separate refs for each timer type" />
+    <MESSAGE value="feat(services): add personalRecords field to WorkoutSet type&#10;&#10;- Add personalRecords?: string[] field to WorkoutSet interface&#10;- Enable PR type tracking for individual sets&#10;- Support backend PR detection response structure" />
+    <MESSAGE value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
   </component>
 </project>
