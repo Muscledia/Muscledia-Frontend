@@ -1,229 +1,239 @@
 // types/api.ts
+// Centralized types for all API services
+// Single source of truth for data structures
 
-// API Response Types matching Spring Boot backend
-
-// Common API Response Wrapper
+// Base API Response
 export interface ApiResponse<T> {
   success: boolean;
-  message: string;
-  data: T;
-  timestamp: string;
-}
-
-// Authentication Types
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  token: string;
-  username: string;
-  userId: string;
-  uuidString: string;
-  roles: string[];
-}
-
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-  birthDate: string;
-  gender: string;
-  height: number;
-  initialWeight: number;
-  goalType: 'BUILD_STRENGTH' | 'LOSE_WEIGHT' | 'MAINTAIN' | 'BUILD_MUSCLE';
+  message?: string;
+  data?: T;
+  timestamp?: string;
+  status?: number;
 }
 
 // User Types
 export interface User {
   id: number;
-  username: string;
   email: string;
-  birthDate: string;
-  gender: string;
-  height: number;
-  weight: number;
-  goalType: string;
+  username: string;
+  name?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Challenge Types (Backend definitions)
-export type JourneyPhase = 'Foundation' | 'Building' | 'Mastery';
+// Exercise Types
+export interface Exercise {
+  id: string;
+  name: string;
+  category: string;
+  primaryMuscles: string[];
+  secondaryMuscles: string[];
+  equipment: string;
+  difficulty: string;
+  instructions: string[];
+  imageUrl?: string;
+}
 
+// Planned Set Types
+export interface PlannedSet {
+  setNumber?: number;
+  reps?: number;
+  repRangeStart?: number;
+  repRangeEnd?: number;
+  weightKg?: number;
+  durationSeconds?: number;
+  distanceMeters?: number;
+  restSeconds?: number;
+  type?: 'NORMAL' | 'WARMUP' | 'DROP' | 'FAILURE';
+  notes?: string;
+}
+
+// Planned Exercise Types
+export interface PlannedExercise {
+  id?: string;
+  index?: number;
+  title: string;
+  name?: string;
+  exerciseTemplateId: string;
+  notes?: string;
+  sets: PlannedSet[];
+  restSeconds?: number;
+  supersetId?: string;
+  targetSets?: number;
+  targetReps?: number;
+  restDurationSeconds?: number;
+}
+
+// Workout Plan Types
+export interface WorkoutPlan {
+  id: string;
+  title: string;
+  name?: string;
+  folderId?: string;
+  description?: string;
+  exercises: PlannedExercise[];
+  estimatedDurationMinutes?: number;
+  estimatedDuration?: number;
+  isPublic?: boolean;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
+  usageCount?: number;
+  exerciseCount?: number;
+  difficulty?: string;
+  targetMuscleGroups?: string[];
+}
+
+// Create Workout Plan Request DTO
+export interface CreateWorkoutPlanRequest {
+  title: string;
+  description?: string;
+  exercises?: PlannedExercise[];
+  estimatedDurationMinutes?: number;
+  isPublic?: boolean;
+}
+
+// Update Workout Plan Request DTO
+export interface UpdateWorkoutPlanRequest {
+  title?: string;
+  description?: string;
+  estimatedDurationMinutes?: number;
+  isPublic?: boolean;
+}
+
+// Add Exercise to Workout Plan Request DTO
+export interface AddExerciseToWorkoutPlanRequest {
+  exerciseTemplateId: string;
+  title: string;
+  notes?: string;
+  sets: PlannedSet[];
+  restSeconds?: number;
+}
+
+// Routine Folder Types
+export interface RoutineFolder {
+  id: string;
+  hevyId?: number;
+  title: string;
+  name?: string;
+  description?: string;
+  difficultyLevel?: string;
+  difficulty?: string;
+  equipmentType?: string;
+  workoutSplit?: string;
+  duration?: string;
+  imageUrl?: string;
+  isPublic?: boolean;
+  createdBy?: string | number;
+  usageCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  folderIndex?: number;
+  workoutPlanIds: string[];
+  workoutPlans?: WorkoutPlan[];
+  workoutPlanCount?: number;
+  personal?: boolean;
+}
+
+// Save Routine Response
+export interface SaveRoutineResponse {
+  routineFolder: RoutineFolder;
+  workoutPlans: WorkoutPlan[];
+  message?: string;
+}
+
+// Workout Session Types
+export interface WorkoutSet {
+  setNumber: number;
+  weightKg: number | null;
+  reps: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
+  restSeconds: number | null;
+  rpe: number | null;
+  completed: boolean;
+  notes: string | null;
+  volume: number;
+  setType: 'NORMAL' | 'WARMUP' | 'DROP' | 'FAILURE';
+  startedAt: string | null;
+  completedAt: string | null;
+  personalRecords?: string[];
+}
+
+export interface WorkoutExercise {
+  equipment: string | null;
+  sets: WorkoutSet[];
+  notes: string | null;
+  exerciseId: string;
+  exerciseName: string;
+  exerciseOrder: number | null;
+  exerciseCategory: string | null;
+  primaryMuscleGroup: string | null;
+  secondaryMuscleGroups: string[];
+  startedAt: string | null;
+  completedAt: string | null;
+  totalVolume: number;
+  totalReps: number;
+  maxWeight: number;
+  averageRpe: number;
+  completedSets: number;
+}
+
+export interface WorkoutSession {
+  id: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  exercises: WorkoutExercise[];
+  metrics: {
+    totalVolume: number;
+    totalSets: number;
+    totalReps: number;
+    caloriesBurned: number;
+    workedMuscleGroups: string[];
+    personalRecordsAchieved: any | null;
+  };
+  context: {
+    location: string | null;
+    notes: string | null;
+    rating: number | null;
+    tags: string[];
+  };
+  userId: number;
+  workoutName: string;
+  workoutPlanId: string | null;
+  workoutType: 'STRENGTH' | 'CARDIO' | 'HIIT' | 'FLEXIBILITY' | 'SPORTS' | 'OTHER';
+  startedAt: string;
+  completedAt: string | null;
+  durationMinutes: number | null;
+}
+
+// Update Set Request DTO
+export interface UpdateSetRequest {
+  weightKg?: number | null;
+  reps?: number | null;
+  completed?: boolean;
+  rpe?: number | null;
+  notes?: string | null;
+  durationSeconds?: number | null;
+  distanceMeters?: number | null;
+  restSeconds?: number | null;
+  setType?: string;
+}
+
+// Challenge Types
 export interface Challenge {
   id: string;
   name: string;
   description: string;
-  type: string;
-  objective: string;
-  targetValue: number;
-  rewardPoints: number;
-  unlockedQuestId?: string;
-  difficulty: string;
-  autoEnroll: boolean;
-  startDate: string;
-  endDate: string;
-  progressUnit: string;
-  formattedTarget: string;
-  estimatedDuration: string;
-  alreadyStarted: boolean;
-  active: boolean;
+  type: 'DAILY' | 'WEEKLY';
+  points: number;
+  requirements: unknown;
 }
 
 export interface ActiveChallenge {
   id: string;
   challengeId: string;
-  challengeName: string;
-  challengeType: string;
-  status: 'ACTIVE' | 'COMPLETED' | 'FAILED';
-  currentProgress: number;
-  targetValue: number;
-  progressPercentage: number;
-  progressUnit: string;
-  startedAt: string;
+  userId: number;
+  progress: number;
+  completed: boolean;
   completedAt?: string;
-  expiresAt: string;
-  pointsEarned: number;
-  statusDisplayName: string;
-  formattedProgress: string;
-  timeRemaining: string;
-  canComplete: boolean;
-  completionMessage?: string;
-}
-
-// ============================================
-// ROUTINE FOLDER & WORKOUT PLAN TYPES
-// ============================================
-
-/**
- * Routine Folder - Enriched response includes embedded workout plans
- */
-export interface RoutineFolder {
-  id: string;
-  hevyId?: number;
-  title: string;
-  name: string; // Alias for title (for backward compatibility)
-  description: string;
-  difficultyLevel?: string;
-  difficulty: string; // Normalized field
-  equipmentType?: string;
-  workoutSplit?: string;
-  duration: string;
-  imageUrl?: string;
-  isPublic: boolean;
-  createdBy: number | string;
-  usageCount: number;
-  createdAt: string;
-  updatedAt: string;
-  workoutPlanIds: string[];
-  workoutPlans: WorkoutPlan[]; // Embedded workout plans
-  workoutPlanCount: number;
-  personal: boolean;
-  folderIndex?: number;
-}
-
-/**
- * Workout Plan - Matches backend structure with embedded exercises
- */
-export interface WorkoutPlan {
-  id: string;
-  title: string;
-  name: string; // Alias for title (for backward compatibility)
-  folderId?: string;
-  description?: string;
-  exercises: PlannedExercise[]; // Embedded exercises
-  estimatedDurationMinutes?: number;
-  estimatedDuration: number; // Normalized field
-  isPublic: boolean;
-  createdBy: number;
-  usageCount: number;
-  createdAt: string;
-  updatedAt: string;
-
-  // Computed fields for UI
-  exerciseCount: number;
-  difficulty?: string;
-  targetMuscleGroups?: string[];
-}
-
-/**
- * Planned Exercise - Exercise within a workout plan
- */
-export interface PlannedExercise {
-  index: number;
-  title: string;
-  name: string; // Alias for title
-  notes?: string;
-  exerciseTemplateId: string;
-  supersetId?: string | null;
-  restSeconds: number;
-  sets: PlannedSet[];
-}
-
-/**
- * Planned Set - Individual set configuration
- */
-export interface PlannedSet {
-  index: number;
-  type: string;
-  weightKg?: number | null;
-  reps?: number | null;
-  distanceMeters?: number | null;
-  durationSeconds?: number | null;
-  repRangeStart?: number | null;
-  repRangeEnd?: number | null;
-  repRangeString?: string | null;
-  effectiveReps: string;
-}
-
-// ============================================
-// EXERCISE TYPES (for Exercise Library)
-// ============================================
-
-export interface Exercise {
-  id: string;
-  name: string;
-  description: string;
-  muscleGroups: string[];
-  equipment: string[];
-  difficulty: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  sets?: number;
-  reps?: number;
-  restTime?: number;
-}
-
-// Workout Plan Detail (simplified - exercises are always PlannedExercise now)
-export interface WorkoutPlanDetail extends WorkoutPlan {
-  instructions?: string;
-}
-
-// ============================================
-// SAVE ROUTINE TYPES
-// ============================================
-
-export interface SaveRoutineRequest {
-  publicRoutineId: string;
-}
-
-export interface SaveRoutineResponse {
-  routineFolder: RoutineFolder;
-  workoutPlans: WorkoutPlan[];
-  message: string;
-}
-
-// ============================================
-// ERROR TYPES
-// ============================================
-
-export interface ApiError {
-  success: false;
-  message: string;
-  error: string;
-  timestamp: string;
-  path: string;
-  status: number;
 }
