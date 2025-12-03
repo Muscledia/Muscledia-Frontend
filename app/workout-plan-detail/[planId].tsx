@@ -1,4 +1,4 @@
-// app/workout-plan-detail/[planId].tsx
+// app/workout-plan-detail/[planId].tsx - UPDATED with Delete Menu
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,6 +10,8 @@ import {
   Image,
   useColorScheme,
   ActivityIndicator,
+  Alert,
+  ActionSheetIOS,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,6 +49,7 @@ export default function WorkoutPlanDetailScreen() {
   });
 
   const [loading, setLoading] = useState(!plan);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!plan && planId) {
@@ -88,6 +91,157 @@ export default function WorkoutPlanDetailScreen() {
     });
   };
 
+  // Handle menu options: Share, Edit, Duplicate, Delete
+  const handleShowMenu = () => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Cancel', 'Share', 'Edit Routine', 'Duplicate', 'Delete'],
+        destructiveButtonIndex: 4,
+        cancelButtonIndex: 0,
+        title: 'Routine Options',
+        message: plan?.title,
+      },
+      async (buttonIndex) => {
+        await impact('light');
+
+        switch (buttonIndex) {
+          case 1:
+            handleShare();
+            break;
+          case 2:
+            handleEditRoutine();
+            break;
+          case 3:
+            handleDuplicate();
+            break;
+          case 4:
+            handleDelete();
+            break;
+          default:
+            break;
+        }
+      }
+    );
+  };
+
+  const handleShare = async () => {
+    await impact('medium');
+    Alert.alert('Share', 'Share functionality coming soon');
+  };
+
+  const handleEditRoutine = async () => {
+    await impact('medium');
+    router.push({
+      pathname: '/workout-plans/[planId]/edit',
+      params: { planId },
+    });
+  };
+
+  const handleDuplicate = async () => {
+    await impact('medium');
+
+    Alert.prompt(
+      'Duplicate Routine',
+      `Copy "${plan?.title}" as:`,
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Duplicate',
+          onPress: async (newTitle) => {
+            if (!newTitle || !newTitle.trim()) {
+              Alert.alert('Error', 'Please enter a name for the new routine');
+              return;
+            }
+
+            try {
+              const response = await WorkoutPlanService.duplicateWorkoutPlan(
+                planId,
+                newTitle.trim()
+              );
+
+              if (response.success && response.data) {
+                await impact('success');
+                Alert.alert('Success', 'Routine duplicated!', [
+                  {
+                    text: 'View New',
+                    onPress: () => {
+                      router.push({
+                        pathname: '/workout-plan-detail/[planId]',
+                        params: { planId: response.data.id },
+                      });
+                    },
+                  },
+                  {
+                    text: 'OK',
+                    onPress: () => loadWorkoutPlan(),
+                  },
+                ]);
+              }
+            } catch (error) {
+              console.error('Failed to duplicate plan:', error);
+              Alert.alert('Error', 'Failed to duplicate routine');
+              await impact('error');
+            }
+          },
+        },
+      ],
+      'plain-text',
+      `${plan?.title} (Copy)`
+    );
+  };
+
+  // DELETE HANDLER - Called when user selects Delete from menu
+  const handleDelete = async () => {
+    Alert.alert(
+      'Delete Routine',
+      `Are you sure you want to delete "${plan?.title}"? This cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await impact('medium');
+
+              const response = await WorkoutPlanService.deleteWorkoutPlan(planId);
+
+              if (response.success) {
+                await impact('success');
+                Alert.alert('Success', 'Routine deleted', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      router.back();
+                    },
+                  },
+                ]);
+              } else {
+                await impact('error');
+                Alert.alert('Error', response.message || 'Failed to delete routine');
+              }
+            } catch (error) {
+              console.error('Failed to delete plan:', error);
+              await impact('error');
+              Alert.alert('Error', 'Failed to delete routine');
+            } finally {
+              setDeleting(false);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
@@ -125,11 +279,13 @@ export default function WorkoutPlanDetailScreen() {
           >
             <Share2 size={22} color={theme.text} />
           </TouchableOpacity>
+          {/* THREE DOTS MENU BUTTON - NOW WITH DELETE HANDLER */}
           <TouchableOpacity
-            onPress={async () => { await impact('light'); }}
+            onPress={handleShowMenu}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={deleting}
           >
-            <MoreVertical size={22} color={theme.text} />
+            <MoreVertical size={22} color={deleting ? theme.textMuted : theme.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -182,6 +338,7 @@ export default function WorkoutPlanDetailScreen() {
           onPress={startWorkout}
           activeOpacity={0.9}
           style={styles.startButton}
+          disabled={deleting}
         >
           <LinearGradient
             colors={[theme.accent, theme.accentSecondary]}
@@ -233,22 +390,18 @@ interface ExerciseCardProps {
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, index, theme, impact }) => {
   const getSetDisplay = (set: any, idx: number) => {
-    // Handle warmup sets
     if (set.type === 'warmup') {
       return { label: 'W', value: 'Warmup' };
     }
 
-    // Handle rep ranges
     if (set.repRangeStart && set.repRangeEnd) {
       return { label: (idx + 1).toString(), value: `${set.repRangeStart}-${set.repRangeEnd}` };
     }
 
-    // Handle exact reps
     if (set.reps) {
       return { label: (idx + 1).toString(), value: set.reps.toString() };
     }
 
-    // Handle duration
     if (set.durationSeconds) {
       const mins = Math.floor(set.durationSeconds / 60);
       const secs = set.durationSeconds % 60;

@@ -1,766 +1,440 @@
-// app/workout-session/[planId].tsx
+// app/workout-plan-detail/[planId].tsx - UPDATED with Delete Menu
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
   useColorScheme,
   ActivityIndicator,
-  TextInput,
-  Modal,
   Alert,
-  Pressable,
+  ActionSheetIOS,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-  X,
-  Check,
-  Plus,
-  ChevronDown,
+  ArrowLeft,
+  Share2,
+  MoreVertical,
   Timer,
   Dumbbell,
-  MoreVertical,
-  Play,
-  Pause,
-  Settings,
-  Award,
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { WorkoutService, WorkoutSession, WorkoutExercise, WorkoutSet } from '@/services/WorkoutService';
+import { WorkoutPlanService } from '@/services';
+import { WorkoutPlan, PlannedExercise } from '@/types/api';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useAuth } from '@/hooks/useAuth';
 
-interface LocalSetData {
-  weightKg: string;
-  reps: string;
-}
-
-export default function WorkoutSessionScreen() {
-  const { planId } = useLocalSearchParams<{ planId: string }>();
+export default function WorkoutPlanDetailScreen() {
+  const { planId, initialData } = useLocalSearchParams<{ planId: string; initialData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
+  const { user } = useAuth();
 
-  const [workout, setWorkout] = useState<WorkoutSession | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [savingSet, setSavingSet] = useState(false);
-  const [workoutDuration, setWorkoutDuration] = useState('0s');
+  const [plan, setPlan] = useState<WorkoutPlan | null>(() => {
+    if (initialData) {
+      try {
+        return JSON.parse(initialData as string);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
-  const [localSetValues, setLocalSetValues] = useState<Record<string, LocalSetData>>({});
-
-  // Rest timer states
-  const [restTimerPreferences, setRestTimerPreferences] = useState<Record<number, number>>({});
-  const [activeRestTimer, setActiveRestTimer] = useState<number | null>(null);
-  const [restTimeRemaining, setRestTimeRemaining] = useState(0);
-  const [showRestSettings, setShowRestSettings] = useState<number | null>(null);
-
-  // Warmup timer states
-  const [warmupTimers, setWarmupTimers] = useState<Record<string, number>>({});
-  const [activeWarmupTimer, setActiveWarmupTimer] = useState<string | null>(null);
-
-  const [localStartTime] = useState(new Date());
-
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const restTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const warmupTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [loading, setLoading] = useState(!plan);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    startWorkout();
-
-    return () => {
-      if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
-      if (restTimerIntervalRef.current) clearInterval(restTimerIntervalRef.current);
-      if (warmupTimerIntervalRef.current) clearInterval(warmupTimerIntervalRef.current);
-    };
+    if (!plan && planId) {
+      loadWorkoutPlan();
+    }
   }, [planId]);
 
-  // Workout duration timer
-  useEffect(() => {
-    if (workout) {
-      durationIntervalRef.current = setInterval(() => {
-        const now = new Date();
-        const durationMs = now.getTime() - localStartTime.getTime();
-
-        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        if (hours > 0) {
-          setWorkoutDuration(`${hours}h ${minutes}m ${seconds}s`);
-        } else if (minutes > 0) {
-          setWorkoutDuration(`${minutes}m ${seconds}s`);
-        } else {
-          setWorkoutDuration(`${seconds}s`);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (durationIntervalRef.current) {
-        clearInterval(durationIntervalRef.current);
-      }
-    };
-  }, [workout, localStartTime]);
-
-  // Rest timer countdown
-  useEffect(() => {
-    if (activeRestTimer !== null && restTimeRemaining > 0) {
-      restTimerIntervalRef.current = setInterval(() => {
-        setRestTimeRemaining(prev => {
-          if (prev <= 1) {
-            if (restTimerIntervalRef.current) {
-              clearInterval(restTimerIntervalRef.current);
-            }
-            impact('heavy');
-            setActiveRestTimer(null);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (restTimerIntervalRef.current) {
-        clearInterval(restTimerIntervalRef.current);
-      }
-    };
-  }, [activeRestTimer, restTimeRemaining]);
-
-  // Warmup timer countdown
-  useEffect(() => {
-    if (activeWarmupTimer && warmupTimers[activeWarmupTimer] > 0) {
-      warmupTimerIntervalRef.current = setInterval(() => {
-        setWarmupTimers(prev => {
-          const currentTime = prev[activeWarmupTimer];
-          if (currentTime <= 1) {
-            if (warmupTimerIntervalRef.current) {
-              clearInterval(warmupTimerIntervalRef.current);
-            }
-            impact('heavy');
-            setActiveWarmupTimer(null);
-            return { ...prev, [activeWarmupTimer]: 0 };
-          }
-          return { ...prev, [activeWarmupTimer]: currentTime - 1 };
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (warmupTimerIntervalRef.current) {
-        clearInterval(warmupTimerIntervalRef.current);
-      }
-    };
-  }, [activeWarmupTimer, warmupTimers]);
-
-  const startWorkout = async () => {
+  const loadWorkoutPlan = async () => {
     try {
       setLoading(true);
-      const response = await WorkoutService.startWorkoutFromPlan(planId);
+      const response = await WorkoutPlanService.getWorkoutPlanById(planId);
 
       if (response.success && response.data) {
-        setWorkout(response.data);
-        initializeLocalValues(response.data);
-        initializeRestTimers(response.data);
-        initializeWarmupTimers(response.data);
-        console.log('Workout started:', response.data.id);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to start workout');
-        router.back();
+        setPlan(response.data);
       }
-    } catch (error: any) {
-      console.error('Error starting workout:', error);
-      Alert.alert('Error', 'Failed to start workout session');
-      router.back();
+    } catch (error) {
+      console.error('Failed to load workout plan:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const initializeLocalValues = (workoutData: WorkoutSession) => {
-    const initialValues: Record<string, LocalSetData> = {};
-    workoutData.exercises.forEach((exercise, exIdx) => {
-      exercise.sets.forEach((set, setIdx) => {
-        const key = `${exIdx}-${setIdx}`;
-        initialValues[key] = {
-          weightKg: set.weightKg?.toString() || '',
-          reps: set.reps?.toString() || '',
-        };
-      });
-    });
-    setLocalSetValues(initialValues);
+  const calculateTotalSets = () => {
+    if (!plan?.exercises) return 0;
+    return plan.exercises.reduce((total, exercise) => total + (exercise.sets?.length || 0), 0);
   };
 
-  const initializeRestTimers = (workoutData: WorkoutSession) => {
-    const initialTimers: Record<number, number> = {};
-    workoutData.exercises.forEach((exercise, index) => {
-      initialTimers[index] = 120; // Default 2 minutes
-    });
-    setRestTimerPreferences(initialTimers);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
   };
 
-  const initializeWarmupTimers = (workoutData: WorkoutSession) => {
-    const initialTimers: Record<string, number> = {};
-    workoutData.exercises.forEach((exercise, exIdx) => {
-      exercise.sets.forEach((set, setIdx) => {
-        if (set.durationSeconds) {
-          const key = `${exIdx}-${setIdx}`;
-          initialTimers[key] = set.durationSeconds;
-        }
-      });
-    });
-    setWarmupTimers(initialTimers);
-  };
-
-  const getLocalSetKey = (exerciseIndex: number, setIndex: number) => {
-    return `${exerciseIndex}-${setIndex}`;
-  };
-
-  const updateLocalValue = (
-    exerciseIndex: number,
-    setIndex: number,
-    field: 'weightKg' | 'reps',
-    value: string
-  ) => {
-    const key = getLocalSetKey(exerciseIndex, setIndex);
-    setLocalSetValues(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        [field]: value,
-      }
-    }));
-  };
-
-  const getPreviousSetData = (exerciseIndex: number, setIndex: number) => {
-    if (!workout) return null;
-
-    if (setIndex > 0) {
-      const prevSet = workout.exercises[exerciseIndex].sets[setIndex - 1];
-      return prevSet;
-    }
-
-    return null;
-  };
-
-  const toggleSetComplete = async (exerciseIndex: number, setIndex: number) => {
-    if (!workout) return;
-
+  const startWorkout = async () => {
     await impact('medium');
-    setSavingSet(true);
-
-    const currentSet = workout.exercises[exerciseIndex].sets[setIndex];
-    const key = getLocalSetKey(exerciseIndex, setIndex);
-    const localValues = localSetValues[key];
-
-    const isDurationExercise = currentSet.durationSeconds !== null && currentSet.durationSeconds > 0;
-
-    if (!currentSet.completed && !isDurationExercise) {
-      const weightKg = localValues.weightKg ? parseFloat(localValues.weightKg) : null;
-      const reps = localValues.reps ? parseInt(localValues.reps) : null;
-
-      if (!weightKg || !reps) {
-        Alert.alert('Missing Data', 'Please enter both weight and reps before completing the set');
-        setSavingSet(false);
-        return;
-      }
-    }
-
-    try {
-      const weightKg = localValues.weightKg ? parseFloat(localValues.weightKg) : null;
-      const reps = localValues.reps ? parseInt(localValues.reps) : null;
-
-      const response = await WorkoutService.updateSet(
-        workout.id,
-        exerciseIndex,
-        setIndex,
-        {
-          completed: !currentSet.completed,
-          weightKg: isDurationExercise ? null : weightKg,
-          reps: isDurationExercise ? null : reps,
-        }
-      );
-
-      if (response.success && response.data) {
-        setWorkout(response.data);
-
-        const updatedSet = response.data.exercises[exerciseIndex].sets[setIndex];
-        setLocalSetValues(prev => ({
-          ...prev,
-          [key]: {
-            weightKg: updatedSet.weightKg?.toString() || '',
-            reps: updatedSet.reps?.toString() || '',
-          }
-        }));
-
-        // Start rest timer if completing a set
-        if (!currentSet.completed && !isDurationExercise) {
-          const restTime = restTimerPreferences[exerciseIndex] || 120;
-          setRestTimeRemaining(restTime);
-          setActiveRestTimer(exerciseIndex);
-        }
-
-        await impact('success');
-      }
-    } catch (error) {
-      console.error('Failed to update set:', error);
-      Alert.alert('Error', 'Failed to update set');
-      await impact('error');
-    } finally {
-      setSavingSet(false);
-    }
+    router.push({
+      pathname: `/workout-session/${planId}`,
+      params: { initialData: JSON.stringify(plan) }
+    });
   };
 
-  const startWarmupTimer = (exerciseIndex: number, setIndex: number) => {
-    const key = getLocalSetKey(exerciseIndex, setIndex);
-    setActiveWarmupTimer(key);
-    impact('light');
-  };
+  // Handle menu options: Share, Edit, Duplicate, Delete
+  const handleShowMenu = () => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Cancel', 'Share', 'Edit Routine', 'Duplicate', 'Delete'],
+        destructiveButtonIndex: 4,
+        cancelButtonIndex: 0,
+        title: 'Routine Options',
+        message: plan?.title,
+      },
+      async (buttonIndex) => {
+        await impact('light');
 
-  const pauseWarmupTimer = () => {
-    setActiveWarmupTimer(null);
-    impact('light');
-  };
-
-  const resetWarmupTimer = (exerciseIndex: number, setIndex: number) => {
-    const key = getLocalSetKey(exerciseIndex, setIndex);
-    const set = workout?.exercises[exerciseIndex].sets[setIndex];
-    if (set?.durationSeconds) {
-      setWarmupTimers(prev => ({
-        ...prev,
-        [key]: set.durationSeconds!
-      }));
-    }
-    setActiveWarmupTimer(null);
-    impact('light');
-  };
-
-  const addSet = async (exerciseIndex: number) => {
-    if (!workout) return;
-
-    await impact('medium');
-
-    try {
-      const response = await WorkoutService.addSet(workout.id, exerciseIndex);
-
-      if (response.success && response.data) {
-        if ('exercises' in response.data) {
-          setWorkout(response.data as WorkoutSession);
-
-          const newSetIndex = response.data.exercises[exerciseIndex].sets.length - 1;
-          const key = getLocalSetKey(exerciseIndex, newSetIndex);
-          setLocalSetValues(prev => ({
-            ...prev,
-            [key]: {
-              weightKg: '',
-              reps: '',
-            }
-          }));
+        switch (buttonIndex) {
+          case 1:
+            handleShare();
+            break;
+          case 2:
+            handleEditRoutine();
+            break;
+          case 3:
+            handleDuplicate();
+            break;
+          case 4:
+            handleDelete();
+            break;
+          default:
+            break;
         }
       }
-    } catch (error) {
-      console.error('Failed to add set:', error);
-      Alert.alert('Error', 'Failed to add set');
-    }
-  };
-
-  const updateRestTimerPreference = (exerciseIndex: number, minutes: number) => {
-    const seconds = minutes * 60;
-    setRestTimerPreferences(prev => ({
-      ...prev,
-      [exerciseIndex]: seconds
-    }));
-    setShowRestSettings(null);
-  };
-
-  const skipRestTimer = () => {
-    setActiveRestTimer(null);
-    setRestTimeRemaining(0);
-  };
-
-  const cancelWorkout = async () => {
-    if (!workout) return;
-
-    Alert.alert(
-      'Cancel Workout',
-      'Are you sure you want to cancel this workout? All progress will be lost.',
-      [
-        { text: 'Continue Workout', style: 'cancel' },
-        {
-          text: 'Cancel Workout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await WorkoutService.cancelWorkout(workout.id);
-              await impact('medium');
-              router.back();
-            } catch (error) {
-              console.error('Failed to cancel workout:', error);
-              Alert.alert('Error', 'Failed to cancel workout');
-            }
-          },
-        },
-      ]
     );
   };
 
-  const finishWorkout = async () => {
-    if (!workout) return;
+  const handleShare = async () => {
+    await impact('medium');
+    Alert.alert('Share', 'Share functionality coming soon');
+  };
 
-    await impact('success');
+  const handleEditRoutine = async () => {
+    await impact('medium');
+    router.push({
+      pathname: '/workout-plans/[planId]/edit',
+      params: { planId },
+    });
+  };
 
-    Alert.alert(
-      'Finish Workout',
-      'Great job! Ready to finish this workout?',
+  const handleDuplicate = async () => {
+    await impact('medium');
+
+    Alert.prompt(
+      'Duplicate Routine',
+      `Copy "${plan?.title}" as:`,
       [
-        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Finish',
-          onPress: async () => {
-            try {
-              const response = await WorkoutService.completeWorkout(workout.id);
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Duplicate',
+          onPress: async (newTitle) => {
+            if (!newTitle || !newTitle.trim()) {
+              Alert.alert('Error', 'Please enter a name for the new routine');
+              return;
+            }
 
-              if (response.success) {
-                Alert.alert('Success', 'Workout completed!', [
-                  { text: 'OK', onPress: () => router.back() }
+            try {
+              const response = await WorkoutPlanService.duplicateWorkoutPlan(
+                planId,
+                newTitle.trim()
+              );
+
+              if (response.success && response.data) {
+                await impact('success');
+                Alert.alert('Success', 'Routine duplicated!', [
+                  {
+                    text: 'View New',
+                    onPress: () => {
+                      router.push({
+                        pathname: '/workout-plan-detail/[planId]',
+                        params: { planId: response.data.id },
+                      });
+                    },
+                  },
+                  {
+                    text: 'OK',
+                    onPress: () => loadWorkoutPlan(),
+                  },
                 ]);
               }
             } catch (error) {
-              console.error('Failed to complete workout:', error);
-              Alert.alert('Error', 'Failed to complete workout');
+              console.error('Failed to duplicate plan:', error);
+              Alert.alert('Error', 'Failed to duplicate routine');
+              await impact('error');
             }
           },
         },
-      ]
+      ],
+      'plain-text',
+      `${plan?.title} (Copy)`
     );
   };
 
-  const calculateWorkoutStats = () => {
-    if (!workout) return { volume: '0 kg', sets: 0 };
+  // DELETE HANDLER - Called when user selects Delete from menu
+  const handleDelete = async () => {
+    Alert.alert(
+      'Delete Routine',
+      `Are you sure you want to delete "${plan?.title}"? This cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await impact('medium');
 
-    const totalVolume = workout.exercises.reduce((sum, ex) => {
-      return sum + ex.sets.reduce((setSum, set) => {
-        return setSum + (set.completed ? (set.weightKg || 0) * (set.reps || 0) : 0);
-      }, 0);
-    }, 0);
+              const response = await WorkoutPlanService.deleteWorkoutPlan(planId);
 
-    const completedSets = workout.exercises.reduce((sum, ex) => {
-      return sum + ex.sets.filter(s => s.completed).length;
-    }, 0);
-
-    return {
-      volume: `${totalVolume.toFixed(0)} kg`,
-      sets: completedSets,
-    };
+              if (response.success) {
+                await impact('success');
+                Alert.alert('Success', 'Routine deleted', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      router.back();
+                    },
+                  },
+                ]);
+              } else {
+                await impact('error');
+                Alert.alert('Error', response.message || 'Failed to delete routine');
+              }
+            } catch (error) {
+              console.error('Failed to delete plan:', error);
+              await impact('error');
+              Alert.alert('Error', 'Failed to delete routine');
+            } finally {
+              setDeleting(false);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.accent} />
-        <Text style={[styles.loadingText, { color: theme.text }]}>Starting workout...</Text>
       </View>
     );
   }
 
-  if (!workout) {
+  if (!plan) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.text }}>Failed to load workout</Text>
+        <Text style={{ color: theme.text }}>Workout plan not found</Text>
       </View>
     );
   }
 
-  const stats = calculateWorkoutStats();
+  const totalSets = calculateTotalSets();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <TouchableOpacity style={styles.headerLeft}>
-          <ChevronDown size={24} color={theme.text} />
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Log Workout</Text>
+        <TouchableOpacity
+          onPress={async () => { await impact('light'); router.back(); }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-
-        <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => {}} style={styles.timerButton}>
-            <Timer size={20} color={theme.text} />
-          </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Routine</Text>
+        <View style={styles.headerActions}>
           <TouchableOpacity
-            onPress={finishWorkout}
-            style={[styles.finishButton, { backgroundColor: theme.accent }]}
+            onPress={async () => { await impact('light'); }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{ marginRight: 16 }}
           >
-            <Text style={[styles.finishButtonText, { color: theme.cardText }]}>Finish</Text>
+            <Share2 size={22} color={theme.text} />
           </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Workout Stats */}
-      <View style={[styles.statsBar, { backgroundColor: theme.background }]}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: theme.textMuted }]}>Duration</Text>
-          <Text style={[styles.statValue, { color: theme.accent }]}>{workoutDuration}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: theme.textMuted }]}>Volume</Text>
-          <Text style={[styles.statValue, { color: theme.text }]}>{stats.volume}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: theme.textMuted }]}>Sets</Text>
-          <Text style={[styles.statValue, { color: theme.text }]}>{stats.sets}</Text>
-        </View>
-        <View style={styles.muscleIcons}>
-          <Dumbbell size={20} color={theme.textMuted} />
-          <Dumbbell size={20} color={theme.textMuted} />
+          {/* THREE DOTS MENU BUTTON - NOW WITH DELETE HANDLER */}
+          <TouchableOpacity
+            onPress={handleShowMenu}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={deleting}
+          >
+            <MoreVertical size={22} color={deleting ? theme.textMuted : theme.text} />
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {workout.exercises.map((exercise, exerciseIndex) => (
+        {/* Title Section */}
+        <View style={styles.titleSection}>
+          <Text style={[styles.planTitle, { color: theme.text }]}>{plan.title}</Text>
+          <Text style={[styles.createdBy, { color: theme.textMuted }]}>
+            Created by {user?.username || user?.email?.split('@')[0] || 'Unknown'}
+          </Text>
+        </View>
+
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {plan.estimatedDurationMinutes ? formatDuration(plan.estimatedDurationMinutes) : 'N/A'}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Est Duration</Text>
+          </View>
+
+          <View style={[styles.statDivider, { backgroundColor: theme.surface }]} />
+
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {plan.exercises?.length || 0}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Exercises</Text>
+          </View>
+
+          <View style={[styles.statDivider, { backgroundColor: theme.surface }]} />
+
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: theme.text }]}>{totalSets}</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Sets</Text>
+          </View>
+
+          <View style={[styles.statDivider, { backgroundColor: theme.surface }]} />
+
+          {/* Muscle Icons Placeholder */}
+          <View style={styles.muscleIcons}>
+            <Dumbbell size={24} color={theme.accent} />
+            <Dumbbell size={24} color={theme.accent} />
+          </View>
+        </View>
+
+        {/* Start Routine Button */}
+        <TouchableOpacity
+          onPress={startWorkout}
+          activeOpacity={0.9}
+          style={styles.startButton}
+          disabled={deleting}
+        >
+          <LinearGradient
+            colors={[theme.accent, theme.accentSecondary]}
+            locations={[0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.startGradient}
+          >
+            <Text style={[styles.startButtonText, { color: theme.cardText }]}>
+              Start Routine
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Exercises Section Header */}
+        <View style={styles.exercisesHeader}>
+          <Text style={[styles.exercisesTitle, { color: theme.text }]}>Exercises</Text>
+          <TouchableOpacity
+            onPress={async () => { await impact('light'); }}
+          >
+            <Text style={[styles.editButton, { color: theme.accent }]}>Edit Routine</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Exercises List */}
+        {plan.exercises?.map((exercise, index) => (
           <ExerciseCard
-            key={exerciseIndex}
+            key={index}
             exercise={exercise}
-            exerciseIndex={exerciseIndex}
-            workout={workout}
+            index={index}
             theme={theme}
-            localSetValues={localSetValues}
-            onUpdateLocalValue={updateLocalValue}
-            onToggleComplete={toggleSetComplete}
-            onAddSet={addSet}
-            savingSet={savingSet}
-            getPreviousSetData={getPreviousSetData}
-            isRestTimerActive={activeRestTimer === exerciseIndex}
-            restTimeRemaining={activeRestTimer === exerciseIndex ? restTimeRemaining : 0}
-            restTimerPreference={restTimerPreferences[exerciseIndex] || 120}
-            onSkipRestTimer={skipRestTimer}
-            onShowRestSettings={() => setShowRestSettings(exerciseIndex)}
-            warmupTimers={warmupTimers}
-            activeWarmupTimer={activeWarmupTimer}
-            onStartWarmupTimer={startWarmupTimer}
-            onPauseWarmupTimer={pauseWarmupTimer}
-            onResetWarmupTimer={resetWarmupTimer}
+            impact={impact}
           />
         ))}
 
-        {/* Add Exercise Button */}
-        <TouchableOpacity
-          style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
-          onPress={async () => {
-            await impact('medium');
-            Alert.alert('Add Exercise', 'Exercise picker coming soon!');
-          }}
-          activeOpacity={0.7}
-        >
-          <Plus size={20} color={theme.accent} />
-          <Text style={[styles.addExerciseText, { color: theme.accent }]}>Add Exercise</Text>
-        </TouchableOpacity>
-
-        {/* Cancel Workout Button */}
-        <TouchableOpacity
-          style={[styles.cancelButton, { borderColor: theme.error }]}
-          onPress={cancelWorkout}
-          activeOpacity={0.7}
-        >
-          <X size={20} color={theme.error} />
-          <Text style={[styles.cancelButtonText, { color: theme.error }]}>Cancel Workout</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* Rest Timer Settings Modal */}
-      {showRestSettings !== null && (
-        <Modal
-          visible={true}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setShowRestSettings(null)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowRestSettings(null)}>
-            <Pressable style={[styles.settingsModal, { backgroundColor: theme.surface }]}>
-              <Text style={[styles.settingsTitle, { color: theme.text }]}>Rest Timer</Text>
-              <Text style={[styles.settingsSubtitle, { color: theme.textMuted }]}>
-                {workout.exercises[showRestSettings].exerciseName}
-              </Text>
-
-              <View style={styles.timeOptions}>
-                {[1, 1.5, 2, 2.5, 3, 4, 5].map(minutes => (
-                  <TouchableOpacity
-                    key={minutes}
-                    style={[
-                      styles.timeOption,
-                      {
-                        backgroundColor: restTimerPreferences[showRestSettings] === minutes * 60
-                          ? theme.accent
-                          : theme.background,
-                        borderColor: theme.accent,
-                      }
-                    ]}
-                    onPress={() => updateRestTimerPreference(showRestSettings, minutes)}
-                  >
-                    <Text style={[
-                      styles.timeOptionText,
-                      {
-                        color: restTimerPreferences[showRestSettings] === minutes * 60
-                          ? theme.cardText
-                          : theme.text,
-                      }
-                    ]}>
-                      {minutes}min
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      )}
-
-      {/* Active Rest Timer Modal */}
-      {activeRestTimer !== null && (
-        <Modal
-          visible={true}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={skipRestTimer}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.timerModal, { backgroundColor: theme.surface }]}>
-              <Text style={[styles.timerTitle, { color: theme.text }]}>Rest Timer</Text>
-              <Text style={[styles.timerExerciseName, { color: theme.textMuted }]}>
-                {workout.exercises[activeRestTimer].exerciseName}
-              </Text>
-
-              <View style={styles.timerControls}>
-                <TouchableOpacity
-                  onPress={() => setRestTimeRemaining(prev => Math.max(0, prev - 15))}
-                  style={[styles.timerAdjustButton, { backgroundColor: theme.background }]}
-                >
-                  <Text style={[styles.timerAdjustText, { color: theme.text }]}>-15</Text>
-                </TouchableOpacity>
-
-                <Text style={[styles.timerDisplay, { color: theme.accent }]}>
-                  {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
-                </Text>
-
-                <TouchableOpacity
-                  onPress={() => setRestTimeRemaining(prev => prev + 15)}
-                  style={[styles.timerAdjustButton, { backgroundColor: theme.background }]}
-                >
-                  <Text style={[styles.timerAdjustText, { color: theme.text }]}>+15</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.skipButton, { backgroundColor: theme.accent }]}
-                onPress={async () => {
-                  await impact('light');
-                  skipRestTimer();
-                }}
-              >
-                <Text style={[styles.skipButtonText, { color: theme.cardText }]}>Skip</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 }
 
 // Exercise Card Component
 interface ExerciseCardProps {
-  exercise: WorkoutExercise;
-  exerciseIndex: number;
-  workout: WorkoutSession;
+  exercise: PlannedExercise;
+  index: number;
   theme: any;
-  localSetValues: Record<string, LocalSetData>;
-  onUpdateLocalValue: (exerciseIndex: number, setIndex: number, field: 'weightKg' | 'reps', value: string) => void;
-  onToggleComplete: (exerciseIndex: number, setIndex: number) => void;
-  onAddSet: (exerciseIndex: number) => void;
-  savingSet: boolean;
-  getPreviousSetData: (exerciseIndex: number, setIndex: number) => WorkoutSet | null;
-  isRestTimerActive: boolean;
-  restTimeRemaining: number;
-  restTimerPreference: number;
-  onSkipRestTimer: () => void;
-  onShowRestSettings: () => void;
-  warmupTimers: Record<string, number>;
-  activeWarmupTimer: string | null;
-  onStartWarmupTimer: (exerciseIndex: number, setIndex: number) => void;
-  onPauseWarmupTimer: () => void;
-  onResetWarmupTimer: (exerciseIndex: number, setIndex: number) => void;
+  impact: any;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({
-                                                     exercise,
-                                                     exerciseIndex,
-                                                     theme,
-                                                     localSetValues,
-                                                     onUpdateLocalValue,
-                                                     onToggleComplete,
-                                                     onAddSet,
-                                                     savingSet,
-                                                     getPreviousSetData,
-                                                     isRestTimerActive,
-                                                     restTimeRemaining,
-                                                     restTimerPreference,
-                                                     onSkipRestTimer,
-                                                     onShowRestSettings,
-                                                     warmupTimers,
-                                                     activeWarmupTimer,
-                                                     onStartWarmupTimer,
-                                                     onPauseWarmupTimer,
-                                                     onResetWarmupTimer,
-                                                   }) => {
-  const getLocalValue = (setIndex: number, field: 'weightKg' | 'reps') => {
-    const key = `${exerciseIndex}-${setIndex}`;
-    return localSetValues[key]?.[field] || '';
-  };
-
-  const isDurationExercise = exercise.sets.length > 0 &&
-    exercise.sets[0].durationSeconds !== null &&
-    exercise.sets[0].durationSeconds > 0;
-
-  const formatRestTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    if (mins > 0 && secs > 0) {
-      return `${mins}min ${secs}s`;
-    } else if (mins > 0) {
-      return `${mins}min`;
-    } else {
-      return `${secs}s`;
+const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, index, theme, impact }) => {
+  const getSetDisplay = (set: any, idx: number) => {
+    if (set.type === 'warmup') {
+      return { label: 'W', value: 'Warmup' };
     }
-  };
 
-  const hasPR = (set: WorkoutSet, type?: string) => {
-    if (!set.personalRecords || set.personalRecords.length === 0) return false;
-    if (type) return set.personalRecords.includes(type);
-    return true;
+    if (set.repRangeStart && set.repRangeEnd) {
+      return { label: (idx + 1).toString(), value: `${set.repRangeStart}-${set.repRangeEnd}` };
+    }
+
+    if (set.reps) {
+      return { label: (idx + 1).toString(), value: set.reps.toString() };
+    }
+
+    if (set.durationSeconds) {
+      const mins = Math.floor(set.durationSeconds / 60);
+      const secs = set.durationSeconds % 60;
+      return {
+        label: (idx + 1).toString(),
+        value: mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+      };
+    }
+
+    return { label: (idx + 1).toString(), value: '-' };
   };
 
   return (
-    <View style={[styles.exerciseCard, { backgroundColor: theme.background }]}>
+    <View style={[styles.exerciseCard, { backgroundColor: theme.surface }]}>
       {/* Exercise Header */}
-      <View style={styles.exerciseHeader}>
-        <View style={styles.exerciseInfo}>
-          <View style={[styles.exerciseIcon, { backgroundColor: theme.accent + '20' }]}>
-            <Dumbbell size={20} color={theme.accent} />
-          </View>
-          <Text style={[styles.exerciseName, { color: theme.accent }]}>
-            {exercise.exerciseName}
+      <View style={styles.exerciseCardHeader}>
+        <View style={[styles.exerciseIcon, { backgroundColor: theme.accent + '20' }]}>
+          <Dumbbell size={20} color={theme.accent} />
+        </View>
+        <Text style={[styles.exerciseTitle, { color: theme.accent }]}>
+          {exercise.title || exercise.name}
+        </Text>
+      </View>
+
+      {/* Rest Timer */}
+      {exercise.restSeconds > 0 && (
+        <View style={styles.restTimer}>
+          <Timer size={16} color={theme.accent} />
+          <Text style={[styles.restTimerText, { color: theme.accent }]}>
+            Rest Timer: {Math.floor(exercise.restSeconds / 60)}min {exercise.restSeconds % 60}s
           </Text>
         </View>
-        <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <MoreVertical size={20} color={theme.textMuted} />
-        </TouchableOpacity>
-      </View>
+      )}
 
       {/* Exercise Notes */}
       {exercise.notes && (
@@ -769,262 +443,41 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </Text>
       )}
 
-      {/* Notes Input */}
-      <TextInput
-        style={[styles.notesInput, { color: theme.textMuted, borderColor: theme.surface }]}
-        placeholder="Add notes here..."
-        placeholderTextColor={theme.textMuted}
-        multiline
-      />
-
-      {/* Rest Timer Badge - Only show for non-duration exercises */}
-      {!isDurationExercise && (
-        <View style={styles.restTimerContainer}>
-          <TouchableOpacity
-            style={[styles.restBadge, { backgroundColor: theme.accent + '15' }]}
-            onPress={onShowRestSettings}
-            activeOpacity={0.7}
-          >
-            <Timer size={14} color={theme.accent} />
-            <Text style={[styles.restBadgeText, { color: theme.accent }]}>
-              Rest Timer: {formatRestTime(restTimerPreference)}
-            </Text>
-            <Settings size={12} color={theme.accent} />
-          </TouchableOpacity>
-
-          {/* Active Timer Display */}
-          {isRestTimerActive && restTimeRemaining > 0 && (
-            <View style={[styles.activeTimer, { backgroundColor: theme.accent }]}>
-              <Text style={[styles.activeTimerText, { color: theme.cardText }]}>
-                {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
-              </Text>
-              <TouchableOpacity onPress={onSkipRestTimer}>
-                <Text style={[styles.skipTimerText, { color: theme.cardText }]}>Skip</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+      {/* Sets Table */}
+      <View style={styles.setsTable}>
+        {/* Table Header */}
+        <View style={[styles.tableHeader, { borderBottomColor: theme.background }]}>
+          <Text style={[styles.tableHeaderText, { color: theme.textMuted }]}>SET</Text>
+          <Text style={[styles.tableHeaderText, { color: theme.textMuted }]}>KG</Text>
+          <Text style={[styles.tableHeaderText, { color: theme.textMuted }]}>REP RANGE</Text>
         </View>
-      )}
 
-      {/* Duration-based Exercise (Warmup) */}
-      {isDurationExercise ? (
-        <>
-          <View style={[styles.tableHeader, { borderBottomColor: theme.surface }]}>
-            <Text style={[styles.headerText, styles.setCol, { color: theme.textMuted }]}>SET</Text>
-            <Text style={[styles.headerText, styles.prevCol, { color: theme.textMuted }]}>PREVIOUS</Text>
-            <Text style={[styles.headerText, { flex: 1, color: theme.textMuted }]}>TIME</Text>
-            <View style={styles.checkCol} />
-          </View>
+        {/* Sets Rows */}
+        {exercise.sets?.map((set, idx) => {
+          const setDisplay = getSetDisplay(set, idx);
+          const isWarmup = set.type === 'warmup';
 
-          {exercise.sets.map((set, setIndex) => {
-            const prevSet = getPreviousSetData(exerciseIndex, setIndex);
-            const isCompleted = set.completed;
-            const key = `${exerciseIndex}-${setIndex}`;
-            const currentTime = warmupTimers[key] || set.durationSeconds || 0;
-            const isActive = activeWarmupTimer === key;
-            const minutes = Math.floor(currentTime / 60);
-            const seconds = currentTime % 60;
-
-            return (
-              <View
-                key={setIndex}
-                style={[
-                  styles.setRow,
-                  isCompleted && { backgroundColor: theme.accent + '15' }
-                ]}
-              >
-                <View style={styles.setCol}>
-                  <Text style={[styles.setText, { color: isCompleted ? theme.accent : theme.text }]}>
-                    {set.setNumber}
-                  </Text>
-                </View>
-
-                <View style={styles.prevCol}>
-                  {prevSet && prevSet.durationSeconds ? (
-                    <Text style={[styles.prevText, { color: theme.textMuted }]}>
-                      {Math.floor(prevSet.durationSeconds / 60)}:{(prevSet.durationSeconds % 60).toString().padStart(2, '0')}
-                    </Text>
-                  ) : (
-                    <Text style={[styles.prevText, { color: theme.textMuted }]}>-</Text>
-                  )}
-                </View>
-
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <View style={styles.timerControls}>
-                    {!isCompleted && (
-                      <>
-                        <TouchableOpacity
-                          onPress={() => isActive ? onPauseWarmupTimer() : onStartWarmupTimer(exerciseIndex, setIndex)}
-                          style={[styles.timerControlButton, { backgroundColor: theme.accent + '20' }]}
-                        >
-                          {isActive ? (
-                            <Pause size={16} color={theme.accent} />
-                          ) : (
-                            <Play size={16} color={theme.accent} />
-                          )}
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => onResetWarmupTimer(exerciseIndex, setIndex)}
-                          style={[styles.timerControlButton, { backgroundColor: theme.surface }]}
-                        >
-                          <Text style={[styles.timerControlText, { color: theme.textMuted }]}>Reset</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    <View style={[
-                      styles.timerDisplayBox,
-                      { backgroundColor: isCompleted ? theme.accent + '20' : theme.accent + '30' }
-                    ]}>
-                      <Text style={[styles.timerText, { color: isActive ? theme.accent : theme.text }]}>
-                        {minutes}:{seconds.toString().padStart(2, '0')}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.checkCol}
-                  onPress={() => onToggleComplete(exerciseIndex, setIndex)}
-                  disabled={savingSet}
-                >
-                  <View
-                    style={[
-                      styles.squareCheckbox,
-                      {
-                        backgroundColor: isCompleted ? theme.accent : 'transparent',
-                        borderColor: isCompleted ? theme.accent : theme.textMuted,
-                      }
-                    ]}
-                  >
-                    {isCompleted && <Check size={16} color={theme.cardText} />}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </>
-      ) : (
-        <>
-          {/* Regular Exercise with Weight/Reps */}
-          <View style={[styles.tableHeader, { borderBottomColor: theme.surface }]}>
-            <Text style={[styles.headerText, styles.setCol, { color: theme.textMuted }]}>SET</Text>
-            <Text style={[styles.headerText, styles.prevCol, { color: theme.textMuted }]}>PREVIOUS</Text>
-            <Text style={[styles.headerText, styles.kgCol, { color: theme.textMuted }]}>KG</Text>
-            <Text style={[styles.headerText, styles.repsCol, { color: theme.textMuted }]}>REPS</Text>
-            <View style={styles.checkCol} />
-          </View>
-
-          {exercise.sets.map((set, setIndex) => {
-            const prevSet = getPreviousSetData(exerciseIndex, setIndex);
-            const isCompleted = set.completed;
-            const isPR = hasPR(set);
-
-            return (
-              <View
-                key={setIndex}
-                style={[
-                  styles.setRow,
-                  isCompleted && { backgroundColor: theme.accent + '15' }
-                ]}
-              >
-                <View style={styles.setCol}>
-                  <View style={styles.setNumberContainer}>
-                    {set.setType === 'WARMUP' ? (
-                      <Text style={[styles.setText, { color: theme.accent }]}>W</Text>
-                    ) : (
-                      <Text style={[styles.setText, { color: isCompleted ? theme.accent : theme.text }]}>
-                        {set.setNumber}
-                      </Text>
-                    )}
-                    {isPR && (
-                      <View style={[styles.prBadge, { backgroundColor: '#FFD700' }]}>
-                        <Award size={10} color="#000" />
-                        <Text style={styles.prBadgeText}>PR</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.prevCol}>
-                  {prevSet && prevSet.weightKg && prevSet.reps ? (
-                    <Text style={[styles.prevText, { color: theme.textMuted }]}>
-                      {prevSet.weightKg}kg × {prevSet.reps}
-                    </Text>
-                  ) : (
-                    <Text style={[styles.prevText, { color: theme.textMuted }]}>-</Text>
-                  )}
-                </View>
-
-                <View style={styles.kgCol}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        color: theme.text,
-                        backgroundColor: isCompleted ? theme.accent + '20' : theme.surface,
-                        borderColor: isCompleted ? theme.accent : theme.surface,
-                      }
-                    ]}
-                    value={getLocalValue(setIndex, 'weightKg')}
-                    onChangeText={(text) => onUpdateLocalValue(exerciseIndex, setIndex, 'weightKg', text)}
-                    keyboardType="decimal-pad"
-                    placeholder="-"
-                    placeholderTextColor={theme.textMuted}
-                    editable={!isCompleted}
-                  />
-                </View>
-
-                <View style={styles.repsCol}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        color: theme.text,
-                        backgroundColor: isCompleted ? theme.accent + '20' : theme.surface,
-                        borderColor: isCompleted ? theme.accent : theme.surface,
-                      }
-                    ]}
-                    value={getLocalValue(setIndex, 'reps')}
-                    onChangeText={(text) => onUpdateLocalValue(exerciseIndex, setIndex, 'reps', text)}
-                    keyboardType="number-pad"
-                    placeholder="-"
-                    placeholderTextColor={theme.textMuted}
-                    editable={!isCompleted}
-                  />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.checkCol}
-                  onPress={() => onToggleComplete(exerciseIndex, setIndex)}
-                  disabled={savingSet}
-                >
-                  <View
-                    style={[
-                      styles.squareCheckbox,
-                      {
-                        backgroundColor: isCompleted ? theme.accent : 'transparent',
-                        borderColor: isCompleted ? theme.accent : theme.textMuted,
-                      }
-                    ]}
-                  >
-                    {isCompleted && <Check size={16} color={theme.cardText} />}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </>
-      )}
-
-      {/* Add Set Button */}
-      <TouchableOpacity
-        style={styles.addSetButton}
-        onPress={() => onAddSet(exerciseIndex)}
-        activeOpacity={0.7}
-      >
-        <Plus size={16} color={theme.text} />
-        <Text style={[styles.addSetText, { color: theme.text }]}>Add Set</Text>
-      </TouchableOpacity>
+          return (
+            <View
+              key={idx}
+              style={[
+                styles.setRow,
+                { backgroundColor: isWarmup ? theme.accent + '10' : 'transparent' }
+              ]}
+            >
+              <Text style={[styles.setNumber, { color: isWarmup ? theme.accent : theme.text }]}>
+                {setDisplay.label}
+              </Text>
+              <Text style={[styles.setWeight, { color: theme.text }]}>
+                {set.weightKg || '-'}
+              </Text>
+              <Text style={[styles.setReps, { color: theme.text }]}>
+                {setDisplay.value}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 };
@@ -1037,368 +490,169 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 60,
-    paddingBottom: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
-  headerRight: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  timerButton: {
-    padding: 8,
-  },
-  finishButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  finishButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  statsBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
-    marginRight: 32,
-  },
-  statLabel: {
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  muscleIcons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginLeft: 'auto',
   },
   content: {
     flex: 1,
   },
-  exerciseCard: {
-    padding: 16,
-    borderBottomWidth: 8,
-    borderBottomColor: 'rgba(0,0,0,0.2)',
+  titleSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
-  exerciseHeader: {
+  planTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  createdBy: {
+    fontSize: 14,
+  },
+  statsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+  },
+  muscleIcons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 16,
+  },
+  startButton: {
+    marginHorizontal: 16,
+    marginVertical: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  startGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  startButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  exercisesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-  exerciseInfo: {
+  exercisesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  editButton: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  exerciseCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+  },
+  exerciseCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
+    marginBottom: 12,
   },
   exerciseIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  exerciseName: {
-    fontSize: 16,
+  exerciseTitle: {
+    fontSize: 17,
     fontWeight: '600',
     flex: 1,
+  },
+  restTimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  restTimerText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   exerciseNotes: {
     fontSize: 13,
     lineHeight: 18,
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  notesInput: {
-    fontSize: 13,
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-  },
-  restTimerContainer: {
-    marginBottom: 12,
-  },
-  restBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  restBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  activeTimer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+  setsTable: {
     marginTop: 8,
-  },
-  activeTimerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  skipTimerText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   tableHeader: {
     flexDirection: 'row',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  headerText: {
-    fontSize: 10,
+  tableHeaderText: {
+    flex: 1,
+    fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
   },
   setRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: 6,
     marginBottom: 4,
   },
-  setCol: {
-    width: 40,
-    alignItems: 'center',
-  },
-  setNumberContainer: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  prBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  prBadgeText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  prevCol: {
-    flex: 1.2,
-    paddingHorizontal: 4,
-  },
-  kgCol: {
-    flex: 0.8,
-    paddingHorizontal: 4,
-  },
-  repsCol: {
-    flex: 0.8,
-    paddingHorizontal: 4,
-  },
-  checkCol: {
-    width: 40,
-    alignItems: 'center',
-  },
-  setText: {
+  setNumber: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '600',
-  },
-  prevText: {
-    fontSize: 12,
     textAlign: 'center',
   },
-  input: {
-    height: 36,
-    borderRadius: 6,
-    borderWidth: 1,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  timerDisplayBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  timerText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  timerControlButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerControlText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  squareCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addSetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    marginTop: 8,
-  },
-  addSetText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  addExerciseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
-  },
-  addExerciseText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalOverlay: {
+  setWeight: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'flex-end',
-  },
-  settingsModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 48,
-  },
-  settingsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  settingsSubtitle: {
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  timeOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  timeOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  timeOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 32,
-    paddingBottom: 48,
-    alignItems: 'center',
-  },
-  timerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  timerExerciseName: {
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  timerAdjustButton: {
-    width: 60,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerAdjustText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerDisplay: {
-    fontSize: 56,
-    fontWeight: 'bold',
-    minWidth: 140,
+    fontSize: 15,
     textAlign: 'center',
   },
-  skipButton: {
-    paddingHorizontal: 64,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  setReps: {
+    flex: 1,
+    fontSize: 15,
+    textAlign: 'center',
   },
 });
