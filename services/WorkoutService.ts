@@ -1,7 +1,17 @@
 // services/WorkoutService.ts
 
-import { apiGet, apiPost, apiPut } from './api';
+import { apiDelete, apiGet, apiPost, apiPut } from './api';
 import { ApiResponse } from '@/types/api';
+
+/**
+ * Set type classification for training intensity tracking
+ */
+export enum SetType {
+  NORMAL = 'NORMAL',
+  WARMUP = 'WARMUP',
+  FAILURE = 'FAILURE',
+  DROP = 'DROP',
+}
 
 /**
  * Workout data structures matching backend
@@ -20,7 +30,7 @@ export interface WorkoutSet {
   setType: 'NORMAL' | 'WARMUP' | 'DROP' | 'FAILURE';
   startedAt: string | null;
   completedAt: string | null;
-  personalRecords?: string[]; // Array of PR types: ['MAX_WEIGHT', 'MAX_REPS', 'ESTIMATED_1RM']
+  personalRecords?: string[];
 }
 
 export interface WorkoutExercise {
@@ -69,7 +79,6 @@ export interface WorkoutSession {
   durationMinutes: number | null;
 }
 
-// FIXED: Changed undefined to null to match backend
 export interface UpdateSetRequest {
   weightKg?: number | null;
   reps?: number | null;
@@ -78,6 +87,8 @@ export interface UpdateSetRequest {
   notes?: string | null;
   durationSeconds?: number | null;
   distanceMeters?: number | null;
+  restSeconds?: number | null;
+  setType?: SetType | string;
 }
 
 /**
@@ -114,14 +125,14 @@ export class WorkoutService {
 
   /**
    * Update a specific set in the workout
-   * Backend returns the full workout session, not just the set
+   * Backend returns the full workout session
    */
   static async updateSet(
     workoutId: string,
     exerciseIndex: number,
     setIndex: number,
     setData: UpdateSetRequest
-  ): Promise<ApiResponse<WorkoutSession>> { // Changed from WorkoutSet to WorkoutSession
+  ): Promise<ApiResponse<WorkoutSession>> {
     const response = await apiPut<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets/${setIndex}`,
       setData
@@ -178,6 +189,51 @@ export class WorkoutService {
     const response = await apiPut<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/cancel`,
       {}
+    );
+    return response;
+  }
+
+  /**
+   * Delete a set from an exercise during workout
+   */
+  static async deleteSet(
+    workoutId: string,
+    exerciseIndex: number,
+    setIndex: number
+  ): Promise<ApiResponse<WorkoutSession>> {
+    const response = await apiDelete<WorkoutSession>(
+      `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets/${setIndex}`
+    );
+    return response;
+  }
+
+  /**
+   * Delete an exercise from workout
+   */
+  static async deleteExercise(
+    workoutId: string,
+    exerciseIndex: number
+  ): Promise<ApiResponse<WorkoutSession>> {
+    const response = await apiDelete<WorkoutSession>(
+      `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}`
+    );
+    return response;
+  }
+
+  /**
+   * Add exercise to active workout
+   */
+  static async addExerciseToWorkout(
+    workoutId: string,
+    exerciseData: {
+      exerciseId: string;
+      exerciseName: string;
+      notes?: string;
+    }
+  ): Promise<ApiResponse<WorkoutSession>> {
+    const response = await apiPost<WorkoutSession>(
+      `/api/v1/workouts/${workoutId}/exercises`,
+      exerciseData
     );
     return response;
   }
