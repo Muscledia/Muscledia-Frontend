@@ -91,6 +91,14 @@ export interface UpdateSetRequest {
   setType?: SetType | string;
 }
 
+export interface CompleteWorkoutRequest {
+  completedAt?: string;
+  rating?: number;
+  notes?: string;
+  caloriesBurned?: number;
+  additionalTags?: string[];
+}
+
 /**
  * Workout Service
  * Handles all workout session API calls
@@ -100,7 +108,8 @@ export class WorkoutService {
    * Start a workout from a saved plan
    */
   static async startWorkoutFromPlan(planId: string): Promise<ApiResponse<WorkoutSession>> {
-    const response = await apiPost<WorkoutSession>(`/api/v1/workouts/from-plan/${planId}`);
+    console.log('Starting workout from plan:', planId);
+    const response = await apiPost<WorkoutSession>(`/api/v1/workouts/from-plan/${planId}`, {});
     return response;
   }
 
@@ -108,9 +117,11 @@ export class WorkoutService {
    * Start an empty workout session
    */
   static async startEmptyWorkout(workoutName: string): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Starting empty workout:', workoutName);
     const response = await apiPost<WorkoutSession>('/api/v1/workouts', {
       workoutName,
-      workoutType: 'STRENGTH'
+      workoutType: 'STRENGTH',
+      useWorkoutPlan: false
     });
     return response;
   }
@@ -119,6 +130,7 @@ export class WorkoutService {
    * Get active workout session
    */
   static async getWorkoutSession(workoutId: string): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Fetching workout session:', workoutId);
     const response = await apiGet<WorkoutSession>(`/api/v1/workouts/${workoutId}`);
     return response;
   }
@@ -133,6 +145,8 @@ export class WorkoutService {
     setIndex: number,
     setData: UpdateSetRequest
   ): Promise<ApiResponse<WorkoutSession>> {
+    console.log(`Updating set: workout=${workoutId}, exercise=${exerciseIndex}, set=${setIndex}`, setData);
+
     const response = await apiPut<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets/${setIndex}`,
       setData
@@ -151,6 +165,8 @@ export class WorkoutService {
       notes?: string;
     }
   ): Promise<ApiResponse<WorkoutExercise>> {
+    console.log('Adding exercise to workout:', workoutId, exerciseData);
+
     const response = await apiPost<WorkoutExercise>(
       `/api/v1/workouts/${workoutId}/exercises`,
       exerciseData
@@ -165,27 +181,71 @@ export class WorkoutService {
     workoutId: string,
     exerciseIndex: number
   ): Promise<ApiResponse<WorkoutSet | WorkoutSession>> {
-    const response = await apiPost<WorkoutSet | WorkoutSession>(
-      `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets`
-    );
-    return response;
-  }
+    console.log(`Adding set: workout=${workoutId}, exercise=${exerciseIndex}`);
 
-  /**
-   * Complete the workout session
-   */
-  static async completeWorkout(workoutId: string): Promise<ApiResponse<WorkoutSession>> {
-    const response = await apiPut<WorkoutSession>(
-      `/api/v1/workouts/${workoutId}/complete`,
+    const response = await apiPost<WorkoutSet | WorkoutSession>(
+      `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets`,
       {}
     );
     return response;
   }
 
   /**
+   * Complete the workout session with proper request body
+   * FIXED: Now sends proper CompleteWorkoutRequest matching backend expectations
+   */
+  static async completeWorkout(
+    workoutId: string,
+    data?: {
+      rating?: number;
+      notes?: string;
+      caloriesBurned?: number;
+      location?: string;
+    }
+  ): Promise<ApiResponse<WorkoutSession>> {
+    console.log('=== COMPLETING WORKOUT ===');
+    console.log('Workout ID:', workoutId);
+    console.log('Completion data:', data);
+
+    // Build proper request body matching backend CompleteWorkoutRequest
+    const requestBody: CompleteWorkoutRequest = {
+      completedAt: new Date().toISOString(),
+      rating: data?.rating ?? null,
+      notes: data?.notes ?? null,
+      caloriesBurned: data?.caloriesBurned ?? null,
+      additionalTags: []
+    };
+
+    console.log('Request body:', requestBody);
+
+    try {
+      const response = await apiPut<WorkoutSession>(
+        `/api/v1/workouts/${workoutId}/complete`,
+        requestBody
+      );
+
+      console.log('Complete workout response:', response);
+
+      if (response.success) {
+        console.log('✓ Workout completed successfully');
+      } else {
+        console.error('✗ Workout completion failed:', response.message);
+      }
+
+      return response;
+
+    } catch (error: any) {
+      console.error('✗ Complete workout error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Cancel the workout session
    */
   static async cancelWorkout(workoutId: string): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Cancelling workout:', workoutId);
+
     const response = await apiPut<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/cancel`,
       {}
@@ -201,6 +261,8 @@ export class WorkoutService {
     exerciseIndex: number,
     setIndex: number
   ): Promise<ApiResponse<WorkoutSession>> {
+    console.log(`Deleting set: workout=${workoutId}, exercise=${exerciseIndex}, set=${setIndex}`);
+
     const response = await apiDelete<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets/${setIndex}`
     );
@@ -214,6 +276,8 @@ export class WorkoutService {
     workoutId: string,
     exerciseIndex: number
   ): Promise<ApiResponse<WorkoutSession>> {
+    console.log(`Deleting exercise: workout=${workoutId}, exercise=${exerciseIndex}`);
+
     const response = await apiDelete<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}`
     );
@@ -221,7 +285,7 @@ export class WorkoutService {
   }
 
   /**
-   * Add exercise to active workout
+   * Add exercise to active workout (alternative signature)
    */
   static async addExerciseToWorkout(
     workoutId: string,
@@ -231,10 +295,52 @@ export class WorkoutService {
       notes?: string;
     }
   ): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Adding exercise to workout (full response):', workoutId, exerciseData);
+
     const response = await apiPost<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises`,
       exerciseData
     );
+    return response;
+  }
+
+  /**
+   * Log a new set for an exercise
+   */
+  static async logSet(
+    workoutId: string,
+    exerciseIndex: number,
+    setData: UpdateSetRequest
+  ): Promise<ApiResponse<WorkoutSession>> {
+    console.log(`Logging set: workout=${workoutId}, exercise=${exerciseIndex}`, setData);
+
+    const response = await apiPost<WorkoutSession>(
+      `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets`,
+      setData
+    );
+    return response;
+  }
+
+  /**
+   * Get user's workout history
+   */
+  static async getUserWorkouts(
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<WorkoutSession[]>> {
+    console.log('Fetching user workouts:', { startDate, endDate });
+
+    let url = '/api/v1/workouts';
+    const params = new URLSearchParams();
+
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    const response = await apiGet<WorkoutSession[]>(url);
     return response;
   }
 }

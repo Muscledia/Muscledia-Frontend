@@ -2,6 +2,55 @@
 // Centralized types for all API services
 // Single source of truth for data structures
 
+
+// Authentication Types
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  birthDate?: string;
+  gender?: string;
+  height?: number;
+  weight?: number;
+  goalType?: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  userId: string;
+  username: string;
+  email?: string;
+  uuidString: string;
+  roles: string[];
+  message?: string;
+}
+
+// API Error Type - ADD THIS
+export interface ApiError {
+  success: boolean;
+  error: string;
+  message: string;
+  path: string;
+  status: number;
+  timestamp: string;
+  details?: any;
+}
+
+// Error Response Type
+export interface ErrorResponse {
+  success: false;
+  error: string;
+  message: string;
+  status: number;
+  timestamp: string;
+}
+
+
 // Base API Response
 export interface ApiResponse<T> {
   success: boolean;
@@ -24,14 +73,23 @@ export interface User {
 // Exercise Types
 export interface Exercise {
   id: string;
+  externalId?: string;
   name: string;
-  category: string;
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
-  equipment: string;
-  difficulty: string;
-  instructions: string[];
+  bodyPart?: string;
+  equipment?: string;
+  targetMuscle?: string;
+  secondaryMuscles?: string[];
+  instructions?: string[];
+  description?: string;
+  difficulty?: string;
+  category?: string;
+  keywords?: string[];
   imageUrl?: string;
+  videoUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  usageCount?: number;
+  active?: boolean;
 }
 
 // Planned Set Types

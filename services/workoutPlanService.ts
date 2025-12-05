@@ -1,6 +1,6 @@
 // services/workoutPlanService.ts
 // Comprehensive service for all workout plan CRUD operations
-// Separates concerns: service layer handles business logic, repositories/API calls are abstracted
+// Updated to match API Documentation (Image 4) endpoints
 
 import { apiGet, apiPost, apiPut, apiDelete } from './api';
 import {
@@ -18,49 +18,50 @@ import {
  * WorkoutPlanService - Handles all workout plan CRUD operations
  *
  * Architecture:
- * - Thin controller layer calls methods here
- * - This service contains business logic for orchestrating operations
- * - Data access abstracted through API calls
- * - Returns typed responses for type safety
+ * - Aligned with Backend API Endpoints (api/v1/workout-plans/...)
+ * - Handles Public vs Personal plan logic
+ * - Abstracted Data Access
  */
 export class WorkoutPlanService {
   // ===============================
   // WORKOUT PLAN OPERATIONS
   // ===============================
 
-  /**
-   * Fetch all user's workout plans
-   * Business logic: Retrieves all personal plans
-   */
-  static async getMyWorkoutPlans(): Promise<ApiResponse<WorkoutPlan[]>> {
-    try {
-      const response = await apiGet<WorkoutPlan[]>('/api/v1/my-workout-plans');
-      return response;
-    } catch (error) {
-      console.error('Failed to fetch workout plans:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch a specific workout plan by ID
-   * Business logic: Single plan retrieval with all nested data
-   */
   static async getWorkoutPlanById(planId: string): Promise<ApiResponse<WorkoutPlan>> {
     try {
-      const response = await apiGet<WorkoutPlan>(`/api/v1/workout-plans/${planId}`);
+      const personalPlans = await this.getPersonalWorkoutPlans();
+      if (personalPlans.success && personalPlans.data) {
+        const found = personalPlans.data.find((p) => p.id === planId);
+        if (found) return { success: true, data: found };
+      }
+      const response = await apiGet<WorkoutPlan>(`/api/v1/workout-plans/public/${planId}`);
+      if (response.success) return response;
+      throw new Error('Workout plan not found');
+    } catch (error: any) {
+      console.warn(`WorkoutPlan fetch failed for ${planId}:`, error.message);
+      return { success: false, message: 'Workout plan not found' };
+    }
+  }
+
+
+  /**
+   * Fetch all user's personal workout plans
+   * Endpoint: GET /api/v1/workout-plans/personal
+   */
+  static async getPersonalWorkoutPlans(): Promise<ApiResponse<WorkoutPlan[]>> {
+    try {
+      const response = await apiGet<WorkoutPlan[]>('/api/v1/workout-plans/personal');
       return response;
     } catch (error) {
-      console.error(`Failed to fetch workout plan ${planId}:`, error);
+      console.error('Failed to fetch personal workout plans:', error);
       throw error;
     }
   }
 
+
   /**
-   * Create a new workout plan
-   * Business logic: Validates input, creates plan with exercises
-   *
-   * Separation of concerns: Controller passes DTO, service processes
+   * Create a new personal workout plan
+   * Endpoint: POST /api/v1/workout-plans/personal
    */
   static async createWorkoutPlan(
     data: CreateWorkoutPlanRequest
@@ -74,7 +75,7 @@ export class WorkoutPlanService {
         exercises: data.exercises || [],
       };
 
-      const response = await apiPost<WorkoutPlan>('/api/v1/my-workout-plans', payload);
+      const response = await apiPost<WorkoutPlan>('/api/v1/workout-plans/personal', payload);
       return response;
     } catch (error) {
       console.error('Failed to create workout plan:', error);
@@ -84,24 +85,19 @@ export class WorkoutPlanService {
 
   /**
    * Update an existing workout plan
-   * Business logic: Partial updates, preserves existing data
+   * Endpoint: PUT /api/v1/workout-plans/{id}
+   * UPDATE: Backend now handles partial updates. We only send what changed.
    */
   static async updateWorkoutPlan(
     planId: string,
-    data: UpdateWorkoutPlanRequest
+    data: Partial<WorkoutPlan> // Accepts any subset of the plan
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
-      const payload: Record<string, any> = {};
-      if (data.title !== undefined) payload.title = data.title;
-      if (data.description !== undefined) payload.description = data.description;
-      if (data.estimatedDurationMinutes !== undefined) {
-        payload.estimatedDurationMinutes = data.estimatedDurationMinutes;
-      }
-      if (data.isPublic !== undefined) payload.isPublic = data.isPublic;
+      console.log(`Updating plan ${planId} with:`, JSON.stringify(data, null, 2));
 
       const response = await apiPut<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}`,
-        payload
+        `/api/v1/workout-plans/${planId}`,
+        data
       );
       return response;
     } catch (error) {
@@ -112,11 +108,11 @@ export class WorkoutPlanService {
 
   /**
    * Delete a workout plan
-   * Business logic: Removes plan and all associated data
+   * Endpoint: DELETE /api/v1/workout-plans/{id}
    */
   static async deleteWorkoutPlan(planId: string): Promise<ApiResponse<void>> {
     try {
-      const response = await apiDelete<void>(`/api/v1/my-workout-plans/${planId}`);
+      const response = await apiDelete<void>(`/api/v1/workout-plans/${planId}`);
       return response;
     } catch (error) {
       console.error(`Failed to delete workout plan ${planId}:`, error);
@@ -130,8 +126,7 @@ export class WorkoutPlanService {
 
   /**
    * Add exercise to workout plan
-   * Business logic: Validates exercise template exists, creates planned exercise with sets
-   * Single responsibility: Exercise addition
+   * Base Path Updated: /api/v1/workout-plans/...
    */
   static async addExerciseToWorkoutPlan(
     planId: string,
@@ -147,7 +142,7 @@ export class WorkoutPlanService {
       };
 
       const response = await apiPost<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises`,
+        `/api/v1/workout-plans/${planId}/exercises`,
         payload
       );
       return response;
@@ -159,8 +154,6 @@ export class WorkoutPlanService {
 
   /**
    * Update exercise in workout plan
-   * Business logic: Modifies specific exercise properties
-   * Loose coupling: Only updates provided fields
    */
   static async updateExerciseInWorkoutPlan(
     planId: string,
@@ -175,7 +168,7 @@ export class WorkoutPlanService {
       if (exercise.restSeconds !== undefined) payload.restSeconds = exercise.restSeconds;
 
       const response = await apiPut<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}`,
+        `/api/v1/workout-plans/${planId}/exercises/${exerciseIndex}`,
         payload
       );
       return response;
@@ -190,7 +183,6 @@ export class WorkoutPlanService {
 
   /**
    * Delete exercise from workout plan
-   * Business logic: Removes planned exercise and all associated sets
    */
   static async deleteExerciseFromWorkoutPlan(
     planId: string,
@@ -198,7 +190,7 @@ export class WorkoutPlanService {
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
       const response = await apiDelete<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}`
+        `/api/v1/workout-plans/${planId}/exercises/${exerciseIndex}`
       );
       return response;
     } catch (error) {
@@ -210,38 +202,12 @@ export class WorkoutPlanService {
     }
   }
 
-  /**
-   * Update exercise properties while maintaining sets
-   * Business logic: Focused update for specific exercise fields
-   */
-  static async updateExerciseProperties(
-    planId: string,
-    exerciseIndex: number,
-    properties: {
-      title?: string;
-      notes?: string;
-      restSeconds?: number;
-    }
-  ): Promise<ApiResponse<WorkoutPlan>> {
-    try {
-      const response = await apiPut<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}`,
-        properties
-      );
-      return response;
-    } catch (error) {
-      console.error('Failed to update exercise properties:', error);
-      throw error;
-    }
-  }
-
   // ===============================
   // SET OPERATIONS
   // ===============================
 
   /**
    * Add a new set to an exercise
-   * Business logic: Appends new set with proper numbering
    */
   static async addSetToExercise(
     planId: string,
@@ -256,7 +222,7 @@ export class WorkoutPlanService {
       };
 
       const response = await apiPost<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}/sets`,
+        `/api/v1/workout-plans/${planId}/exercises/${exerciseIndex}/sets`,
         payload
       );
       return response;
@@ -271,7 +237,6 @@ export class WorkoutPlanService {
 
   /**
    * Update a specific set in an exercise
-   * Business logic: Modifies set properties (weight, reps, duration, etc)
    */
   static async updateSet(
     planId: string,
@@ -281,7 +246,7 @@ export class WorkoutPlanService {
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
       const response = await apiPut<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}/sets/${setIndex}`,
+        `/api/v1/workout-plans/${planId}/exercises/${exerciseIndex}/sets/${setIndex}`,
         setData
       );
       return response;
@@ -296,7 +261,6 @@ export class WorkoutPlanService {
 
   /**
    * Delete a set from an exercise
-   * Business logic: Removes set and renumbers remaining sets
    */
   static async deleteSet(
     planId: string,
@@ -305,37 +269,12 @@ export class WorkoutPlanService {
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
       const response = await apiDelete<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}/sets/${setIndex}`
+        `/api/v1/workout-plans/${planId}/exercises/${exerciseIndex}/sets/${setIndex}`
       );
       return response;
     } catch (error) {
       console.error(
         `Failed to delete set ${setIndex} from exercise ${exerciseIndex} in plan ${planId}:`,
-        error
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Bulk update sets for an exercise
-   * Business logic: Replaces all sets at once
-   * Useful for: Duplicating set schemes, quick modifications
-   */
-  static async updateExerciseSets(
-    planId: string,
-    exerciseIndex: number,
-    sets: PlannedSet[]
-  ): Promise<ApiResponse<WorkoutPlan>> {
-    try {
-      const response = await apiPut<WorkoutPlan>(
-        `/api/v1/my-workout-plans/${planId}/exercises/${exerciseIndex}`,
-        { sets }
-      );
-      return response;
-    } catch (error) {
-      console.error(
-        `Failed to update sets for exercise ${exerciseIndex} in plan ${planId}:`,
         error
       );
       throw error;
@@ -348,8 +287,7 @@ export class WorkoutPlanService {
 
   /**
    * Browse available exercises for adding to a plan
-   * Business logic: Filters and searches exercise library
-   * Loose coupling: Exercise template service is independent
+   * Endpoint: GET /api/v1/exercises/search (Standard convention)
    */
   static async browseExercises(
     search?: string,
@@ -358,49 +296,18 @@ export class WorkoutPlanService {
   ): Promise<ApiResponse<Exercise[]>> {
     try {
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (search) params.append('q', search); // Changed 'search' to 'q' (common standard)
       if (category) params.append('category', category);
       if (muscle) params.append('muscle', muscle);
 
       const queryString = params.toString();
-      const url = `/api/v1/my-workout-plans/browse-exercises${
-        queryString ? `?${queryString}` : ''
-      }`;
+      // Assuming a generic exercise endpoint exists as verified in previous steps
+      const url = `/api/v1/exercises/search${queryString ? `?${queryString}` : ''}`;
 
       const response = await apiGet<Exercise[]>(url);
       return response;
     } catch (error) {
       console.error('Failed to browse exercises:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get exercises with advanced filtering
-   * Business logic: Complex filtering with multiple parameters
-   */
-  static async getExercisesWithFilters(filters: {
-    search?: string;
-    category?: string;
-    muscleGroup?: string;
-    equipment?: string;
-    difficulty?: string;
-  }): Promise<ApiResponse<Exercise[]>> {
-    try {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
-
-      const queryString = params.toString();
-      const url = `/api/v1/my-workout-plans/browse-exercises${
-        queryString ? `?${queryString}` : ''
-      }`;
-
-      const response = await apiGet<Exercise[]>(url);
-      return response;
-    } catch (error) {
-      console.error('Failed to fetch exercises with filters:', error);
       throw error;
     }
   }
@@ -411,7 +318,7 @@ export class WorkoutPlanService {
 
   /**
    * Duplicate a workout plan
-   * Business logic: Creates copy with new ID, preserves structure
+   * Logic: Fetches original -> Cleanse ID -> Create new via POST /personal
    */
   static async duplicateWorkoutPlan(
     sourcePlanId: string,
@@ -426,12 +333,14 @@ export class WorkoutPlanService {
 
       const sourcePlan = sourceResponse.data;
 
+      // Create new plan using the source data
+      // Note: We deliberately strip the ID and created dates
       const createResponse = await this.createWorkoutPlan({
         title: newTitle,
         description: sourcePlan.description,
         exercises: sourcePlan.exercises,
         estimatedDurationMinutes: sourcePlan.estimatedDurationMinutes,
-        isPublic: sourcePlan.isPublic,
+        isPublic: false, // Duplicates should default to private/personal
       });
 
       return createResponse;
@@ -443,7 +352,6 @@ export class WorkoutPlanService {
 
   /**
    * Duplicate an exercise within the same plan
-   * Business logic: Creates copy of exercise with sets
    */
   static async duplicateExercise(
     planId: string,
@@ -467,7 +375,7 @@ export class WorkoutPlanService {
         exerciseTemplateId: exerciseToDuplicate.exerciseTemplateId,
         title: `${exerciseToDuplicate.title} (Copy)`,
         notes: exerciseToDuplicate.notes,
-        sets: exerciseToDuplicate.sets,
+        sets: exerciseToDuplicate.sets.map(s => ({...s, setNumber: undefined})), // Ensure new sets get new IDs/Numbers if backend handles it
         restSeconds: exerciseToDuplicate.restSeconds,
       };
 

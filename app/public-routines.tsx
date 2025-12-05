@@ -1,3 +1,5 @@
+// app/public-routines.tsx - COMPLETE REFACTORED VERSION
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -6,17 +8,19 @@ import {
   FlatList,
   TouchableOpacity,
   useColorScheme,
-  ActivityIndicator,
   RefreshControl,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell, TrendingUp, Clock, ChevronRight } from 'lucide-react-native';
-import { Colors, getThemeColors } from '@/constants/Colors';
+import { getThemeColors } from '@/constants/Colors';
 import { RoutineService } from '@/services';
 import { RoutineFolder } from '@/types/api';
 import { useHaptics } from '@/hooks/useHaptics';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 export default function PublicRoutinesScreen() {
   const colorScheme = useColorScheme();
@@ -37,7 +41,7 @@ export default function PublicRoutinesScreen() {
       setError(null);
 
       const response = await RoutineService.getPublicRoutineFolders();
-      
+
       if (response.success && response.data) {
         setRoutines(response.data);
       } else {
@@ -56,17 +60,14 @@ export default function PublicRoutinesScreen() {
     fetchPublicRoutines();
   }, []);
 
-  // Pull to refresh handler
   const onRefresh = () => {
     setRefreshing(true);
     fetchPublicRoutines(true);
   };
 
-  // Difficulty badge color
   const getDifficultyColor = (difficulty?: string) => {
-    if (!difficulty) {
-      return theme.textMuted;
-    }
+    if (!difficulty) return theme.textMuted;
+
     switch (difficulty.toLowerCase()) {
       case 'beginner':
         return '#4CAF50';
@@ -79,16 +80,17 @@ export default function PublicRoutinesScreen() {
     }
   };
 
-  // Render routine card
   const renderRoutineCard = ({ item }: { item: RoutineFolder }) => (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={async () => {
         await impact('selection');
-        // Pass the routine data as a query parameter (encoded)
         router.push({
           pathname: `/routine-detail/${item.id}`,
-          params: { routineData: JSON.stringify(item) }
+          params: {
+            routineData: JSON.stringify(item),
+            isPublic: 'true' // CRITICAL: This flag tells detail screen it's a public routine
+          }
         });
       }}
       style={styles.cardWrapper}
@@ -106,11 +108,11 @@ export default function PublicRoutinesScreen() {
             resizeMode="cover"
           />
         )}
-        
+
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={2}>
-              {item.name}
+              {item.name || item.title}
             </Text>
             <ChevronRight size={24} color={theme.accent} />
           </View>
@@ -160,93 +162,28 @@ export default function PublicRoutinesScreen() {
           </View>
         </View>
 
-        {/* Golden accent stripe */}
         <View style={[styles.accentStripe, { backgroundColor: theme.accent }]} />
       </LinearGradient>
     </TouchableOpacity>
   );
 
-  // Loading state
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.accent} />
-        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-          Loading routines...
-        </Text>
-      </View>
-    );
-  }
+  // CLEAN STATE HANDLING: Use shared components
+  if (loading) return <LoadingScreen message="Loading routines..." theme={theme} />;
 
-  // Error state
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <Dumbbell size={64} color={theme.textMuted} />
-        <Text style={[styles.errorTitle, { color: theme.text }]}>
-          Oops! Something went wrong
-        </Text>
-        <Text style={[styles.errorMessage, { color: theme.textSecondary }]}>
-          {error}
-        </Text>
-        <TouchableOpacity
-          onPress={async () => {
-            await impact('medium');
-            fetchPublicRoutines();
-          }}
-          style={styles.retryButton}
-        >
-          <LinearGradient
-            colors={[theme.accent, theme.accentSecondary]}
-            locations={[0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.retryButtonGradient}
-          >
-            <Text style={[styles.retryButtonText, { color: theme.cardText }]}>
-              Try Again
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  if (error) return <ErrorState error={error} onRetry={fetchPublicRoutines} theme={theme} />;
 
-  // Empty state
   if (routines.length === 0) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <Dumbbell size={64} color={theme.textMuted} />
-        <Text style={[styles.emptyTitle, { color: theme.text }]}>
-          No Routines Available
-        </Text>
-        <Text style={[styles.emptyMessage, { color: theme.textSecondary }]}>
-          Check back later for new workout programs!
-        </Text>
-        <TouchableOpacity
-          onPress={async () => {
-            await impact('medium');
-            router.back();
-          }}
-          style={styles.backButton}
-        >
-          <LinearGradient
-            colors={[theme.accent, theme.accentSecondary]}
-            locations={[0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.backButtonGradient}
-          >
-            <Text style={[styles.backButtonText, { color: theme.cardText }]}>
-              Go Back
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon={<Dumbbell size={64} color={theme.textMuted} />}
+        title="No Routines Available"
+        message="Check back later for new workout programs!"
+        action={{ label: 'Go Back', onPress: () => router.back() }}
+        theme={theme}
+      />
     );
   }
 
-  // Main content
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
@@ -271,11 +208,6 @@ export default function PublicRoutinesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
   },
   listContent: {
     padding: 16,
@@ -347,59 +279,4 @@ const styles = StyleSheet.create({
     right: 0,
     height: 4,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorMessage: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  retryButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  retryButtonGradient: {
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  retryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyMessage: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  backButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  backButtonGradient: {
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 });
-

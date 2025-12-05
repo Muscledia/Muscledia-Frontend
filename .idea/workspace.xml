@@ -4,24 +4,37 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators">
-      <change afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/add-exercise.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/workout-plans/create.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/workout-session/add-exercise.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/workout/SetRow.tsx" afterDir="false" />
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow">
+      <change afterPath="$PROJECT_DIR$/app/exercise-filters.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/routine-detail/[id]/edit.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/routine-detail/[id]/index.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/exercises/ExerciseBrowser.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/ui/EmptyState.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/ui/ErrorState.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/ui/LoadingScreen.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/ui/ScreenHeader.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hooks/useOptimisticUpdate.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/public-routines.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/public-routines.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routine-builder.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routine-detail/[id].tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routine-editor.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-plans/[planId]/add-exercise.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/add-exercise.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/workout-session/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-session/[planId].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/BACKEND_API.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/INTEGRATION.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/SAVE_ROUTINE_FEATURE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workout-session/add-exercise.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-session/add-exercise.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workout/ExerciseCard.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workout/SetRow.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/useApi.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/WorkoutService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/WorkoutService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/exerciseService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/exerciseService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/routineService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/routineService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/workoutPlanService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/workoutPlanService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/types/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types/workout.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/workout.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,6 +102,11 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\ericm\spring-boot-Uni\Muscledia-Frontend\app\routine-detail\[id]" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -120,7 +138,9 @@
       <workItem from="1764619031334" duration="5871000" />
       <workItem from="1764693674826" duration="16969000" />
       <workItem from="1764757893235" duration="11044000" />
-      <workItem from="1764790785258" duration="8516000" />
+      <workItem from="1764790785258" duration="9415000" />
+      <workItem from="1764869854992" duration="21885000" />
+      <workItem from="1764935548726" duration="17298000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />
@@ -266,7 +286,47 @@
       <option name="project" value="LOCAL" />
       <updated>1764627763931</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators">
+      <option name="closed" value="true" />
+      <created>1764802692143</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802692143</updated>
+    </task>
+    <task id="LOCAL-00020" summary="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search">
+      <option name="closed" value="true" />
+      <created>1764802743718</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802743718</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods">
+      <option name="closed" value="true" />
+      <created>1764802777424</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802777424</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat(types): add types for PR badges and timer controls&#10;&#10;Files:&#10;- types/workout.types.ts&#10;- types/api.ts&#10;&#10;Changes:&#10;- Add PersonalRecord types and interfaces&#10;- Define timer control types&#10;- Update workout session types&#10;- Add API response types for new features">
+      <option name="closed" value="true" />
+      <created>1764802796826</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802796826</updated>
+    </task>
+    <task id="LOCAL-00023" summary="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow">
+      <option name="closed" value="true" />
+      <created>1764802825823</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802825823</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -301,6 +361,11 @@
     <MESSAGE value="feat(workout-session): add rest timers, warmup controls, and cancel button&#10;&#10;- Implement adjustable rest timer (1-5 min) with modal settings per exercise&#10;- Add warmup timer with play/pause/reset functionality&#10;- Add cancel workout button at bottom with confirmation&#10;- Fix workout duration to use local time and format with hours&#10;- Add rest timer countdown modal with +15/-15 second adjustments&#10;- Improve timer state management with separate refs for each timer type" />
     <MESSAGE value="feat(services): add personalRecords field to WorkoutSet type&#10;&#10;- Add personalRecords?: string[] field to WorkoutSet interface&#10;- Enable PR type tracking for individual sets&#10;- Support backend PR detection response structure" />
     <MESSAGE value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
+    <MESSAGE value="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators" />
+    <MESSAGE value="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search" />
+    <MESSAGE value="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods" />
+    <MESSAGE value="feat(types): add types for PR badges and timer controls&#10;&#10;Files:&#10;- types/workout.types.ts&#10;- types/api.ts&#10;&#10;Changes:&#10;- Add PersonalRecord types and interfaces&#10;- Define timer control types&#10;- Update workout session types&#10;- Add API response types for new features" />
+    <MESSAGE value="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
   </component>
 </project>
