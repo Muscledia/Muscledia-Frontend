@@ -1,4 +1,4 @@
-// app/routine-detail/[id]/index.tsx - UPDATED WITH ORIGINAL HEADER & BUTTON COLOR
+// app/routine-detail/[id]/index.tsx - UPDATED: Added Routine Title Display
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -280,7 +280,7 @@ export default function RoutineDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header - RESTORED ORIGINAL */}
+      {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color={theme.text} />
@@ -296,6 +296,7 @@ export default function RoutineDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+
         {/* Creator Badge */}
         <View style={styles.creatorBadge}>
           <Bookmark size={16} color={theme.textMuted} />
@@ -304,7 +305,12 @@ export default function RoutineDetailScreen() {
           </Text>
         </View>
 
-        {/* Save Button - RESTORED ORIGINAL YELLOW COLOR */}
+        {/* Routine Title - NEW ADDITION */}
+        <Text style={[styles.routineName, { color: theme.text }]}>
+          {routineFolder.title}
+        </Text>
+
+        {/* Save Button */}
         {isPublic && (
           <TouchableOpacity
             activeOpacity={0.9}
@@ -426,11 +432,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 8, // Reduced spacing to title
     marginTop: 8,
   },
   creatorText: {
     fontSize: 14,
+  },
+  routineName: {
+    fontSize: 28, // Prominent size
+    fontWeight: '800', // Extra bold
+    marginBottom: 20, // Space before save button/description
+    marginTop: 4,
+    lineHeight: 34,
   },
   saveButtonContainer: {
     borderRadius: 12,
