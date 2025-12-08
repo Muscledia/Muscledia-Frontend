@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   useColorScheme,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft,
@@ -26,6 +26,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function WorkoutPlanDetailScreen() {
+  const navigation = useNavigation();
   const { planId, initialData } = useLocalSearchParams<{ planId: string; initialData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -52,6 +53,15 @@ export default function WorkoutPlanDetailScreen() {
       loadWorkoutPlan();
     }
   }, [planId]);
+
+  // Listen for screen focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadWorkoutPlan();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const loadWorkoutPlan = async () => {
     try {
