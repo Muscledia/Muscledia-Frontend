@@ -287,7 +287,7 @@ export default function RoutineDetailScreen() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Routine Details</Text>
         <TouchableOpacity onPress={() => {}} style={styles.bookmarkButton}>
-          <Bookmark size={24} color={theme.accent} />
+          <Bookmark size={24} color={theme.accent} onPress={handleSaveRoutine} disabled={saving || isSaved} />
         </TouchableOpacity>
       </View>
 
