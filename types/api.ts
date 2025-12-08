@@ -106,7 +106,7 @@ export interface PlannedSet {
   notes?: string;
 }
 
-// Planned Exercise Types
+// Planned Exercise Types (for workout plans)
 export interface PlannedExercise {
   id?: string;
   index?: number;
@@ -114,6 +114,17 @@ export interface PlannedExercise {
   name?: string;
   exerciseTemplateId: string;
   notes?: string;
+  description?: string;
+  instructions?: string;
+
+  // ADDED: Metadata fields
+  bodyPart?: string;
+  equipment?: string;
+  targetMuscle?: string;
+  secondaryMuscles?: string[];
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  category?: 'STRENGTH' | 'CARDIO' | 'FLEXIBILITY' | 'SPORTS' | 'OTHER';
+
   sets: PlannedSet[];
   restSeconds?: number;
   supersetId?: string;
@@ -164,6 +175,7 @@ export interface AddExerciseToWorkoutPlanRequest {
   exerciseTemplateId: string;
   title: string;
   notes?: string;
+  instructions?: string;
   sets: PlannedSet[];
   restSeconds?: number;
 }
@@ -218,16 +230,25 @@ export interface WorkoutSet {
   personalRecords?: string[];
 }
 
+// Workout Exercise Types (for active workout sessions)
 export interface WorkoutExercise {
-  equipment: string | null;
-  sets: WorkoutSet[];
-  notes: string | null;
   exerciseId: string;
   exerciseName: string;
   exerciseOrder: number | null;
   exerciseCategory: string | null;
   primaryMuscleGroup: string | null;
   secondaryMuscleGroups: string[];
+  equipment: string | null;
+
+  // ADDED: Additional metadata fields
+  bodyPart?: string | null;
+  targetMuscle?: string | null;
+  difficulty?: string | null;
+  category?: string | null;
+  description?: string | null;
+
+  sets: WorkoutSet[];
+  notes: string | null;
   startedAt: string | null;
   completedAt: string | null;
   totalVolume: number;
@@ -294,4 +315,56 @@ export interface ActiveChallenge {
   progress: number;
   completed: boolean;
   completedAt?: string;
+}
+
+// Add Exercise to Workout Plan Request DTO
+export interface AddExerciseToWorkoutPlanRequest {
+  exerciseTemplateId: string;
+  title: string;
+  notes?: string;
+  instructions?: string;
+  description?: string;
+
+  // ADDED: Metadata fields
+  bodyPart?: string;
+  equipment?: string;
+  targetMuscle?: string;
+  secondaryMuscles?: string[];
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  category?: 'STRENGTH' | 'CARDIO' | 'FLEXIBILITY' | 'SPORTS' | 'OTHER';
+
+  sets: PlannedSet[];
+  restSeconds?: number;
+}
+
+
+// Add Exercise to Workout Session Request DTO
+export interface AddExerciseToWorkoutSessionRequest {
+  exerciseId: string;
+  exerciseName: string;
+  notes?: string;
+  exerciseCategory?: string | null;
+  primaryMuscleGroup?: string | null;
+  secondaryMuscleGroups?: string[];
+  equipment?: string | null;
+
+  // ADDED: Denormalized metadata fields
+  bodyPart?: string | null;
+  targetMuscle?: string | null;
+  difficulty?: string | null;
+  category?: string | null;
+  description?: string | null;
+
+  sets?: {
+    setNumber: number;
+    setType: 'NORMAL' | 'WARMUP' | 'DROP' | 'FAILURE';
+    weightKg?: number | null;
+    reps?: number | null;
+    durationSeconds?: number | null;
+    distanceMeters?: number | null;
+    restSeconds?: number | null;
+    rpe?: number | null;
+    notes?: string | null;
+    completed: boolean;
+  }[];
 }
