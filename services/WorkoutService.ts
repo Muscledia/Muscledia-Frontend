@@ -155,44 +155,142 @@ export class WorkoutService {
   }
 
   /**
+   * Add exercise to active workout session (alias with correct signature)
+   */
+  static async addExerciseToSession(
+    workoutId: string,
+    exercise: {
+      exerciseId: string;
+      exerciseName: string;
+      notes?: string;
+      bodyPart?: string;
+      equipment?: string;
+      targetMuscle?: string;
+      secondaryMuscles?: string[];
+      difficulty?: string;
+      category?: string;
+      description?: string;
+      sets?: any[];
+    }
+  ): Promise<ApiResponse<WorkoutSession>> {
+    return this.addExercise(workoutId, exercise);
+  }
+
+  /**
    * Add a new exercise to active workout
    */
   static async addExercise(
     workoutId: string,
-    exerciseData: {
+    exercise: {
       exerciseId: string;
       exerciseName: string;
       notes?: string;
+      bodyPart?: string;
+      equipment?: string;
+      targetMuscle?: string;
+      secondaryMuscles?: string[];
+      difficulty?: string;
+      category?: string;
+      description?: string;
+      sets?: any[];
     }
-  ): Promise<ApiResponse<WorkoutExercise>> {
-    console.log('Adding exercise to workout:', workoutId, exerciseData);
+  ): Promise<ApiResponse<WorkoutSession>> {
+    try {
+      const payload = {
+        // Required fields
+        exerciseId: exercise.exerciseId,
+        exerciseName: exercise.exerciseName,
 
-    const response = await apiPost<WorkoutExercise>(
-      `/api/v1/workouts/${workoutId}/exercises`,
-      exerciseData
-    );
-    return response;
+        // Optional metadata
+        notes: exercise.notes || '',
+        exerciseCategory: exercise.category || null,
+        primaryMuscleGroup: exercise.targetMuscle || null,
+        secondaryMuscleGroups: exercise.secondaryMuscles || [],
+        equipment: exercise.equipment || null,
+
+        // Additional denormalized fields
+        bodyPart: exercise.bodyPart || null,
+        targetMuscle: exercise.targetMuscle || null,
+        difficulty: exercise.difficulty || null,
+        category: exercise.category || null,
+        description: exercise.description || null,
+
+        // Sets (ensure proper structure)
+        sets: (exercise.sets || []).map((set, index) => ({
+          setNumber: index + 1,
+          setType: set.type || set.setType || 'NORMAL',
+          weightKg: set.weightKg !== undefined ? set.weightKg : null,
+          reps: set.reps !== undefined ? set.reps : null,
+          durationSeconds: set.durationSeconds !== undefined ? set.durationSeconds : null,
+          distanceMeters: set.distanceMeters !== undefined ? set.distanceMeters : null,
+          restSeconds: set.restSeconds !== undefined ? set.restSeconds : null,
+          rpe: set.rpe !== undefined ? set.rpe : null,
+          notes: set.notes || null,
+          completed: false, // Always start incomplete
+        })),
+      };
+
+      console.log('Adding exercise to workout session:', workoutId);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
+
+      const response = await apiPost<WorkoutSession>(
+        `/api/v1/workouts/${workoutId}/exercises`,
+        payload
+      );
+
+      console.log('Exercise added to session successfully');
+      return response;
+    } catch (error: any) {
+      console.error('Failed to add exercise to workout session:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      throw error;
+    }
   }
 
   /**
    * Add a new set to an exercise
+   * FIXED: Now ensures new sets start with completed: false
    */
   static async addSet(
     workoutId: string,
-    exerciseIndex: number
-  ): Promise<ApiResponse<WorkoutSet | WorkoutSession>> {
+    exerciseIndex: number,
+    initialSetData?: Partial<UpdateSetRequest>
+  ): Promise<ApiResponse<WorkoutSession>> {
     console.log(`Adding set: workout=${workoutId}, exercise=${exerciseIndex}`);
 
-    const response = await apiPost<WorkoutSet | WorkoutSession>(
+    // Ensure the new set starts incomplete
+    const setPayload = {
+      ...initialSetData,
+      completed: false, // Always start incomplete
+      setType: initialSetData?.setType || 'NORMAL',
+    };
+
+    console.log('New set payload:', setPayload);
+
+    const response = await apiPost<WorkoutSession>(
       `/api/v1/workouts/${workoutId}/exercises/${exerciseIndex}/sets`,
-      {}
+      setPayload
     );
     return response;
   }
 
   /**
+   * Update set type during workout session
+   * This is called when user changes set type in the UI
+   */
+  static async updateSetType(
+    workoutId: string,
+    exerciseIndex: number,
+    setIndex: number,
+    setType: SetType | string
+  ): Promise<ApiResponse<WorkoutSession>> {
+    console.log(`Updating set type: workout=${workoutId}, exercise=${exerciseIndex}, set=${setIndex}, type=${setType}`);
+
+    return this.updateSet(workoutId, exerciseIndex, setIndex, { setType });
+  }
+
+  /**
    * Complete the workout session with proper request body
-   * FIXED: Now sends proper CompleteWorkoutRequest matching backend expectations
    */
   static async completeWorkout(
     workoutId: string,
@@ -207,7 +305,6 @@ export class WorkoutService {
     console.log('Workout ID:', workoutId);
     console.log('Completion data:', data);
 
-    // Build proper request body matching backend CompleteWorkoutRequest
     const requestBody: CompleteWorkoutRequest = {
       completedAt: new Date().toISOString(),
       rating: data?.rating ?? null,
@@ -283,6 +380,7 @@ export class WorkoutService {
     );
     return response;
   }
+
 
   /**
    * Add exercise to active workout (alternative signature)
