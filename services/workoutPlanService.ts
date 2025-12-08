@@ -43,7 +43,6 @@ export class WorkoutPlanService {
     }
   }
 
-
   /**
    * Fetch all user's personal workout plans
    * Endpoint: GET /api/v1/workout-plans/personal
@@ -57,7 +56,6 @@ export class WorkoutPlanService {
       throw error;
     }
   }
-
 
   /**
    * Create a new personal workout plan
@@ -90,7 +88,7 @@ export class WorkoutPlanService {
    */
   static async updateWorkoutPlan(
     planId: string,
-    data: Partial<WorkoutPlan> // Accepts any subset of the plan
+    data: Partial<WorkoutPlan>
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
       console.log(`Updating plan ${planId} with:`, JSON.stringify(data, null, 2));
@@ -126,7 +124,8 @@ export class WorkoutPlanService {
 
   /**
    * Add exercise to workout plan
-   * Base Path Updated: /api/v1/workout-plans/...
+   * UPDATED: Now includes instructions field
+   * Endpoint: POST /api/v1/workout-plans/{planId}/exercises
    */
   static async addExerciseToWorkoutPlan(
     planId: string,
@@ -137,17 +136,24 @@ export class WorkoutPlanService {
         exerciseTemplateId: exercise.exerciseTemplateId,
         title: exercise.title,
         notes: exercise.notes || '',
+        instructions: exercise.instructions || '', // ADDED: Instructions field
         sets: exercise.sets || [],
         restSeconds: exercise.restSeconds || 120,
       };
+
+      console.log('Adding exercise to plan:', planId);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
 
       const response = await apiPost<WorkoutPlan>(
         `/api/v1/workout-plans/${planId}/exercises`,
         payload
       );
+
+      console.log('Exercise added successfully');
       return response;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add exercise to workout plan:', error);
+      console.error('Error details:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -164,6 +170,7 @@ export class WorkoutPlanService {
       const payload: Record<string, any> = {};
       if (exercise.title !== undefined) payload.title = exercise.title;
       if (exercise.notes !== undefined) payload.notes = exercise.notes;
+      if (exercise.instructions !== undefined) payload.instructions = exercise.instructions;
       if (exercise.sets !== undefined) payload.sets = exercise.sets;
       if (exercise.restSeconds !== undefined) payload.restSeconds = exercise.restSeconds;
 
@@ -287,7 +294,7 @@ export class WorkoutPlanService {
 
   /**
    * Browse available exercises for adding to a plan
-   * Endpoint: GET /api/v1/exercises/search (Standard convention)
+   * Endpoint: GET /api/v1/exercises/search
    */
   static async browseExercises(
     search?: string,
@@ -296,12 +303,11 @@ export class WorkoutPlanService {
   ): Promise<ApiResponse<Exercise[]>> {
     try {
       const params = new URLSearchParams();
-      if (search) params.append('q', search); // Changed 'search' to 'q' (common standard)
+      if (search) params.append('q', search);
       if (category) params.append('category', category);
       if (muscle) params.append('muscle', muscle);
 
       const queryString = params.toString();
-      // Assuming a generic exercise endpoint exists as verified in previous steps
       const url = `/api/v1/exercises/search${queryString ? `?${queryString}` : ''}`;
 
       const response = await apiGet<Exercise[]>(url);
@@ -318,7 +324,6 @@ export class WorkoutPlanService {
 
   /**
    * Duplicate a workout plan
-   * Logic: Fetches original -> Cleanse ID -> Create new via POST /personal
    */
   static async duplicateWorkoutPlan(
     sourcePlanId: string,
@@ -333,14 +338,12 @@ export class WorkoutPlanService {
 
       const sourcePlan = sourceResponse.data;
 
-      // Create new plan using the source data
-      // Note: We deliberately strip the ID and created dates
       const createResponse = await this.createWorkoutPlan({
         title: newTitle,
         description: sourcePlan.description,
         exercises: sourcePlan.exercises,
         estimatedDurationMinutes: sourcePlan.estimatedDurationMinutes,
-        isPublic: false, // Duplicates should default to private/personal
+        isPublic: false,
       });
 
       return createResponse;
@@ -375,7 +378,8 @@ export class WorkoutPlanService {
         exerciseTemplateId: exerciseToDuplicate.exerciseTemplateId,
         title: `${exerciseToDuplicate.title} (Copy)`,
         notes: exerciseToDuplicate.notes,
-        sets: exerciseToDuplicate.sets.map(s => ({...s, setNumber: undefined})), // Ensure new sets get new IDs/Numbers if backend handles it
+        instructions: exerciseToDuplicate.instructions,
+        sets: exerciseToDuplicate.sets.map(s => ({ ...s, setNumber: undefined })),
         restSeconds: exerciseToDuplicate.restSeconds,
       };
 
