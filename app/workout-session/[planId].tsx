@@ -1,4 +1,4 @@
-// app/workout-session/[planId].tsx
+// app/workout-session/[planId].tsx - COMPLETE WITH LOCAL SET TYPES
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -51,6 +51,7 @@ export default function WorkoutSessionScreen() {
   const [workoutDuration, setWorkoutDuration] = useState('0s');
 
   const [localSetValues, setLocalSetValues] = useState<Record<string, LocalSetData>>({});
+  const [localSetTypes, setLocalSetTypes] = useState<Record<string, string>>({}); // NEW
 
   // Rest timer states
   const [restTimerPreferences, setRestTimerPreferences] = useState<Record<number, number>>({});
@@ -183,6 +184,8 @@ export default function WorkoutSessionScreen() {
 
   const initializeLocalValues = (workoutData: WorkoutSession) => {
     const initialValues: Record<string, LocalSetData> = {};
+    const initialTypes: Record<string, string> = {}; // NEW
+
     workoutData.exercises.forEach((exercise, exIdx) => {
       exercise.sets.forEach((set, setIdx) => {
         const key = `${exIdx}-${setIdx}`;
@@ -190,9 +193,12 @@ export default function WorkoutSessionScreen() {
           weightKg: set.weightKg?.toString() || '',
           reps: set.reps?.toString() || '',
         };
+        initialTypes[key] = set.setType || 'NORMAL'; // NEW: Initialize types
       });
     });
+
     setLocalSetValues(initialValues);
+    setLocalSetTypes(initialTypes); // NEW: Set initial types
   };
 
   const initializeRestTimers = (workoutData: WorkoutSession) => {
@@ -247,39 +253,32 @@ export default function WorkoutSessionScreen() {
     return null;
   };
 
-  // NEW: Toggle Set Type Function
+  // UPDATED: Toggle Set Type - LOCAL ONLY, NO API CALL
   const toggleSetType = async (exerciseIndex: number, setIndex: number) => {
     if (!workout) return;
 
     await impact('light');
 
-    // 1. Determine next type
-    const currentSet = workout.exercises[exerciseIndex].sets[setIndex];
-    const currentType = currentSet.setType || 'NORMAL';
-    let nextType: SetType;
+    const key = getLocalSetKey(exerciseIndex, setIndex);
+    const currentType = localSetTypes[key] || 'NORMAL';
 
+    // Determine next type
+    let nextType: string;
     switch (currentType) {
-      case 'NORMAL': nextType = SetType.WARMUP; break;
-      case 'WARMUP': nextType = SetType.DROP; break;
-      case 'DROP': nextType = SetType.FAILURE; break;
-      case 'FAILURE': nextType = SetType.NORMAL; break;
-      default: nextType = SetType.NORMAL;
+      case 'NORMAL': nextType = 'WARMUP'; break;
+      case 'WARMUP': nextType = 'DROP'; break;
+      case 'DROP': nextType = 'FAILURE'; break;
+      case 'FAILURE': nextType = 'NORMAL'; break;
+      default: nextType = 'NORMAL';
     }
 
-    // 2. Optimistic Update
-    const updatedExercises = [...workout.exercises];
-    updatedExercises[exerciseIndex].sets[setIndex].setType = nextType as any;
-    setWorkout({ ...workout, exercises: updatedExercises });
+    console.log(`Set type toggle: ${currentType} → ${nextType} (LOCAL ONLY - no API call)`);
 
-    // 3. API Sync
-    try {
-      await WorkoutService.updateSet(workout.id, exerciseIndex, setIndex, {
-        setType: nextType
-      });
-    } catch (error) {
-      console.error("Failed to update set type", error);
-      // Revert on fail if needed
-    }
+    // Update local state only - no API call
+    setLocalSetTypes(prev => ({
+      ...prev,
+      [key]: nextType
+    }));
   };
 
   const toggleSetComplete = async (exerciseIndex: number, setIndex: number) => {
@@ -291,6 +290,7 @@ export default function WorkoutSessionScreen() {
     const currentSet = workout.exercises[exerciseIndex].sets[setIndex];
     const key = getLocalSetKey(exerciseIndex, setIndex);
     const localValues = localSetValues[key];
+    const localSetType = localSetTypes[key] || 'NORMAL'; // NEW: Get local type
 
     const isDurationExercise = currentSet.durationSeconds !== null && currentSet.durationSeconds > 0;
 
@@ -317,6 +317,7 @@ export default function WorkoutSessionScreen() {
           completed: !currentSet.completed,
           weightKg: isDurationExercise ? null : weightKg,
           reps: isDurationExercise ? null : reps,
+          setType: localSetType, // NEW: Send local set type
         }
       );
 
@@ -330,6 +331,12 @@ export default function WorkoutSessionScreen() {
             weightKg: updatedSet.weightKg?.toString() || '',
             reps: updatedSet.reps?.toString() || '',
           }
+        }));
+
+        // NEW: Sync local type with server response
+        setLocalSetTypes(prev => ({
+          ...prev,
+          [key]: updatedSet.setType || 'NORMAL'
         }));
 
         // Start rest timer if completing a set
@@ -374,28 +381,57 @@ export default function WorkoutSessionScreen() {
     impact('light');
   };
 
+  // UPDATED: Add Set with type initialization
   const addSet = async (exerciseIndex: number) => {
     if (!workout) return;
 
     await impact('medium');
 
     try {
-      const response = await WorkoutService.addSet(workout.id, exerciseIndex);
+      console.log(`Adding new set to exercise ${exerciseIndex}`);
+
+      const exercise = workout.exercises[exerciseIndex];
+      const lastSet = exercise.sets[exercise.sets.length - 1];
+
+      const response = await WorkoutService.addSet(
+        workout.id,
+        exerciseIndex,
+        {
+          weightKg: lastSet?.weightKg || null,
+          reps: lastSet?.reps || null,
+          setType: 'NORMAL',
+        }
+      );
 
       if (response.success && response.data) {
-        if ('exercises' in response.data) {
-          setWorkout(response.data as WorkoutSession);
+        console.log('New set added - completed:',
+          response.data.exercises[exerciseIndex].sets[
+          response.data.exercises[exerciseIndex].sets.length - 1
+            ].completed
+        );
 
-          const newSetIndex = response.data.exercises[exerciseIndex].sets.length - 1;
-          const key = getLocalSetKey(exerciseIndex, newSetIndex);
-          setLocalSetValues(prev => ({
-            ...prev,
-            [key]: {
-              weightKg: '',
-              reps: '',
-            }
-          }));
-        }
+        setWorkout(response.data as WorkoutSession);
+
+        const newSetIndex = response.data.exercises[exerciseIndex].sets.length - 1;
+        const newSet = response.data.exercises[exerciseIndex].sets[newSetIndex];
+        const key = getLocalSetKey(exerciseIndex, newSetIndex);
+
+        // Initialize both values and type
+        setLocalSetValues(prev => ({
+          ...prev,
+          [key]: {
+            weightKg: newSet.weightKg?.toString() || '',
+            reps: newSet.reps?.toString() || '',
+          }
+        }));
+
+        // NEW: Initialize set type
+        setLocalSetTypes(prev => ({
+          ...prev,
+          [key]: newSet.setType || 'NORMAL'
+        }));
+
+        await impact('success');
       }
     } catch (error) {
       console.error('Failed to add set:', error);
@@ -563,6 +599,7 @@ export default function WorkoutSessionScreen() {
             workout={workout}
             theme={theme}
             localSetValues={localSetValues}
+            localSetTypes={localSetTypes}
             onUpdateLocalValue={updateLocalValue}
             onToggleComplete={toggleSetComplete}
             onToggleSetType={toggleSetType}
@@ -587,7 +624,10 @@ export default function WorkoutSessionScreen() {
           style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
           onPress={async () => {
             await impact('medium');
-            Alert.alert('Add Exercise', 'Exercise picker coming soon!');
+            router.push({
+              pathname: '/exercises/browse',
+              params: { sessionId: workout.id },
+            });
           }}
           activeOpacity={0.7}
         >
@@ -715,6 +755,7 @@ interface ExerciseCardProps {
   workout: WorkoutSession;
   theme: any;
   localSetValues: Record<string, LocalSetData>;
+  localSetTypes: Record<string, string>; // NEW
   onUpdateLocalValue: (exerciseIndex: number, setIndex: number, field: 'weightKg' | 'reps', value: string) => void;
   onToggleComplete: (exerciseIndex: number, setIndex: number) => void;
   onToggleSetType: (exerciseIndex: number, setIndex: number) => void;
@@ -738,6 +779,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                                                      exerciseIndex,
                                                      theme,
                                                      localSetValues,
+                                                     localSetTypes, // NEW
                                                      onUpdateLocalValue,
                                                      onToggleComplete,
                                                      onToggleSetType,
@@ -782,30 +824,30 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     return true;
   };
 
-  // Pre-calculate display numbers for sets
-  // This logic ensures only NORMAL sets increment the count
+  // UPDATED: Use local set types
   let normalSetCount = 0;
-  const setsWithDisplay = exercise.sets.map((s) => {
-    const type = s.setType || 'NORMAL';
+  const setsWithDisplay = exercise.sets.map((s, idx) => {
+    const key = `${exerciseIndex}-${idx}`;
+    const type = localSetTypes[key] || s.setType || 'NORMAL'; // Use local type first!
+
     let label = '';
-    let color = theme.text; // Default color
+    let color = theme.text;
 
     if (type === 'NORMAL') {
       normalSetCount++;
       label = normalSetCount.toString();
-      // Normal text color handled in render
     } else if (type === 'WARMUP') {
       label = 'W';
-      color = '#FFD700'; // Gold
+      color = '#FFD700';
     } else if (type === 'DROP') {
       label = 'D';
-      color = '#FF453A'; // Red/Orange
+      color = '#FF453A';
     } else if (type === 'FAILURE') {
       label = 'F';
-      color = '#FF3B30'; // Red
+      color = '#FF3B30';
     }
 
-    return { ...s, displayLabel: label, displayColor: color };
+    return { ...s, displayLabel: label, displayColor: color, actualType: type };
   });
 
   return (
