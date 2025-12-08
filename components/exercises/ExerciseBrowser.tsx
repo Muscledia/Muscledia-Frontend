@@ -1,37 +1,29 @@
-// components/features/ExerciseBrowser.tsx
+// components/exercise/ExerciseBrowser.tsx - FILTER FIX
 
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
   useColorScheme,
-  Image,
+  FlatList,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Search, Filter, X } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { ExerciseService } from '@/services';
+import { ExerciseService} from '@/services';
 import { Exercise } from '@/types/api';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useHaptics } from '@/hooks/useHaptics';
+import { ExerciseFilters } from '@/app/exercise-filters';
 
 interface ExerciseBrowserProps {
-  onSelectExercise: (exercise: Exercise) => Promise<void>;
+  onSelectExercise?: (exercise: Exercise) => void;
 }
 
-export interface ExerciseFilters {
-  difficulty: string[];
-  equipment: string[];
-  targetMuscle: string[];
-  bodyPart: string[];
-}
-
-export function ExerciseBrowser({ onSelectExercise }: ExerciseBrowserProps) {
+export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExercise }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
@@ -50,32 +42,44 @@ export function ExerciseBrowser({ onSelectExercise }: ExerciseBrowserProps) {
     bodyPart: [],
   });
 
-  // Listen for applied filters from filter screen
-  useEffect(() => {
-    if (params.appliedFilters) {
-      try {
-        const filters = JSON.parse(params.appliedFilters as string);
-        setActiveFilters(filters);
-      } catch (error) {
-        console.error('Error parsing filters:', error);
-      }
-    }
-  }, [params.appliedFilters]);
-
+  // Load exercises on mount
   useEffect(() => {
     loadExercises();
   }, []);
 
+  // Apply filters when they change
   useEffect(() => {
-    applyFiltersAndSearch();
-  }, [exercises, searchQuery, activeFilters]);
+    console.log('Filters changed:', activeFilters);
+    console.log('Search query:', searchQuery);
+    applyFilters();
+  }, [exercises, activeFilters, searchQuery]);
+
+  // Listen for filter changes from filter screen
+  useEffect(() => {
+    if (params.appliedFilters) {
+      try {
+        const filters = JSON.parse(params.appliedFilters as string);
+        console.log('Applied filters from params:', filters);
+        setActiveFilters(filters);
+      } catch (error) {
+        console.error('Failed to parse filters:', error);
+      }
+    }
+  }, [params.appliedFilters, params._timestamp]); // Include _timestamp to force update
 
   const loadExercises = async () => {
     try {
       setLoading(true);
+      console.log('Loading all exercises...');
+
       const response = await ExerciseService.getAllExercises();
+
       if (response.success && response.data) {
+        console.log(`Loaded ${response.data.length} exercises`);
         setExercises(response.data);
+        setFilteredExercises(response.data);
+      } else {
+        console.error('Failed to load exercises:', response.message);
       }
     } catch (error) {
       console.error('Error loading exercises:', error);
@@ -84,52 +88,67 @@ export function ExerciseBrowser({ onSelectExercise }: ExerciseBrowserProps) {
     }
   };
 
-  const applyFiltersAndSearch = () => {
+  const applyFilters = () => {
     let filtered = [...exercises];
+    console.log(`Starting with ${filtered.length} exercises`);
 
     // Apply search query
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (ex) =>
-          ex.name.toLowerCase().includes(query) ||
-          ex.targetMuscle?.toLowerCase().includes(query) ||
-          ex.equipment?.toLowerCase().includes(query)
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(exercise =>
+        exercise.name.toLowerCase().includes(query) ||
+        exercise.targetMuscle?.toLowerCase().includes(query) ||
+        exercise.equipment?.toLowerCase().includes(query) ||
+        exercise.bodyPart?.toLowerCase().includes(query)
       );
+      console.log(`After search: ${filtered.length} exercises`);
     }
 
     // Apply difficulty filter
-    if (activeFilters.difficulty.length > 0) {
-      filtered = filtered.filter((ex) =>
-        activeFilters.difficulty.includes(ex.difficulty || '')
+    if (activeFilters.difficulty && activeFilters.difficulty.length > 0) {
+      filtered = filtered.filter(exercise =>
+        activeFilters.difficulty!.includes(exercise.difficulty || '')
       );
+      console.log(`After difficulty filter: ${filtered.length} exercises`);
     }
 
     // Apply equipment filter
-    if (activeFilters.equipment.length > 0) {
-      filtered = filtered.filter((ex) =>
-        activeFilters.equipment.includes(ex.equipment || '')
+    if (activeFilters.equipment && activeFilters.equipment.length > 0) {
+      filtered = filtered.filter(exercise =>
+        activeFilters.equipment!.includes(exercise.equipment || '')
       );
+      console.log(`After equipment filter: ${filtered.length} exercises`);
     }
 
     // Apply target muscle filter
-    if (activeFilters.targetMuscle.length > 0) {
-      filtered = filtered.filter((ex) =>
-        activeFilters.targetMuscle.includes(ex.targetMuscle || '')
+    if (activeFilters.targetMuscle && activeFilters.targetMuscle.length > 0) {
+      filtered = filtered.filter(exercise =>
+        activeFilters.targetMuscle!.includes(exercise.targetMuscle || '')
       );
+      console.log(`After target muscle filter: ${filtered.length} exercises`);
     }
 
     // Apply body part filter
-    if (activeFilters.bodyPart.length > 0) {
-      filtered = filtered.filter((ex) =>
-        activeFilters.bodyPart.includes(ex.bodyPart || '')
+    if (activeFilters.bodyPart && activeFilters.bodyPart.length > 0) {
+      filtered = filtered.filter(exercise =>
+        activeFilters.bodyPart!.includes(exercise.bodyPart || '')
       );
+      console.log(`After body part filter: ${filtered.length} exercises`);
     }
 
+    console.log(`Final filtered count: ${filtered.length} exercises`);
     setFilteredExercises(filtered);
   };
 
-  const openFilterScreen = async () => {
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const openFilters = async () => {
     await impact('medium');
     router.push({
       pathname: '/exercise-filters',
@@ -142,213 +161,248 @@ export function ExerciseBrowser({ onSelectExercise }: ExerciseBrowserProps) {
     });
   };
 
-  const clearFilters = async () => {
-    await impact('light');
+  const getActiveFilterCount = () => {
+    return Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+  };
+
+  const clearAllFilters = async () => {
+    await impact('medium');
     setActiveFilters({
       difficulty: [],
       equipment: [],
       targetMuscle: [],
       bodyPart: [],
     });
+    setSearchQuery('');
   };
 
-  const getActiveFilterCount = () => {
-    return Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+  const handleExerciseSelect = async (exercise: Exercise) => {
+    await impact('medium');
+    if (onSelectExercise) {
+      onSelectExercise(exercise);
+    }
   };
 
-  const renderExerciseCard = ({ item }: { item: Exercise }) => (
+  const renderExercise = ({ item }: { item: Exercise }) => (
     <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={() => onSelectExercise(item)}
       style={[styles.exerciseCard, { backgroundColor: theme.surface }]}
+      onPress={() => handleExerciseSelect(item)}
+      activeOpacity={0.7}
     >
-      {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.exerciseImage} />
-      )}
-      <View style={styles.exerciseInfo}>
-        <Text style={[styles.exerciseName, { color: theme.text }]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <View style={styles.exerciseMeta}>
-          {item.equipment && (
-            <View style={[styles.tag, { backgroundColor: theme.accent + '20' }]}>
-              <Text style={[styles.tagText, { color: theme.accent }]}>
-                {item.equipment}
-              </Text>
-            </View>
-          )}
-          {item.targetMuscle && (
-            <View style={[styles.tag, { backgroundColor: theme.textMuted + '20' }]}>
-              <Text style={[styles.tagText, { color: theme.textMuted }]}>
-                {item.targetMuscle}
-              </Text>
-            </View>
-          )}
-        </View>
+      <View style={styles.exerciseHeader}>
+        <Text style={[styles.exerciseName, { color: theme.text }]}>{item.name}</Text>
+      </View>
+
+      <View style={styles.exerciseTags}>
+        {item.targetMuscle && (
+          <View style={[styles.tag, { backgroundColor: theme.accent + '20' }]}>
+            <Text style={[styles.tagText, { color: theme.accent }]}>
+              {item.targetMuscle}
+            </Text>
+          </View>
+        )}
+        {item.equipment && (
+          <View style={[styles.tag, { backgroundColor: theme.textMuted + '20' }]}>
+            <Text style={[styles.tagText, { color: theme.textMuted }]}>
+              {item.equipment}
+            </Text>
+          </View>
+        )}
+        {item.difficulty && (
+          <View style={[styles.tag, { backgroundColor: getDifficultyColor(item.difficulty) + '20' }]}>
+            <Text style={[styles.tagText, { color: getDifficultyColor(item.difficulty) }]}>
+              {item.difficulty}
+            </Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toUpperCase()) {
+      case 'BEGINNER':
+        return '#4CAF50';
+      case 'INTERMEDIATE':
+        return '#FF9800';
+      case 'ADVANCED':
+        return '#F44336';
+      default:
+        return theme.textMuted;
+    }
+  };
+
   const activeFilterCount = getActiveFilterCount();
 
-  if (loading) return <LoadingScreen message="Loading exercises..." theme={theme} />;
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.accent} />
+        <Text style={[styles.loadingText, { color: theme.textMuted }]}>Loading exercises...</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
-        <Search size={20} color={theme.textMuted} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Search exercises..."
-          placeholderTextColor={theme.textMuted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <X size={20} color={theme.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Filter Button */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={openFilterScreen}
-          style={[
-            styles.filterButton,
-            {
-              backgroundColor: activeFilterCount > 0 ? theme.accent : theme.surface,
-              borderColor: theme.border,
-            },
-          ]}
-        >
-          <Filter
-            size={18}
-            color={activeFilterCount > 0 ? theme.cardText : theme.text}
+      <View style={[styles.searchContainer, { backgroundColor: theme.background }]}>
+        <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
+          <Search size={20} color={theme.textMuted} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
+            placeholder="Search exercises..."
+            placeholderTextColor={theme.textMuted}
+            value={searchQuery}
+            onChangeText={handleSearch}
           />
-          <Text
-            style={[
-              styles.filterButtonText,
-              { color: activeFilterCount > 0 ? theme.cardText : theme.text },
-            ]}
-          >
-            Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-          </Text>
-        </TouchableOpacity>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch}>
+              <X size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
 
-        {activeFilterCount > 0 && (
-          <TouchableOpacity
-            onPress={clearFilters}
-            style={[styles.clearButton, { backgroundColor: theme.surface }]}
-          >
-            <Text style={[styles.clearButtonText, { color: theme.accent }]}>
-              Clear All
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.filterButton, { backgroundColor: theme.surface }]}
+          onPress={openFilters}
+          activeOpacity={0.7}
+        >
+          <Filter size={20} color={theme.accent} />
+          {activeFilterCount > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: theme.accent }]}>
+              <Text style={[styles.filterBadgeText, { color: theme.cardText }]}>
+                {activeFilterCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
+
+      {/* Active Filters Display */}
+      {activeFilterCount > 0 && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={[styles.activeFiltersText, { color: theme.textMuted }]}>
+            {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
+          </Text>
+          <TouchableOpacity onPress={clearAllFilters}>
+            <Text style={[styles.clearFiltersText, { color: theme.accent }]}>Clear all</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Exercise List */}
-      {filteredExercises.length === 0 ? (
-        <EmptyState
-          icon={<Search size={48} color={theme.textMuted} />}
-          title="No Exercises Found"
-          message={
-            searchQuery || activeFilterCount > 0
-              ? 'Try adjusting your search or filters'
-              : 'No exercises available'
-          }
-          theme={theme}
-        />
-      ) : (
-        <FlatList
-          data={filteredExercises}
-          renderItem={renderExerciseCard}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      )}
+      <FlatList
+        data={filteredExercises}
+        renderItem={renderExercise}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+              No exercises found
+            </Text>
+            {activeFilterCount > 0 && (
+              <TouchableOpacity onPress={clearAllFilters} style={styles.clearButton}>
+                <Text style={[styles.clearButtonText, { color: theme.accent }]}>
+                  Clear filters
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        }
+      />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+  },
   searchContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    padding: 16,
     gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    margin: 16,
-    borderRadius: 12,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    fontSize: 15,
   },
   filterButton: {
-    flexDirection: 'row',
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
+    position: 'relative',
   },
-  filterButtonText: {
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  activeFiltersText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  clearButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  clearButtonText: {
+  clearFiltersText: {
     fontSize: 14,
     fontWeight: '600',
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: 16,
+    paddingTop: 0,
   },
   exerciseCard: {
-    flexDirection: 'row',
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    gap: 12,
   },
-  exerciseImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: '#1C1C1C',
-  },
-  exerciseInfo: {
-    flex: 1,
-    justifyContent: 'center',
+  exerciseHeader: {
+    marginBottom: 8,
   },
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+    textTransform: 'capitalize',
   },
-  exerciseMeta: {
+  exerciseTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
@@ -356,10 +410,27 @@ const styles = StyleSheet.create({
   tag: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 4,
   },
   tagText: {
     fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  clearButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  clearButtonText: {
+    fontSize: 14,
     fontWeight: '600',
   },
 });
