@@ -234,7 +234,7 @@ export default function EditRoutineScreen() {
           icon: saving
             ? <ActivityIndicator size="small" color={theme.accent} />
             : <Check size={24} color={theme.accent} />,
-          onPress: handleSave,
+          onPress: handleUpdate,
           disabled: saving
         }}
         theme={theme}
