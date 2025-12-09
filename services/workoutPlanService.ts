@@ -6,10 +6,8 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api';
 import {
   ApiResponse,
   WorkoutPlan,
-  PlannedExercise,
   PlannedSet,
   CreateWorkoutPlanRequest,
-  UpdateWorkoutPlanRequest,
   AddExerciseToWorkoutPlanRequest,
   Exercise,
 } from '@/types/api';
@@ -129,16 +127,59 @@ export class WorkoutPlanService {
    */
   static async addExerciseToWorkoutPlan(
     planId: string,
-    exercise: AddExerciseToWorkoutPlanRequest
+    exercise: {
+      exerciseTemplateId: string;
+      title: string;
+      notes?: string;
+      instructions?: string | string[];  // Accept both string and array
+      description?: string;
+      bodyPart?: string;
+      equipment?: string;
+      targetMuscle?: string;
+      secondaryMuscles?: string[];
+      difficulty?: string;
+      category?: string;
+      restSeconds?: number;
+      sets?: any[];
+    }
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
+      // ✅ Convert instructions to array if it's a string
+      let instructionsArray: string[] = [];
+      if (typeof exercise.instructions === 'string' && exercise.instructions) {
+        // Split by newline and filter out empty lines
+        instructionsArray = exercise.instructions
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
+      } else if (Array.isArray(exercise.instructions)) {
+        instructionsArray = exercise.instructions;
+      }
+
+      // ✅ Build complete payload with ALL fields
       const payload = {
         exerciseTemplateId: exercise.exerciseTemplateId,
         title: exercise.title,
         notes: exercise.notes || '',
-        instructions: exercise.instructions || '', // ADDED: Instructions field
-        sets: exercise.sets || [],
+
+        // ✅ CRITICAL: Instructions must be an array!
+        instructions: instructionsArray,
+
+        description: exercise.description || '',
+
+        // Metadata fields
+        bodyPart: exercise.bodyPart,
+        equipment: exercise.equipment,
+        targetMuscle: exercise.targetMuscle,
+        secondaryMuscles: exercise.secondaryMuscles || [],
+        difficulty: exercise.difficulty,
+        category: exercise.category,
+
+        // Configuration
         restSeconds: exercise.restSeconds || 120,
+
+        // Sets
+        sets: exercise.sets || [],
       };
 
       console.log('Adding exercise to plan:', planId);
@@ -149,11 +190,14 @@ export class WorkoutPlanService {
         payload
       );
 
-      console.log('Exercise added successfully');
+      if (response.success) {
+        console.log('Successfully added exercise to workout plan');
+      }
+
       return response;
     } catch (error: any) {
-      console.error('Failed to add exercise to workout plan:', error);
-      console.error('Error details:', error.response?.data || error.message);
+      console.error('Failed to add exercise to workout plan:', error.response?.data || error);
+      console.error('Error details:', error.response?.data?.message || error.message);
       throw error;
     }
   }

@@ -1,5 +1,3 @@
-// app/exercises/browse.tsx - FIXED FOR BACKEND PLANNEDSET STRUCTURE
-
 import React from 'react';
 import { View, StyleSheet, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,16 +10,6 @@ import { WorkoutPlanService, WorkoutService } from '@/services';
 import { Exercise } from '@/types/api';
 import { useHaptics } from '@/hooks/useHaptics';
 
-// Convert instructions array to formatted string
-const formatInstructions = (instructions?: string | string[]): string => {
-  if (!instructions) return '';
-  if (typeof instructions === 'string') return instructions;
-  if (Array.isArray(instructions)) {
-    return instructions.map((step, index) => `${index + 1}. ${step}`).join('\n\n');
-  }
-  return '';
-};
-
 export default function ExerciseBrowserScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ planId?: string; sessionId?: string }>();
@@ -30,222 +18,149 @@ export default function ExerciseBrowserScreen() {
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
 
-  // Extract IDs from params
   const targetPlanId = params.planId;
   const currentWorkoutId = params.sessionId;
 
+  // --- Helper Functions ---
+  const mapDifficulty = (difficulty?: string): string => {
+    if (!difficulty) return 'INTERMEDIATE';
+    const upper = difficulty.toUpperCase();
+    return ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'].includes(upper) ? upper : 'INTERMEDIATE';
+  };
+
+  const mapCategory = (category?: string): string => {
+    if (!category) return 'STRENGTH';
+    const upper = category.toUpperCase();
+    return ['STRENGTH', 'CARDIO', 'FLEXIBILITY', 'SPORTS', 'OTHER'].includes(upper) ? upper : 'STRENGTH';
+  };
+
+  const formatInstructionsArray = (instructions?: string | string[]): string[] => {
+    if (!instructions) return [];
+    if (Array.isArray(instructions)) {
+      return instructions.filter(line => line && line.trim().length > 0);
+    }
+    if (typeof instructions === 'string') {
+      return instructions.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    }
+    return [];
+  };
+
+  const removeNullValues = (obj: any): any => {
+    if (Array.isArray(obj)) {
+      return obj.map(v => removeNullValues(v));
+    } else if (obj !== null && typeof obj === 'object') {
+      return Object.keys(obj).reduce((acc, key) => {
+        const value = removeNullValues(obj[key]);
+        if (value !== null && value !== undefined && value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+    }
+    return obj;
+  };
+
   const handleSelectExercise = async (exercise: Exercise) => {
     await impact('medium');
-
-    if (params.planId) {
+    if (targetPlanId) {
       await addExerciseToPlan(exercise);
-    } else if (params.sessionId) {
+    } else if (currentWorkoutId) {
       await addExerciseToSession(exercise);
     } else {
       Alert.alert('Error', 'No workout plan or session specified');
     }
   };
 
+  // --- Add to Workout Plan (Template) ---
   const addExerciseToPlan = async (exercise: Exercise) => {
-    if (!targetPlanId) {
-      Alert.alert('Error', 'No workout plan selected');
-      return;
-    }
+    if (!targetPlanId) return;
 
     try {
-      await impact('medium');
-
-      // Helper function to format instructions
-      const formatInstructions = (instructions?: string[]): string => {
-        if (!instructions || instructions.length === 0) return '';
-        return instructions.join('\n');
-      };
-
-      // Helper function to map difficulty
-      const mapDifficulty = (difficulty?: string): string => {
-        if (!difficulty) return 'INTERMEDIATE';
-        const upper = difficulty.toUpperCase();
-        return ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'].includes(upper)
-          ? upper
-          : 'INTERMEDIATE';
-      };
-
-      // Helper function to map category
-      const mapCategory = (category?: string): string => {
-        if (!category) return 'STRENGTH';
-        const upper = category.toUpperCase();
-        return ['STRENGTH', 'CARDIO', 'FLEXIBILITY', 'SPORTS', 'OTHER'].includes(upper)
-          ? upper
-          : 'STRENGTH';
-      };
-
-      // Build complete payload with ALL metadata
-      const exerciseRequest = {
-        // Required fields (note: different from session!)
-        exerciseTemplateId: exercise.externalId || exercise.id,
+      const rawPayload = {
+        exerciseTemplateId: exercise.id,
         title: exercise.name,
-
-        // Text content
         notes: exercise.description || '',
-        instructions: formatInstructions(exercise.instructions),
-        description: exercise.description || '',
-
-        // Metadata fields for workout plan display and tracking
-        bodyPart: exercise.bodyPart || null,
-        equipment: exercise.equipment || null,
-        targetMuscle: exercise.targetMuscle || null,
+        instructions: formatInstructionsArray(exercise.instructions),
+        bodyPart: exercise.bodyPart,
+        equipment: exercise.equipment,
+        targetMuscle: exercise.targetMuscle,
         secondaryMuscles: exercise.secondaryMuscles || [],
         difficulty: mapDifficulty(exercise.difficulty),
         category: mapCategory(exercise.category),
-
-        // Configuration
+        numberOfSets: 3,
+        targetReps: 10,
         restSeconds: 120,
-
-        // Default sets
-        sets: [{
-          type: 'NORMAL',
-          reps: null,
-          weightKg: null,
-          durationSeconds: null,
-          distanceMeters: null,
-          repRangeStart: null,
-          repRangeEnd: null,
-          restSeconds: 90,
-        }],
+        sets: [
+          { setNumber: 1, type: 'NORMAL', reps: 10 },
+          { setNumber: 2, type: 'NORMAL', reps: 10 },
+          { setNumber: 3, type: 'NORMAL', reps: 10 }
+        ]
       };
 
-      console.log('Adding exercise to plan:', targetPlanId);
-      console.log('Exercise data:', exerciseRequest);
+      const payload = removeNullValues(rawPayload);
+      console.log('Adding to Plan Payload:', JSON.stringify(payload, null, 2));
 
       const response = await WorkoutPlanService.addExerciseToWorkoutPlan(
         targetPlanId,
-        exerciseRequest
+        payload
       );
 
       if (response.success) {
-        await impact('heavy');
-        Alert.alert('Success', `Added ${exercise.name} to workout plan`);
+        await impact('success');
+        Alert.alert('Success', `Added ${exercise.name} to plan`);
         router.back();
+      } else {
+        throw new Error(response.message || 'Failed to add exercise');
       }
     } catch (error: any) {
-      console.error('Error adding exercise to plan:', error.response?.data || error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to add exercise to plan'
-      );
+      console.error('Add to Plan Error:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Could not add exercise to plan');
     }
   };
 
+  // --- Add to Active Session ---
   const addExerciseToSession = async (exercise: Exercise) => {
-    if (!currentWorkoutId) {
-      Alert.alert('Error', 'No active workout session');
-      return;
-    }
+    if (!currentWorkoutId) return;
 
     try {
-      await impact('medium');
-
-      // Map exercise data with ALL required fields
-      const exerciseData = {
-        // Required fields (different from workout plan!)
-        exerciseId: exercise.externalId || exercise.id,
+      const rawPayload = {
+        exerciseId: exercise.id,
         exerciseName: exercise.name,
-
-        // Optional fields
         notes: exercise.description || '',
-
-        // Metadata fields for display and tracking
         exerciseCategory: mapCategory(exercise.category),
-        primaryMuscleGroup: exercise.targetMuscle || null,
+        primaryMuscleGroup: exercise.targetMuscle || 'unknown',
         secondaryMuscleGroups: exercise.secondaryMuscles || [],
-        equipment: exercise.equipment || null,
-
-        // Additional denormalized fields
-        bodyPart: exercise.bodyPart || null,
-        targetMuscle: exercise.targetMuscle || null,
+        equipment: exercise.equipment || 'none',
+        bodyPart: exercise.bodyPart,
+        targetMuscle: exercise.targetMuscle,
         difficulty: mapDifficulty(exercise.difficulty),
         category: mapCategory(exercise.category),
-        description: exercise.description || null,
-
-        // Default sets
         sets: [
-          {
-            setNumber: 1,
-            setType: 'NORMAL',
-            weightKg: null,
-            reps: null,
-            durationSeconds: null,
-            distanceMeters: null,
-            restSeconds: null,
-            rpe: null,
-            notes: null,
-            completed: false,
-          },
-          {
-            setNumber: 2,
-            setType: 'NORMAL',
-            weightKg: null,
-            reps: null,
-            durationSeconds: null,
-            distanceMeters: null,
-            restSeconds: null,
-            rpe: null,
-            notes: null,
-            completed: false,
-          },
-          {
-            setNumber: 3,
-            setType: 'NORMAL',
-            weightKg: null,
-            reps: null,
-            durationSeconds: null,
-            distanceMeters: null,
-            restSeconds: null,
-            rpe: null,
-            notes: null,
-            completed: false,
-          },
-        ],
+          { setNumber: 1, setType: 'NORMAL', completed: false, weightKg: 0, reps: 0 },
+          { setNumber: 2, setType: 'NORMAL', completed: false, weightKg: 0, reps: 0 },
+          { setNumber: 3, setType: 'NORMAL', completed: false, weightKg: 0, reps: 0 }
+        ]
       };
 
-      console.log('Adding exercise to session:', exerciseData);
+      const payload = removeNullValues(rawPayload);
+      console.log('Adding to Session Payload:', JSON.stringify(payload, null, 2));
 
       const response = await WorkoutService.addExerciseToSession(
         currentWorkoutId,
-        exerciseData
+        payload
       );
 
       if (response.success) {
-        await impact('heavy');
+        await impact('success');
         Alert.alert('Success', `Added ${exercise.name} to workout`);
         router.back();
+      } else {
+        throw new Error(response.message || 'Failed to add exercise');
       }
     } catch (error: any) {
-      console.error('Error adding exercise to session:', error.response?.data || error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to add exercise'
-      );
+      console.error('Add to Session Error:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Could not add exercise to session');
     }
-  };
-
-  // Helper functions (add these if missing)
-  const mapDifficulty = (difficulty?: string): string => {
-    if (!difficulty) return 'INTERMEDIATE';
-    const upper = difficulty.toUpperCase();
-    if (['BEGINNER', 'INTERMEDIATE', 'ADVANCED'].includes(upper)) {
-      return upper;
-    }
-    return 'INTERMEDIATE';
-  };
-
-  const mapCategory = (category?: string): string => {
-    if (!category) return 'STRENGTH';
-    const upper = category.toUpperCase();
-    if (['STRENGTH', 'CARDIO', 'FLEXIBILITY', 'SPORTS', 'OTHER'].includes(upper)) {
-      return upper;
-    }
-    return 'STRENGTH';
   };
 
   return (
@@ -259,7 +174,13 @@ export default function ExerciseBrowserScreen() {
         }}
         theme={theme}
       />
-      <ExerciseBrowser onSelectExercise={handleSelectExercise} />
+      {/* FIX: Pass explicit IDs to ensure they survive filter navigation */}
+      <ExerciseBrowser
+        onSelectExercise={handleSelectExercise}
+        theme={theme}
+        planId={targetPlanId}
+        sessionId={currentWorkoutId}
+      />
     </SafeAreaView>
   );
 }
