@@ -1,6 +1,4 @@
-// app/workout-session/[planId].tsx - COMPLETE WITH LOCAL SET TYPES
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,7 +12,8 @@ import {
   Alert,
   Pressable,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+// FIX: Import useFocusEffect
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
   X,
   Check,
@@ -51,7 +50,7 @@ export default function WorkoutSessionScreen() {
   const [workoutDuration, setWorkoutDuration] = useState('0s');
 
   const [localSetValues, setLocalSetValues] = useState<Record<string, LocalSetData>>({});
-  const [localSetTypes, setLocalSetTypes] = useState<Record<string, string>>({}); // NEW
+  const [localSetTypes, setLocalSetTypes] = useState<Record<string, string>>({});
 
   // Rest timer states
   const [restTimerPreferences, setRestTimerPreferences] = useState<Record<number, number>>({});
@@ -64,11 +63,14 @@ export default function WorkoutSessionScreen() {
   const [activeWarmupTimer, setActiveWarmupTimer] = useState<string | null>(null);
 
   const [localStartTime] = useState(new Date());
+  // Track if initial load is done to avoid double fetching issues
+  const initialLoadComplete = useRef(false);
 
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const restTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const warmupTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Initial Start (Only once on mount/planId change)
   useEffect(() => {
     startWorkout();
 
@@ -78,6 +80,16 @@ export default function WorkoutSessionScreen() {
       if (warmupTimerIntervalRef.current) clearInterval(warmupTimerIntervalRef.current);
     };
   }, [planId]);
+
+  // FIX: Refresh when returning to screen (e.g. after adding exercise)
+  // Logic: If we have a workout ID, fetch the latest version.
+  useFocusEffect(
+    useCallback(() => {
+      if (workout?.id && initialLoadComplete.current) {
+        refreshWorkoutSession(workout.id);
+      }
+    }, [workout?.id])
+  );
 
   // Workout duration timer
   useEffect(() => {
@@ -169,6 +181,7 @@ export default function WorkoutSessionScreen() {
         initializeLocalValues(response.data);
         initializeRestTimers(response.data);
         initializeWarmupTimers(response.data);
+        initialLoadComplete.current = true;
       } else {
         Alert.alert('Error', response.message || 'Failed to start workout');
         router.back();
@@ -182,9 +195,24 @@ export default function WorkoutSessionScreen() {
     }
   };
 
+  // FIX: Silent refresh function
+  const refreshWorkoutSession = async (workoutId: string) => {
+    try {
+      console.log('Refreshing workout session:', workoutId);
+      const response = await WorkoutService.getWorkoutSession(workoutId);
+      if (response.success && response.data) {
+        setWorkout(response.data);
+        // MERGE local values instead of overwriting to preserve unsaved inputs
+        refreshLocalValues(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to refresh session", error);
+    }
+  };
+
   const initializeLocalValues = (workoutData: WorkoutSession) => {
     const initialValues: Record<string, LocalSetData> = {};
-    const initialTypes: Record<string, string> = {}; // NEW
+    const initialTypes: Record<string, string> = {};
 
     workoutData.exercises.forEach((exercise, exIdx) => {
       exercise.sets.forEach((set, setIdx) => {
@@ -193,12 +221,47 @@ export default function WorkoutSessionScreen() {
           weightKg: set.weightKg?.toString() || '',
           reps: set.reps?.toString() || '',
         };
-        initialTypes[key] = set.setType || 'NORMAL'; // NEW: Initialize types
+        initialTypes[key] = set.setType || 'NORMAL';
       });
     });
 
     setLocalSetValues(initialValues);
-    setLocalSetTypes(initialTypes); // NEW: Set initial types
+    setLocalSetTypes(initialTypes);
+  };
+
+  // FIX: Smart merge for refreshing data
+  const refreshLocalValues = (workoutData: WorkoutSession) => {
+    setLocalSetValues(prev => {
+      const next = { ...prev };
+      workoutData.exercises.forEach((exercise, exIdx) => {
+        exercise.sets.forEach((set, setIdx) => {
+          const key = `${exIdx}-${setIdx}`;
+          // Only set if not already present (preserve user's unsaved typing)
+          // OR if the server has data (completed sets), prefer server data
+          if (!next[key] || set.completed) {
+            next[key] = {
+              weightKg: set.weightKg?.toString() || '',
+              reps: set.reps?.toString() || '',
+            };
+          }
+        });
+      });
+      return next;
+    });
+
+    // Sync types (safer to sync always as types change rarely by typing)
+    setLocalSetTypes(prev => {
+      const next = { ...prev };
+      workoutData.exercises.forEach((exercise, exIdx) => {
+        exercise.sets.forEach((set, setIdx) => {
+          const key = `${exIdx}-${setIdx}`;
+          if (!next[key] || set.setType) {
+            next[key] = set.setType || 'NORMAL';
+          }
+        });
+      });
+      return next;
+    });
   };
 
   const initializeRestTimers = (workoutData: WorkoutSession) => {
@@ -253,7 +316,6 @@ export default function WorkoutSessionScreen() {
     return null;
   };
 
-  // UPDATED: Toggle Set Type - LOCAL ONLY, NO API CALL
   const toggleSetType = async (exerciseIndex: number, setIndex: number) => {
     if (!workout) return;
 
@@ -262,7 +324,6 @@ export default function WorkoutSessionScreen() {
     const key = getLocalSetKey(exerciseIndex, setIndex);
     const currentType = localSetTypes[key] || 'NORMAL';
 
-    // Determine next type
     let nextType: string;
     switch (currentType) {
       case 'NORMAL': nextType = 'WARMUP'; break;
@@ -272,13 +333,17 @@ export default function WorkoutSessionScreen() {
       default: nextType = 'NORMAL';
     }
 
-    console.log(`Set type toggle: ${currentType} → ${nextType} (LOCAL ONLY - no API call)`);
+    console.log(`Set type toggle: ${currentType} → ${nextType}`);
 
-    // Update local state only - no API call
     setLocalSetTypes(prev => ({
       ...prev,
       [key]: nextType
     }));
+
+    // Sync to API in background
+    try {
+      WorkoutService.updateSetType(workout.id, exerciseIndex, setIndex, nextType);
+    } catch (e) { console.error(e); }
   };
 
   const toggleSetComplete = async (exerciseIndex: number, setIndex: number) => {
@@ -290,7 +355,7 @@ export default function WorkoutSessionScreen() {
     const currentSet = workout.exercises[exerciseIndex].sets[setIndex];
     const key = getLocalSetKey(exerciseIndex, setIndex);
     const localValues = localSetValues[key];
-    const localSetType = localSetTypes[key] || 'NORMAL'; // NEW: Get local type
+    const localSetType = localSetTypes[key] || 'NORMAL';
 
     const isDurationExercise = currentSet.durationSeconds !== null && currentSet.durationSeconds > 0;
 
@@ -317,7 +382,7 @@ export default function WorkoutSessionScreen() {
           completed: !currentSet.completed,
           weightKg: isDurationExercise ? null : weightKg,
           reps: isDurationExercise ? null : reps,
-          setType: localSetType, // NEW: Send local set type
+          setType: localSetType,
         }
       );
 
@@ -333,13 +398,11 @@ export default function WorkoutSessionScreen() {
           }
         }));
 
-        // NEW: Sync local type with server response
         setLocalSetTypes(prev => ({
           ...prev,
           [key]: updatedSet.setType || 'NORMAL'
         }));
 
-        // Start rest timer if completing a set
         if (!currentSet.completed && !isDurationExercise) {
           const restTime = restTimerPreferences[exerciseIndex] || 120;
           setRestTimeRemaining(restTime);
@@ -357,6 +420,7 @@ export default function WorkoutSessionScreen() {
     }
   };
 
+  // ... (Keep existing Timer functions: startWarmup, pause, reset, addSet, updateRest, skipRest, cancel, finish, stats) ...
   const startWarmupTimer = (exerciseIndex: number, setIndex: number) => {
     const key = getLocalSetKey(exerciseIndex, setIndex);
     setActiveWarmupTimer(key);
@@ -381,15 +445,11 @@ export default function WorkoutSessionScreen() {
     impact('light');
   };
 
-  // UPDATED: Add Set with type initialization
   const addSet = async (exerciseIndex: number) => {
     if (!workout) return;
-
     await impact('medium');
-
     try {
       console.log(`Adding new set to exercise ${exerciseIndex}`);
-
       const exercise = workout.exercises[exerciseIndex];
       const lastSet = exercise.sets[exercise.sets.length - 1];
 
@@ -404,19 +464,11 @@ export default function WorkoutSessionScreen() {
       );
 
       if (response.success && response.data) {
-        console.log('New set added - completed:',
-          response.data.exercises[exerciseIndex].sets[
-          response.data.exercises[exerciseIndex].sets.length - 1
-            ].completed
-        );
-
         setWorkout(response.data as WorkoutSession);
-
         const newSetIndex = response.data.exercises[exerciseIndex].sets.length - 1;
         const newSet = response.data.exercises[exerciseIndex].sets[newSetIndex];
         const key = getLocalSetKey(exerciseIndex, newSetIndex);
 
-        // Initialize both values and type
         setLocalSetValues(prev => ({
           ...prev,
           [key]: {
@@ -425,7 +477,6 @@ export default function WorkoutSessionScreen() {
           }
         }));
 
-        // NEW: Initialize set type
         setLocalSetTypes(prev => ({
           ...prev,
           [key]: newSet.setType || 'NORMAL'
@@ -455,7 +506,6 @@ export default function WorkoutSessionScreen() {
 
   const cancelWorkout = async () => {
     if (!workout) return;
-
     Alert.alert(
       'Cancel Workout',
       'Are you sure you want to cancel this workout? All progress will be lost.',
@@ -471,7 +521,6 @@ export default function WorkoutSessionScreen() {
               router.back();
             } catch (error) {
               console.error('Failed to cancel workout:', error);
-              Alert.alert('Error', 'Failed to cancel workout');
             }
           },
         },
@@ -481,9 +530,7 @@ export default function WorkoutSessionScreen() {
 
   const finishWorkout = async () => {
     if (!workout) return;
-
     await impact('success');
-
     Alert.alert(
       'Finish Workout',
       'Great job! Ready to finish this workout?',
@@ -494,7 +541,6 @@ export default function WorkoutSessionScreen() {
           onPress: async () => {
             try {
               const response = await WorkoutService.completeWorkout(workout.id);
-
               if (response.success) {
                 Alert.alert('Success', 'Workout completed!', [
                   { text: 'OK', onPress: () => router.back() }
@@ -512,17 +558,14 @@ export default function WorkoutSessionScreen() {
 
   const calculateWorkoutStats = () => {
     if (!workout) return { volume: '0 kg', sets: 0 };
-
     const totalVolume = workout.exercises.reduce((sum, ex) => {
       return sum + ex.sets.reduce((setSum, set) => {
         return setSum + (set.completed ? (set.weightKg || 0) * (set.reps || 0) : 0);
       }, 0);
     }, 0);
-
     const completedSets = workout.exercises.reduce((sum, ex) => {
       return sum + ex.sets.filter(s => s.completed).length;
     }, 0);
-
     return {
       volume: `${totalVolume.toFixed(0)} kg`,
       sets: completedSets,
@@ -755,7 +798,7 @@ interface ExerciseCardProps {
   workout: WorkoutSession;
   theme: any;
   localSetValues: Record<string, LocalSetData>;
-  localSetTypes: Record<string, string>; // NEW
+  localSetTypes: Record<string, string>;
   onUpdateLocalValue: (exerciseIndex: number, setIndex: number, field: 'weightKg' | 'reps', value: string) => void;
   onToggleComplete: (exerciseIndex: number, setIndex: number) => void;
   onToggleSetType: (exerciseIndex: number, setIndex: number) => void;
@@ -779,7 +822,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                                                      exerciseIndex,
                                                      theme,
                                                      localSetValues,
-                                                     localSetTypes, // NEW
+                                                     localSetTypes,
                                                      onUpdateLocalValue,
                                                      onToggleComplete,
                                                      onToggleSetType,
@@ -824,12 +867,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     return true;
   };
 
-  // UPDATED: Use local set types
+  // Pre-calculate display numbers for sets
   let normalSetCount = 0;
   const setsWithDisplay = exercise.sets.map((s, idx) => {
     const key = `${exerciseIndex}-${idx}`;
-    const type = localSetTypes[key] || s.setType || 'NORMAL'; // Use local type first!
-
+    const type = localSetTypes[key] || s.setType || 'NORMAL';
     let label = '';
     let color = theme.text;
 
@@ -847,12 +889,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
       color = '#FF3B30';
     }
 
-    return { ...s, displayLabel: label, displayColor: color, actualType: type };
+    return { ...s, displayLabel: label, displayColor: color };
   });
 
   return (
     <View style={[styles.exerciseCard, { backgroundColor: theme.background }]}>
-      {/* Exercise Header */}
       <View style={styles.exerciseHeader}>
         <View style={styles.exerciseInfo}>
           <View style={[styles.exerciseIcon, { backgroundColor: theme.accent + '20' }]}>
@@ -867,14 +908,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Exercise Notes */}
       {exercise.notes && (
         <Text style={[styles.exerciseNotes, { color: theme.textSecondary }]}>
           {exercise.notes}
         </Text>
       )}
 
-      {/* Notes Input */}
       <TextInput
         style={[styles.notesInput, { color: theme.textMuted, borderColor: theme.surface }]}
         placeholder="Add notes here..."
@@ -882,7 +921,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         multiline
       />
 
-      {/* Rest Timer Badge */}
       {!isDurationExercise && (
         <View style={styles.restTimerContainer}>
           <TouchableOpacity
@@ -897,7 +935,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <Settings size={12} color={theme.accent} />
           </TouchableOpacity>
 
-          {/* Active Timer Display */}
           {isRestTimerActive && restTimeRemaining > 0 && (
             <View style={[styles.activeTimer, { backgroundColor: theme.accent }]}>
               <Text style={[styles.activeTimerText, { color: theme.cardText }]}>
@@ -911,7 +948,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </View>
       )}
 
-      {/* Duration-based Exercise (Warmup) */}
       {isDurationExercise ? (
         <>
           <View style={[styles.tableHeader, { borderBottomColor: theme.surface }]}>
@@ -1020,7 +1056,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </>
       ) : (
         <>
-          {/* Regular Exercise with Weight/Reps */}
           <View style={[styles.tableHeader, { borderBottomColor: theme.surface }]}>
             <Text style={[styles.headerText, styles.setCol, { color: theme.textMuted }]}>SET</Text>
             <Text style={[styles.headerText, styles.prevCol, { color: theme.textMuted }]}>PREVIOUS</Text>
@@ -1138,7 +1173,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </>
       )}
 
-      {/* Add Set Button */}
       <TouchableOpacity
         style={styles.addSetButton}
         onPress={() => onAddSet(exerciseIndex)}
