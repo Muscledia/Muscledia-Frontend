@@ -1,6 +1,4 @@
-// app/workout-plan-detail/[planId].tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +8,8 @@ import {
   ActivityIndicator,
   useColorScheme,
 } from 'react-native';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+// FIX: Import useFocusEffect
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft,
@@ -26,7 +25,6 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function WorkoutPlanDetailScreen() {
-  const navigation = useNavigation();
   const { planId, initialData } = useLocalSearchParams<{ planId: string; initialData?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -48,26 +46,16 @@ export default function WorkoutPlanDetailScreen() {
 
   const [loading, setLoading] = useState(!plan);
 
-  useEffect(() => {
-    if (planId) {
+  // FIX: Use useFocusEffect instead of useEffect for live reloading
+  useFocusEffect(
+    useCallback(() => {
       loadWorkoutPlan();
-    }
-  }, [planId]);
-
-  // Listen for screen focus
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadWorkoutPlan();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
+    }, [planId])
+  );
 
   const loadWorkoutPlan = async () => {
     try {
-      // Don't wipe state if we already have data, just refresh it
-      if (!plan) setLoading(true);
-
+      if (!plan) setLoading(true); // Only show spinner if no data
       const response = await WorkoutPlanService.getWorkoutPlanById(planId);
       if (response.success && response.data) {
         setPlan(response.data);
@@ -103,7 +91,7 @@ export default function WorkoutPlanDetailScreen() {
     router.push(`/workout-plans/${planId}/edit`);
   };
 
-  if (loading) {
+  if (loading && !plan) {
     return (
       <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.accent} />
@@ -234,9 +222,7 @@ export default function WorkoutPlanDetailScreen() {
   );
 }
 
-// ... (ExerciseCard and styles remain exactly the same as your code, omitting for brevity)
-// Just ensure you keep the ExerciseCard component and styles at the bottom
-// ...
+// Exercise Card Component
 interface ExerciseCardProps {
   exercise: PlannedExercise;
   index: number;
@@ -245,7 +231,6 @@ interface ExerciseCardProps {
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, index, theme, impact }) => {
-  // ... logic from your snippet
   const getSetDisplay = (set: any, idx: number) => {
     if (set.type === 'warmup') return { label: 'W', value: 'Warmup' };
     if (set.repRangeStart && set.repRangeEnd) return { label: (idx + 1).toString(), value: `${set.repRangeStart}-${set.repRangeEnd}` };

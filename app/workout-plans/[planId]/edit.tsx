@@ -1,6 +1,6 @@
 // app/workout-plans/[planId]/edit.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft,
@@ -46,13 +46,19 @@ export default function EditRoutineScreen() {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
 
-  useEffect(() => {
-    loadPlan();
-  }, [planId]);
+  // FIX: Use useFocusEffect to reload data when returning from "Add Exercise" screen
+  useFocusEffect(
+    useCallback(() => {
+      loadPlan();
+    }, [planId])
+  );
 
   const loadPlan = async () => {
     if (!planId) return;
     try {
+      // Only show full spinner on first load to prevent flickering
+      if (!plan) setLoading(true);
+
       const response = await WorkoutPlanService.getWorkoutPlanById(planId);
       if (response.success && response.data) {
         const safePlan = {
@@ -60,7 +66,7 @@ export default function EditRoutineScreen() {
           exercises: response.data.exercises || []
         };
         setPlan(safePlan);
-        setTitle(safePlan.title);
+        setTitle(prevTitle => prevTitle || safePlan.title);
       } else {
         Alert.alert('Error', 'Routine not found');
         router.back();

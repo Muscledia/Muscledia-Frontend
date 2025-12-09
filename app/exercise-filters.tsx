@@ -1,5 +1,3 @@
-// app/exercise-filters.tsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -132,13 +130,19 @@ export default function ExerciseFiltersScreen() {
 
   const applyFilters = async () => {
     await impact('success');
-    router.back();
-    // Pass filters back through global event or navigation params
-    if (router.canGoBack()) {
-      router.setParams({
+
+    // FIX: Use router.navigate to pass params back to the existing screen in the stack
+    // router.back() does not pass params.
+    router.navigate({
+      pathname: '/exercises/browse',
+      params: {
         appliedFilters: JSON.stringify(selectedFilters),
-      });
-    }
+        _timestamp: Date.now().toString(), // Force update hook
+        // Preserve other context params if they exist
+        planId: params.planId,
+        sessionId: params.sessionId
+      },
+    });
   };
 
   const getActiveFilterCount = () => {
