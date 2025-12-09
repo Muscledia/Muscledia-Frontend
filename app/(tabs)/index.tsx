@@ -1,6 +1,4 @@
-// app/(tabs)/index.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -34,11 +32,13 @@ import {
   Trash2,
   X,
   FolderEdit,
+  Compass,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
 import { getThemeColors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
+// FIX: Import useFocusEffect
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
 import { RoutineService } from '@/services';
 import { RoutineFolder, WorkoutPlan } from '@/types/api';
@@ -63,6 +63,9 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [expandedRoutines, setExpandedRoutines] = useState<Set<string>>(new Set());
 
+  // Ref to track if we've loaded data initially (to prevent spinner flash on focus)
+  const hasLoadedRef = useRef(false);
+
   const [activeMenu, setActiveMenu] = useState<'folder' | 'plan' | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<RoutineFolder | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<WorkoutPlan | null>(null);
@@ -70,18 +73,28 @@ export default function HomeScreen() {
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 
-  useEffect(() => {
-    setGreeting(getGreeting());
-    fetchSavedRoutines();
-  }, []);
+  // FIX: Use useFocusEffect to refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setGreeting(getGreeting());
+      fetchSavedRoutines();
+    }, [])
+  );
 
   const fetchSavedRoutines = async (isRefreshing = false) => {
     try {
-      if (!isRefreshing) setLoadingRoutines(true);
+      // Only show full loading spinner if it's the first load or explicit refresh
+      // If we already have data (returning to screen), we do a "silent" update
+      if (!isRefreshing && !hasLoadedRef.current) {
+        setLoadingRoutines(true);
+      }
+
       setError(null);
       const response = await RoutineService.getPersonalRoutineFolders();
+
       if (response.success && response.data) {
         setSavedRoutines(response.data);
+        hasLoadedRef.current = true; // Mark as loaded so we don't show spinner again on focus
       } else {
         setError(response.message || 'Failed to load routines');
       }
@@ -96,6 +109,7 @@ export default function HomeScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    // Force spinner on pull-to-refresh
     fetchSavedRoutines(true);
   };
 
@@ -396,6 +410,13 @@ export default function HomeScreen() {
 
         <View style={styles.routinesHeader}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Routines</Text>
+          <TouchableOpacity
+            onPress={async () => { await impact('light'); router.push('/public-routines'); }}
+            style={styles.exploreBadge}
+          >
+            <Compass size={16} color={theme.accent} />
+            <Text style={[styles.exploreText, { color: theme.accent }]}>Explore</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.actionButtons}>
@@ -563,6 +584,8 @@ const styles = StyleSheet.create({
   customizeBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 10 },
   routinesHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },
+  exploreBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6 },
+  exploreText: { fontSize: 14, fontWeight: '600' },
   actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 12 },
   actionButtonText: { fontSize: 14, fontWeight: '600' },
