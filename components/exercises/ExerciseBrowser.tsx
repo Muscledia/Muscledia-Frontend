@@ -21,12 +21,21 @@ import { ExerciseFilters } from '@/app/exercise-filters';
 
 interface ExerciseBrowserProps {
   onSelectExercise?: (exercise: Exercise) => void;
+  theme?: any;
+  // FIX: Accept context IDs as props to ensure they are passed to filters
+  planId?: string;
+  sessionId?: string;
 }
 
-export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExercise }) => {
+export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({
+                                                                  onSelectExercise,
+                                                                  theme: propsTheme,
+                                                                  planId, // Receive from parent
+                                                                  sessionId // Receive from parent
+                                                                }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const theme = getThemeColors(isDark);
+  const theme = propsTheme || getThemeColors(isDark);
   const router = useRouter();
   const params = useLocalSearchParams();
   const { impact } = useHaptics();
@@ -42,44 +51,33 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
     bodyPart: [],
   });
 
-  // Load exercises on mount
   useEffect(() => {
     loadExercises();
   }, []);
 
-  // Apply filters when they change
-  useEffect(() => {
-    console.log('Filters changed:', activeFilters);
-    console.log('Search query:', searchQuery);
-    applyFilters();
-  }, [exercises, activeFilters, searchQuery]);
-
-  // Listen for filter changes from filter screen
   useEffect(() => {
     if (params.appliedFilters) {
       try {
         const filters = JSON.parse(params.appliedFilters as string);
-        console.log('Applied filters from params:', filters);
         setActiveFilters(filters);
       } catch (error) {
         console.error('Failed to parse filters:', error);
       }
     }
-  }, [params.appliedFilters, params._timestamp]); // Include _timestamp to force update
+  }, [params.appliedFilters, params._timestamp]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [exercises, activeFilters, searchQuery]);
 
   const loadExercises = async () => {
     try {
       setLoading(true);
-      console.log('Loading all exercises...');
-
       const response = await ExerciseService.getAllExercises();
 
       if (response.success && response.data) {
-        console.log(`Loaded ${response.data.length} exercises`);
         setExercises(response.data);
         setFilteredExercises(response.data);
-      } else {
-        console.error('Failed to load exercises:', response.message);
       }
     } catch (error) {
       console.error('Error loading exercises:', error);
@@ -90,53 +88,47 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
 
   const applyFilters = () => {
     let filtered = [...exercises];
-    console.log(`Starting with ${filtered.length} exercises`);
 
-    // Apply search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(exercise =>
-        exercise.name.toLowerCase().includes(query) ||
+        exercise.name?.toLowerCase().includes(query) ||
         exercise.targetMuscle?.toLowerCase().includes(query) ||
         exercise.equipment?.toLowerCase().includes(query) ||
         exercise.bodyPart?.toLowerCase().includes(query)
       );
-      console.log(`After search: ${filtered.length} exercises`);
     }
 
-    // Apply difficulty filter
     if (activeFilters.difficulty && activeFilters.difficulty.length > 0) {
       filtered = filtered.filter(exercise =>
-        activeFilters.difficulty!.includes(exercise.difficulty || '')
+        exercise.difficulty && activeFilters.difficulty.includes(exercise.difficulty.toUpperCase())
       );
-      console.log(`After difficulty filter: ${filtered.length} exercises`);
     }
 
-    // Apply equipment filter
     if (activeFilters.equipment && activeFilters.equipment.length > 0) {
       filtered = filtered.filter(exercise =>
-        activeFilters.equipment!.includes(exercise.equipment || '')
+          exercise.equipment && activeFilters.equipment.some(filter =>
+            exercise.equipment!.toLowerCase() === filter.toLowerCase()
+          )
       );
-      console.log(`After equipment filter: ${filtered.length} exercises`);
     }
 
-    // Apply target muscle filter
     if (activeFilters.targetMuscle && activeFilters.targetMuscle.length > 0) {
       filtered = filtered.filter(exercise =>
-        activeFilters.targetMuscle!.includes(exercise.targetMuscle || '')
+          exercise.targetMuscle && activeFilters.targetMuscle.some(filter =>
+            exercise.targetMuscle!.toLowerCase() === filter.toLowerCase()
+          )
       );
-      console.log(`After target muscle filter: ${filtered.length} exercises`);
     }
 
-    // Apply body part filter
     if (activeFilters.bodyPart && activeFilters.bodyPart.length > 0) {
       filtered = filtered.filter(exercise =>
-        activeFilters.bodyPart!.includes(exercise.bodyPart || '')
+          exercise.bodyPart && activeFilters.bodyPart.some(filter =>
+            exercise.bodyPart!.toLowerCase() === filter.toLowerCase()
+          )
       );
-      console.log(`After body part filter: ${filtered.length} exercises`);
     }
 
-    console.log(`Final filtered count: ${filtered.length} exercises`);
     setFilteredExercises(filtered);
   };
 
@@ -150,6 +142,9 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
 
   const openFilters = async () => {
     await impact('medium');
+
+    // FIX: Pass the props (planId/sessionId) explicitly to the filter screen
+    // This ensures they persist when the user navigates back
     router.push({
       pathname: '/exercise-filters',
       params: {
@@ -157,6 +152,8 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
         equipment: JSON.stringify(activeFilters.equipment),
         targetMuscle: JSON.stringify(activeFilters.targetMuscle),
         bodyPart: JSON.stringify(activeFilters.bodyPart),
+        planId: planId,       // Pass explicitly
+        sessionId: sessionId  // Pass explicitly
       },
     });
   };
@@ -221,14 +218,10 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toUpperCase()) {
-      case 'BEGINNER':
-        return '#4CAF50';
-      case 'INTERMEDIATE':
-        return '#FF9800';
-      case 'ADVANCED':
-        return '#F44336';
-      default:
-        return theme.textMuted;
+      case 'BEGINNER': return '#4CAF50';
+      case 'INTERMEDIATE': return '#FF9800';
+      case 'ADVANCED': return '#F44336';
+      default: return theme.textMuted;
     }
   };
 
@@ -245,7 +238,6 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: theme.background }]}>
         <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
           <Search size={20} color={theme.textMuted} />
@@ -279,7 +271,6 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
         </TouchableOpacity>
       </View>
 
-      {/* Active Filters Display */}
       {activeFilterCount > 0 && (
         <View style={styles.activeFiltersContainer}>
           <Text style={[styles.activeFiltersText, { color: theme.textMuted }]}>
@@ -291,7 +282,6 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
         </View>
       )}
 
-      {/* Exercise List */}
       <FlatList
         data={filteredExercises}
         renderItem={renderExercise}
@@ -318,119 +308,27 @@ export const ExerciseBrowser: React.FC<ExerciseBrowserProps> = ({ onSelectExerci
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-  },
-  filterButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  filterBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  filterBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  activeFiltersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  activeFiltersText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  clearFiltersText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  exerciseCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  exerciseHeader: {
-    marginBottom: 8,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  exerciseTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: '500',
-    textTransform: 'capitalize',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  clearButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  container: { flex: 1 },
+  centerContent: { justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14 },
+  searchContainer: { flexDirection: 'row', padding: 16, gap: 12 },
+  searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, gap: 8 },
+  searchInput: { flex: 1, fontSize: 15 },
+  filterButton: { width: 44, height: 44, borderRadius: 8, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  filterBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  filterBadgeText: { fontSize: 10, fontWeight: 'bold' },
+  activeFiltersContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12 },
+  activeFiltersText: { fontSize: 14, fontWeight: '500' },
+  clearFiltersText: { fontSize: 14, fontWeight: '600' },
+  listContent: { padding: 16, paddingTop: 0 },
+  exerciseCard: { padding: 16, borderRadius: 12, marginBottom: 12 },
+  exerciseHeader: { marginBottom: 8 },
+  exerciseName: { fontSize: 16, fontWeight: '600', textTransform: 'capitalize' },
+  exerciseTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+  tagText: { fontSize: 11, fontWeight: '500', textTransform: 'capitalize' },
+  emptyState: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 16, marginBottom: 16 },
+  clearButton: { paddingHorizontal: 20, paddingVertical: 10 },
+  clearButtonText: { fontSize: 14, fontWeight: '600' },
 });
