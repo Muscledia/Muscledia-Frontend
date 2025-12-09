@@ -178,6 +178,9 @@ export interface AddExerciseToWorkoutPlanRequest {
   instructions?: string;
   sets: PlannedSet[];
   restSeconds?: number;
+  bodyPart?: string;
+  equipment?: string;
+  targetMuscle?: string;
 }
 
 // Routine Folder Types
