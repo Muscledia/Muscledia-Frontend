@@ -10,6 +10,7 @@ export { WorkoutPlanService } from './workoutPlanService';
 export { WorkoutService } from './WorkoutService';
 export { ExerciseService } from './exerciseService';
 export { ChallengeService } from './challengeService';
+export { AiService } from './aiService';
 
 // Types and DTOs
 export type {

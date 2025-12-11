@@ -44,6 +44,10 @@ export const API_CONFIG = {
       UPDATE_PROFILE: '/api/users/me',
       GET_USER: (id: string) => `/api/users/${id}`,
     },
+
+    AI: {
+      GET_RECOMMENDATION: '/ollama/getRecommendation',
+    },
   },
 
   // Request configuration
@@ -51,6 +55,7 @@ export const API_CONFIG = {
     TIMEOUT: 30000, // Increased to 30 seconds
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000, // 1 second
+    AI_TIMEOUT: 120000, // AI endpoint can take up to 2 minutes
   },
 
   // Storage keys
