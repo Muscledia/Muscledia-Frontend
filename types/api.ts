@@ -9,6 +9,16 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface LoginResponse {
+  token: string;
+  userId: string;
+  username: string;
+  email?: string;
+  uuidString: string;
+  roles: string[];
+  message?: string;
+}
+
 export interface RegisterRequest {
   username: string;
   email: string;
@@ -20,14 +30,34 @@ export interface RegisterRequest {
   goalType?: string;
 }
 
-export interface LoginResponse {
-  token: string;
+export interface RegisterResponse {   //full response from register endpoint - leave it if we will need this data for later
   userId: string;
-  username: string;
-  email?: string;
   uuidString: string;
-  roles: string[];
-  message?: string;
+  username: string;
+  email: string;
+  birthDate: string;
+  gender: string;
+  height: number;
+  initialWeight: number;
+  goalType: string;
+  userChampions: any[];
+  userBadges: any[];
+  roles: any[];
+  currentStreak: number;
+  totalExp: number;
+  createdAt: string;
+  updatedAt: string;
+  admin: boolean;
+}
+
+// User Types
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  name?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // API Error Type - ADD THIS
@@ -60,15 +90,7 @@ export interface ApiResponse<T> {
   status?: number;
 }
 
-// User Types
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  name?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+
 
 // Exercise Types
 export interface Exercise {
