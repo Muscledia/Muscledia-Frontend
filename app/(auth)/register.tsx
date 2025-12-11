@@ -280,7 +280,7 @@ export default function RegisterScreen() {
               </TouchableOpacity>
               {showGoalTypeOptions && (
                 <View style={[styles.dropdownContainer, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
-                  {(['BUILD_STRENGTH','LOSE_WEIGHT','MAINTAIN','BUILD_MUSCLE'] as const).map((opt) => (
+                  {(['LOSE_WEIGHT','BUILD_STRENGTH','GAIN_MUSCLE'] as const).map((opt) => (
                     <TouchableOpacity
                       key={opt}
                       style={styles.dropdownOption}

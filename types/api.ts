@@ -16,7 +16,7 @@ export interface RegisterRequest {
   birthDate?: string;
   gender?: string;
   height?: number;
-  weight?: number;
+  initialWeight?: number;
   goalType?: string;
 }
 
