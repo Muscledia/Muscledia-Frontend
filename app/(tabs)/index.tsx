@@ -33,6 +33,7 @@ import {
   X,
   FolderEdit,
   Compass,
+  Sparkles,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
@@ -438,6 +439,18 @@ export default function HomeScreen() {
             <Text style={[styles.actionButtonText, { color: theme.text }]}>Explore</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: theme.surface }]}
+          onPress={async () => { 
+            await impact('medium'); 
+            router.push('/ai-recommendation'); 
+          }}
+          activeOpacity={0.9}
+        >
+          <Sparkles size={18} color={theme.text} />
+          <Text style={[styles.actionButtonText, { color: theme.text }]}>Get AI Recommendation</Text>
+        </TouchableOpacity>
 
         {loadingRoutines ? (
           <View style={[styles.loadingContainer, { backgroundColor: theme.surface }]}>
