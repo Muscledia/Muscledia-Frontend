@@ -108,6 +108,43 @@ export interface AiRecommendationResponse {
 }
 
 
+//Badge Types
+export interface BadgeCatalogResponse {
+  success: boolean;
+  message: string;
+  data: Badge[];
+  timestamp: string;
+}
+
+export interface Badge {
+badgeId: string;
+name: string;
+description: string;
+badgeType: 'EXERCISE' | 'CHAMPION' | 'WELCOME';
+imageUrl: string | null;
+pointsAwarded: number;
+criteriaType: 'WORKOUT_COUNT' | 'WORKOUT_DURATION';
+criteriaParams: {
+targetValue: number;
+};
+createdAt: string;
+}
+
+export interface EarnedBadge {
+  badgeId: string;
+  earnedAt: string;
+  badgeName: string;
+  description: string;
+  category: string;
+  pointsAwarded: number;
+}
+
+export interface BadgeStatus extends Badge {
+  isEarned: boolean;
+  earnedAt?: string;
+  progress?: number; // 0-100 for trackable badges
+}
+
 
 // Exercise Types
 export interface Exercise {
