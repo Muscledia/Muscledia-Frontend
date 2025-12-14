@@ -120,10 +120,10 @@ export interface Badge {
 badgeId: string;
 name: string;
 description: string;
-badgeType: 'EXERCISE' | 'CHAMPION' | 'WELCOME';
+badgeType: 'EXERCISE' | 'CHAMPION' | 'STREAK' | 'PR';
 imageUrl: string | null;
 pointsAwarded: number;
-criteriaType: 'WORKOUT_COUNT' | 'WORKOUT_DURATION';
+criteriaType: 'WORKOUT_COUNT' | 'WORKOUT_DURATION' | 'WORKOUT_STREAK' | 'PERSONAL_RECORD' | 'LEVEL_REACHED' | 'EXERCISE_COUNT' | 'WEIGHT_LIFTED_TOTAL' | 'WEEKLY_WORKOUTS' | 'MONTHLY_WORKOUTS' | 'POINTS_EARNED' | 'LOGIN_STREAK';
 criteriaParams: {
 targetValue: number;
 };

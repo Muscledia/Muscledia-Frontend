@@ -444,17 +444,19 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: theme.surface }]}
-          onPress={async () => { 
-            await impact('medium'); 
-            router.push('/ai-recommendation'); 
-          }}
-          activeOpacity={0.9}
-        >
-          <Sparkles size={18} color={theme.text} />
-          <Text style={[styles.actionButtonText, { color: theme.text }]}>Get AI Recommendation</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.surface }]}
+            onPress={async () => { 
+              await impact('medium'); 
+              router.push('/ai-recommendation'); 
+            }}
+            activeOpacity={0.9}
+          >
+            <Sparkles size={18} color={theme.text} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Get AI Recommendation</Text>
+          </TouchableOpacity>
+        </View>
 
         {loadingRoutines ? (
           <View style={[styles.loadingContainer, { backgroundColor: theme.surface }]}>

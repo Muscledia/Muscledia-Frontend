@@ -11,6 +11,7 @@ export { WorkoutService } from './WorkoutService';
 export { ExerciseService } from './exerciseService';
 export { ChallengeService } from './challengeService';
 export { AiService } from './aiService';
+export { BadgeService } from './badgeService';
 
 // Types and DTOs
 export type {

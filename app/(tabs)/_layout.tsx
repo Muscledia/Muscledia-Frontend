@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { House, Dumbbell, ShoppingBag, User, Plus, Target } from 'lucide-react-native';
+import { House, Dumbbell, ShoppingBag, User, Plus, Target, Award } from 'lucide-react-native';
 import { useColorScheme, TouchableOpacity, View, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -133,9 +133,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="achievements"
         options={{
-          title: 'Arena',
-          tabBarIcon: ({ color, size }) => <Dumbbell size={size} color={color} />,
-          headerTitle: 'Arena',
+          title: 'Badges',
+          tabBarIcon: ({ color, size }) => <Award size={size} color={color} />,
+          headerTitle: 'Badges',
         }}
       />
 
