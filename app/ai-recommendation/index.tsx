@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Send } from 'lucide-react-native';
+import { Sparkles, Send, ArrowLeft } from 'lucide-react-native';
 import { AiService } from '@/services';
 import { AiRecommendationRequest, TrainingLevel } from '@/types/api';
 import { getThemeColors, Colors } from '@/constants/Colors';
@@ -86,7 +86,14 @@ export default function AIRecommendationScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <ScreenHeader title="AI Workout Plan" theme={theme}/>
+      <ScreenHeader
+        title="AI Workout Plan"
+        theme={theme}
+        leftAction={{
+          icon: <ArrowLeft size={24} color={theme.text} />,
+          onPress: () => router.back(),
+        }}
+      />
       
       <ScrollView
         style={styles.scrollView}

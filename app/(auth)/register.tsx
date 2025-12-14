@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff, Mail, Lock, User, Calendar } from 'lucide-react-native';
 import { AuthService } from '@/services/authService';
+import { StorageService } from '@/services/storageService';
 import { RegisterRequest } from '@/types/api';
 import { Colors, getThemeColors } from '@/constants/Colors';
 
@@ -29,6 +30,7 @@ export default function RegisterScreen() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | ''>('');
+  const [skinColor, setSkinColor] = useState<1 | 2 | 3>(1);
   const [heightText, setHeightText] = useState('');
   const [initialWeightText, setInitialWeightText] = useState('');
   const [goalType, setGoalType] = useState<RegisterRequest['goalType'] | ''>('');
@@ -94,6 +96,9 @@ export default function RegisterScreen() {
       };
 
       await AuthService.register(payload);
+
+      // Save local preferences
+      await StorageService.saveUserData(username.trim(), { skinColor });
 
       Alert.alert(
         'Success!', 
@@ -229,6 +234,37 @@ export default function RegisterScreen() {
                     onPress={() => setGender(g)}
                   >
                     <Text style={[styles.chipText, { color: gender === g ? '#FFFFFF' : theme.text }]}>{g}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Skin Color Selector */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.text }]}>Skin Tone</Text>
+              <View style={[styles.chipRow, { gap: 16 }]}>
+                {[
+                  { id: 1, color: '#F5D0C5' },
+                  { id: 2, color: '#E0AC69' },
+                  { id: 3, color: '#8D5524' }
+                ].map((tone) => (
+                  <TouchableOpacity
+                    key={tone.id}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: tone.color,
+                      borderWidth: skinColor === tone.id ? 3 : 1,
+                      borderColor: skinColor === tone.id ? theme.accent : theme.border,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    onPress={() => setSkinColor(tone.id as 1 | 2 | 3)}
+                  >
+                    {skinColor === tone.id && (
+                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: theme.accent }} />
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>

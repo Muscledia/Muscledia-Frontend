@@ -44,6 +44,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { RoutineService } from '@/services';
 import { RoutineFolder, WorkoutPlan } from '@/types/api';
 import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
+import { CharacterDisplay } from '@/components/CharacterDisplay';
 
 export default function HomeScreen() {
   const { character } = useCharacter();
@@ -366,18 +367,21 @@ export default function HomeScreen() {
                 <Pen size={16} color={theme.cardText} />
               </View>
             </TouchableOpacity>
-            {character.characterBackgroundUrl && (
-              <Image
-                source={{ uri: character.characterBackgroundUrl }}
-                style={styles.backgroundImage}
-                resizeMode="cover"
+            {/* Wrapper to contain z-indexed layers properly */}
+            {/* Using 2x scale: 151x221 -> 302x442 to prevent blur */}
+            <View style={{ width: 302, height: 442, zIndex: 1 }}>
+              <CharacterDisplay
+                level={character.level}
+                skinColor={character.skinColor}
+                equippedShirt={character.equippedShirt}
+                equippedPants={character.equippedPants}
+                equippedEquipment={character.equippedEquipment}
+                equippedAccessory={character.equippedAccessory}
+                characterBackgroundUrl={character.characterBackgroundUrl}
+                style={{ width: '100%', height: '100%' }}
+                imageStyle={{ width: '100%', height: '100%' }}
               />
-            )}
-            <Image
-              source={require('../../assets/images/muscledia_guy.png')}
-              style={styles.characterImage}
-              resizeMode="contain"
-            />
+            </View>
           </View>
           <View style={styles.barsContainer}>
             <View style={styles.barRow}>
@@ -593,7 +597,7 @@ const styles = StyleSheet.create({
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, width: '100%', maxWidth: 420 },
   barLeftLabel: { width: 100, fontSize: 12, textAlign: 'left' },
   barRightLabel: { width: 60, fontSize: 12, textAlign: 'right' },
-  customizeBtn: { position: 'absolute', top: 12, right: 12, zIndex: 2 },
+  customizeBtn: { position: 'absolute', top: 12, right: 12, zIndex: 100, elevation: 100 },
   customizeBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 10 },
   routinesHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },

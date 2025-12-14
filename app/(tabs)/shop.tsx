@@ -45,14 +45,19 @@ export default function ShopScreen() {
       items: [
         { name: 'Dumbbells', price: 300, icon: '🏋️' },
         { name: 'Barbell', price: 500, icon: '🏋️' },
-        { name: 'Bench', price: 400, icon: '🪑' },
-        { name: 'Rack', price: 800, icon: '🏗️' },
+      ]
+    },
+    {
+      title: 'Accessories',
+      items: [
+        { name: 'Wristbands', price: 40, icon: '🥊' },
+        { name: 'Headband', price: 60, icon: '🤕' },
       ]
     },
     {
       title: 'Backgrounds',
       items: [
-        { name: 'Gym Floor', price: 100, icon: '🏟️', url: 'https://images.unsplash.com/photo-1517963879433-6ad2b3bf0f84?q=80&w=1200&auto=format&fit=crop' },
+        { name: 'Gym Floor', price: 100, icon: '🏟️', url: 'Gym Floor' },
         { name: 'Beach', price: 150, icon: '🏖️', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop' },
         { name: 'Mountains', price: 200, icon: '⛰️', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop' },
         { name: 'Space', price: 300, icon: '🌌', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop' },
@@ -83,6 +88,7 @@ export default function ShopScreen() {
       categoryTitle === 'Shirts' ? character.ownedShirts.includes(item.name) :
       categoryTitle === 'Pants' ? character.ownedPants.includes(item.name) :
       categoryTitle === 'Equipment' ? character.ownedEquipment.includes(item.name) :
+      categoryTitle === 'Accessories' ? character.ownedAccessories.includes(item.name) :
       categoryTitle === 'Backgrounds' ? character.ownedBackgrounds.includes(item.url || '') :
       false
     );

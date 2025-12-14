@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './useAuth';
+import { StorageService } from '@/services/storageService';
 
 type Gender = 'male' | 'female';
 
@@ -26,16 +26,19 @@ type Character = {
   // Customization
   characterBackgroundUrl?: string | null;
   avatarUrl?: string | null;
+  skinColor: 1 | 2 | 3;
   // Economy & Inventory
   coins: number;
   ownedShirts: string[];
   ownedPants: string[];
   ownedEquipment: string[];
+  ownedAccessories: string[];
   ownedBackgrounds: string[]; // store URLs
   // Equipped
   equippedShirt?: string | null;
   equippedPants?: string | null;
   equippedEquipment?: string | null;
+  equippedAccessory?: string | null;
   // Derived stats
   baseStrength?: number;
   baseStamina?: number;
@@ -57,7 +60,7 @@ type CharacterContextType = {
   registerRoutineStart: (routineId: string) => void;
   // Economy helpers
   addCoins: (amount: number) => void;
-  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Backgrounds', itemName: string, price: number, url?: string) => boolean;
+  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => boolean;
 };
 
 const DEFAULT_CHARACTER: Character = {
@@ -74,16 +77,19 @@ const DEFAULT_CHARACTER: Character = {
   lastHealthUpdate: null,
   routinesDate: null,
   routinesDoneToday: [],
-  characterBackgroundUrl: null,
+  characterBackgroundUrl: 'Garage',
   avatarUrl: null,
+  skinColor: 1,
   coins: 0,
   ownedShirts: [],
   ownedPants: [],
   ownedEquipment: [],
-  ownedBackgrounds: [],
+  ownedAccessories: [],
+  ownedBackgrounds: ['Garage'],
   equippedShirt: null,
   equippedPants: null,
   equippedEquipment: null,
+  equippedAccessory: null,
   baseStrength: 10,
   baseStamina: 10,
   baseAgility: 10,
@@ -94,20 +100,26 @@ const DEFAULT_CHARACTER: Character = {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [character, setCharacter] = useState<Character>(DEFAULT_CHARACTER);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load character data on initial render
+  // Load character data on initial render or user change
   useEffect(() => {
     const loadCharacter = async () => {
+      if (!user?.username) {
+        setIsInitialized(false);
+        setCharacter(DEFAULT_CHARACTER);
+        return;
+      }
+
       try {
-        const storedCharacter = await AsyncStorage.getItem('character');
+        const storedCharacter = await StorageService.getUserData(user.username);
         if (storedCharacter) {
-          const parsed = JSON.parse(storedCharacter);
           // Merge with defaults to ensure newly added fields exist
           const merged: Character = {
             ...DEFAULT_CHARACTER,
-            ...parsed,
+            ...storedCharacter,
           };
           // Normalize XP to next level
           if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
@@ -126,9 +138,18 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!Array.isArray((merged as any).ownedShirts)) (merged as any).ownedShirts = [];
           if (!Array.isArray((merged as any).ownedPants)) (merged as any).ownedPants = [];
           if (!Array.isArray((merged as any).ownedEquipment)) (merged as any).ownedEquipment = [];
-          if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = [];
+          if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
+          if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
+          if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
+          if (!merged.skinColor) merged.skinColor = 1;
+          if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
 
           setCharacter(merged);
+        } else {
+          // New user (or local storage not present for this user)
+          // We can initialize with defaults, but maybe check if user object has preferences?
+          // For now, use defaults.
+           setCharacter(DEFAULT_CHARACTER);
         }
       } catch (error) {
         console.error('Failed to load character data:', error);
@@ -138,7 +159,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
 
     loadCharacter();
-  }, []);
+  }, [user]);
 
   // Health regeneration logic (called on init and whenever character loads)
   const applyHealthRegen = () => {
@@ -216,18 +237,18 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Save character data whenever it changes
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || !user?.username) return;
 
     const saveCharacter = async () => {
       try {
-        await AsyncStorage.setItem('character', JSON.stringify(character));
+        await StorageService.saveUserData(user.username, character);
       } catch (error) {
         console.error('Failed to save character data:', error);
       }
     };
 
     saveCharacter();
-  }, [character, isInitialized]);
+  }, [character, isInitialized, user]);
 
   const calculateXPToNextLevel = (level: number) => {
     return Math.floor(100 * Math.pow(1.2, level - 1));
@@ -304,25 +325,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     // no-op: feature disabled
   };
 
-  const equipItem = (category: 'Shirts'|'Pants'|'Equipment', name: string) => {
-    const updates: Partial<Character> = {};
-    if (category === 'Shirts') updates.equippedShirt = name;
-    if (category === 'Pants') updates.equippedPants = name;
-    if (category === 'Equipment') updates.equippedEquipment = name;
-    // Apply simple stat modifiers for demo purposes
-    let bs = character.baseStrength || 10;
-    let bst = character.baseStamina || 10;
-    let bag = character.baseAgility || 10;
-    let bf = character.baseFocus || 10;
-    let bl = character.baseLuck || 10;
-    // naive mapping
-    if (category === 'Equipment') { bs += 5; }
-    if (category === 'Shirts') { bag += 3; }
-    if (category === 'Pants') { bst += 3; }
-    updates.baseStrength = bs; updates.baseStamina = bst; updates.baseAgility = bag; updates.baseFocus = bf; updates.baseLuck = bl;
-    updateCharacter(updates);
-  };
-
   const resetCharacter = () => {
     setCharacter(DEFAULT_CHARACTER);
   };
@@ -332,7 +334,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateCharacter({ coins: Math.max(0, (character.coins || 0) + amount) });
   };
 
-  const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Backgrounds', itemName: string, price: number, url?: string) => {
+  const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => {
     const currentCoins = character.coins || 0;
     if (currentCoins < price) return false;
     const newCoins = currentCoins - price;
@@ -346,6 +348,9 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         break;
       case 'Equipment':
         updates.ownedEquipment = Array.from(new Set([...(character.ownedEquipment || []), itemName]));
+        break;
+      case 'Accessories':
+        updates.ownedAccessories = Array.from(new Set([...(character.ownedAccessories || []), itemName]));
         break;
       case 'Backgrounds':
         if (url) updates.ownedBackgrounds = Array.from(new Set([...(character.ownedBackgrounds || []), url]));
