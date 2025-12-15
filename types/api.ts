@@ -146,6 +146,44 @@ export interface BadgeStatus extends Badge {
 }
 
 
+// // Leaderboard Types
+// export interface LeaderboardPointsResponse {
+//   success: boolean;
+//   message: string;
+//   data: UserLeaderboardEntry[];
+//   timestamp: string;
+// }
+
+// export interface UserLeaderboardEntry {
+//   id: string;
+//   userId: number;
+//   points: number;
+//   level: number;
+//   lastLevelUpDate: string;
+//   streaks: {
+//     workout: {
+//       current: number;
+//       lastUpdate: string;
+//       longest: number;
+//     };
+//   };
+//   earnedBadges: EarnedBadge[];
+//   quests: any[];
+//   totalWorkoutsCompleted: number;
+//   lastWorkoutDate: string | null;
+//   profileCreatedAt: string;
+//   lastUpdated: string;
+// }
+
+// export interface EarnedBadge {
+//   badgeId: string;
+//   earnedAt: string;
+//   badgeName: string;
+//   description: string;
+//   category: string;
+//   pointsAwarded: number;
+// }
+
 // Exercise Types
 export interface Exercise {
   id: string;

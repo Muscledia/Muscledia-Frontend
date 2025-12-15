@@ -14,10 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BadgeService } from '@/services/badgeService';
-import { BadgeStatus } from '@/types/api';
+import { BadgeStatus } from '@/types/api';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Award, Check, X, Filter, ChevronDown, Trophy, Zap } from 'lucide-react-native';
-import { useAuth } from '@/hooks/useAuth';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
@@ -356,7 +355,6 @@ export default function BadgesScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
-  const { loginData, user } = useAuth();
 
   const [badges, setBadges] = useState<BadgeStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -369,22 +367,11 @@ export default function BadgesScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('recent');
 
-  const currentUserId = loginData?.userId || user?.id;
-
   const loadBadges = useCallback(
     async (forceRefresh = false) => {
-      if (!currentUserId) {
-        setError('User not authenticated');
-        setLoading(false);
-        return;
-      }
-
       try {
         setError(null);
-        const badgeStatuses = await BadgeService.getBadgeStatus(
-          currentUserId.toString(),
-          forceRefresh
-        );
+        const badgeStatuses = await BadgeService.getBadgeStatus(forceRefresh);
         setBadges(badgeStatuses);
       } catch (err: any) {
         console.error('Failed to load badges:', err);
@@ -394,7 +381,7 @@ export default function BadgesScreen() {
         setRefreshing(false);
       }
     },
-    [currentUserId]
+    []
   );
 
   useEffect(() => {
