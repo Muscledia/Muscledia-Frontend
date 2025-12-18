@@ -2,8 +2,8 @@ Implement Points Leaderboard
 Priority
 Priority 2 - Social Feature
 
-Endpoint
-GET /api/gamification/leaderboards/points
+Endpoints:
+Three endpoints which provide leaderboard data based on points, levels and streak.
 
 Description
 Create leaderboard screen showing top users ranked by total points earned. This feature adds competitive and social elements to the platform, encouraging engagement and consistency.
@@ -25,7 +25,7 @@ Handle rank calculations and formatting
 Determine current user's position in list
 Format point values for display
 API Response Model
-IMPORTANT: The actual API returns MUCH more data than expected - full user profiles with badges!
+IMPORTANT: The actual API returns a bit different data which is provided on the bottom of this document
 
 interface LeaderboardPointsResponse {
   success: boolean;
@@ -110,12 +110,6 @@ Badge Display (Available from API):
 Display earned badge count for each user
 
 Show badge icons/thumbnails in leaderboard row
-
-Tap to view badge details (modal with description)
-
-Display recent badges (last 2-3 earned)
-
-Add "View All Badges" option for each user
 UI/UX Elements:
 
 
@@ -146,17 +140,109 @@ Show point differences between ranks
 Consider adding time period filter (daily/weekly/all-time)
 Sticky current user position indicator
 
-
+Available endpoints:
+http://89.168.117.65/api/gamification/leaderboards/weekly-streak
+Response:
 {
     "success": true,
-    "message": "Points leaderboard retrieved successfully",
+    "message": "Weekly streak leaderboard retrieved successfully",
+    "data": {
+        "leaderboard": [
+            {
+                "userId": 8828567213117535,
+                "rank": 1,
+                "points": 1860,
+                "level": 6,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            },
+            {
+                "userId": 6605473744026944,
+                "rank": 2,
+                "points": 8195,
+                "level": 13,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            },
+            {
+                "userId": 8472899537426078,
+                "rank": 3,
+                "points": 3960,
+                "level": 9,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            }
+        ],
+        "currentUser": {
+            "userId": 6605473744026944,
+            "rank": 1,
+            "points": 8195,
+            "level": 13,
+            "currentStreak": 0,
+            "totalWorkouts": 0,
+            "totalBadges": 1,
+            "longestStreak": 0
+        },
+        "nearbyUsers": [
+            {
+                "userId": 8828567213117535,
+                "rank": 1,
+                "points": 1860,
+                "level": 6,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            },
+            {
+                "userId": 6605473744026944,
+                "rank": 2,
+                "points": 8195,
+                "level": 13,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            },
+            {
+                "userId": 8472899537426078,
+                "rank": 3,
+                "points": 3960,
+                "level": 9,
+                "currentStreak": 0,
+                "totalWorkouts": 0,
+                "totalBadges": 1,
+                "longestStreak": 0
+            }
+        ],
+        "currentPage": 0,
+        "pageSize": 10,
+        "totalPages": 1,
+        "totalUsers": 3,
+        "leaderboardType": "WEEKLY_STREAK",
+        "currentUserInTopList": true
+    },
+    "timestamp": "2025-12-18T16:08:11.272871768Z"
+}
+
+Endpoint: http://89.168.117.65/api/gamification/leaderboards/levels
+Response: 
+{
+    "success": true,
+    "message": "Level leaderboard retrieved successfully",
     "data": {
         "leaderboard": [
             {
                 "userId": 6605473744026944,
                 "rank": 1,
-                "points": 4845,
-                "level": 10,
+                "points": 8195,
+                "level": 13,
                 "totalWorkouts": 0,
                 "totalBadges": 1
             },
@@ -180,8 +266,8 @@ Sticky current user position indicator
         "currentUser": {
             "userId": 6605473744026944,
             "rank": 1,
-            "points": 4845,
-            "level": 10,
+            "points": 8195,
+            "level": 13,
             "totalWorkouts": 0,
             "totalBadges": 1
         },
@@ -189,8 +275,8 @@ Sticky current user position indicator
             {
                 "userId": 6605473744026944,
                 "rank": 1,
-                "points": 4845,
-                "level": 10,
+                "points": 8195,
+                "level": 13,
                 "totalWorkouts": 0,
                 "totalBadges": 1
             },
@@ -218,5 +304,81 @@ Sticky current user position indicator
         "leaderboardType": "POINTS",
         "currentUserInTopList": true
     },
-    "timestamp": "2025-12-15T18:37:39.238148206Z"
+    "timestamp": "2025-12-18T16:08:03.541588022Z"
+}
+
+Endpoint: http://89.168.117.65/api/gamification/leaderboards/points
+Response: 
+{
+    "success": true,
+    "message": "Points leaderboard retrieved successfully",
+    "data": {
+        "leaderboard": [
+            {
+                "userId": 6605473744026944,
+                "rank": 1,
+                "points": 8195,
+                "level": 13,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            },
+            {
+                "userId": 8472899537426078,
+                "rank": 2,
+                "points": 3960,
+                "level": 9,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            },
+            {
+                "userId": 8828567213117535,
+                "rank": 3,
+                "points": 1860,
+                "level": 6,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            }
+        ],
+        "currentUser": {
+            "userId": 6605473744026944,
+            "rank": 1,
+            "points": 8195,
+            "level": 13,
+            "totalWorkouts": 0,
+            "totalBadges": 1
+        },
+        "nearbyUsers": [
+            {
+                "userId": 6605473744026944,
+                "rank": 1,
+                "points": 8195,
+                "level": 13,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            },
+            {
+                "userId": 8472899537426078,
+                "rank": 2,
+                "points": 3960,
+                "level": 9,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            },
+            {
+                "userId": 8828567213117535,
+                "rank": 3,
+                "points": 1860,
+                "level": 6,
+                "totalWorkouts": 0,
+                "totalBadges": 1
+            }
+        ],
+        "currentPage": 0,
+        "pageSize": 10,
+        "totalPages": 1,
+        "totalUsers": 3,
+        "leaderboardType": "POINTS",
+        "currentUserInTopList": true
+    },
+    "timestamp": "2025-12-18T18:12:09.249247683Z"
 }

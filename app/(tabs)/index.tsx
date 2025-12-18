@@ -34,6 +34,7 @@ import {
   FolderEdit,
   Compass,
   Sparkles,
+  Trophy,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
@@ -413,6 +414,29 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Leaderboard Button */}
+        <TouchableOpacity
+          style={[styles.leaderboardButton, { backgroundColor: theme.surface }]}
+          onPress={async () => {
+            await impact('medium');
+            router.push('/leaderboard');
+          }}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={[theme.accent, theme.accentSecondary]}
+            locations={[0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.leaderboardGradient}
+          >
+            <Trophy size={20} color={theme.cardText} />
+            <Text style={[styles.leaderboardButtonText, { color: theme.cardText }]}>
+              View Leaderboard
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
         <View style={styles.routinesHeader}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Routines</Text>
           <TouchableOpacity
@@ -601,6 +625,9 @@ const styles = StyleSheet.create({
   barRightLabel: { width: 60, fontSize: 12, textAlign: 'right' },
   customizeBtn: { position: 'absolute', top: 12, right: 12, zIndex: 100, elevation: 100 },
   customizeBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 10 },
+  leaderboardButton: { borderRadius: 12, overflow: 'hidden', marginBottom: 20 },
+  leaderboardGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, paddingHorizontal: 20 },
+  leaderboardButtonText: { fontSize: 16, fontWeight: '700' },
   routinesHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },
   exploreBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6 },

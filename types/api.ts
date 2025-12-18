@@ -146,43 +146,38 @@ export interface BadgeStatus extends Badge {
 }
 
 
-// // Leaderboard Types
-// export interface LeaderboardPointsResponse {
-//   success: boolean;
-//   message: string;
-//   data: UserLeaderboardEntry[];
-//   timestamp: string;
-// }
+// Leaderboard Types
+export type LeaderboardType = 'POINTS' | 'LEVELS' | 'WEEKLY_STREAK';
 
-// export interface UserLeaderboardEntry {
-//   id: string;
-//   userId: number;
-//   points: number;
-//   level: number;
-//   lastLevelUpDate: string;
-//   streaks: {
-//     workout: {
-//       current: number;
-//       lastUpdate: string;
-//       longest: number;
-//     };
-//   };
-//   earnedBadges: EarnedBadge[];
-//   quests: any[];
-//   totalWorkoutsCompleted: number;
-//   lastWorkoutDate: string | null;
-//   profileCreatedAt: string;
-//   lastUpdated: string;
-// }
+export interface LeaderboardEntry {
+  userId: number;
+  rank: number;
+  points: number;
+  level: number;
+  currentStreak?: number;
+  totalWorkouts: number;
+  totalBadges: number;
+  longestStreak?: number;
+}
 
-// export interface EarnedBadge {
-//   badgeId: string;
-//   earnedAt: string;
-//   badgeName: string;
-//   description: string;
-//   category: string;
-//   pointsAwarded: number;
-// }
+export interface LeaderboardData {
+  leaderboard: LeaderboardEntry[];
+  currentUser: LeaderboardEntry;
+  nearbyUsers: LeaderboardEntry[];
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalUsers: number;
+  leaderboardType: LeaderboardType;
+  currentUserInTopList: boolean;
+}
+
+export interface LeaderboardResponse {
+  success: boolean;
+  message: string;
+  data: LeaderboardData;
+  timestamp: string;
+}
 
 // Exercise Types
 export interface Exercise {

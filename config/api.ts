@@ -60,6 +60,9 @@ export const API_CONFIG = {
       GET_ACHIEVEMENTS: '/api/gamification/achievements',
       GET_BADGES: '/api/gamification/badges',
       GET_LEADERBOARD: '/api/gamification/leaderboard',
+      GET_LEADERBOARD_POINTS: '/api/gamification/leaderboards/points',
+      GET_LEADERBOARD_LEVELS: '/api/gamification/leaderboards/levels',
+      GET_LEADERBOARD_WEEKLY_STREAK: '/api/gamification/leaderboards/weekly-streak',
     },
   },
 
