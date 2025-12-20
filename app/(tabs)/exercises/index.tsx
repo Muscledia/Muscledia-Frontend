@@ -1,3 +1,3 @@
-import ExerciseExploreScreen from '@/screens/ExerciseExploreScreen';
+import ExerciseExploreScreen from '../../exercises/explore';
 
 export default ExerciseExploreScreen;

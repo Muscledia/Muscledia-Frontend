@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { RoutineService } from '@/services';
-import { RoutineFolder, WorkoutPlan, PlannedExercise } from '@/types/api';
+import { RoutineFolder, WorkoutPlan, PlannedExercise } from '@/types';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';

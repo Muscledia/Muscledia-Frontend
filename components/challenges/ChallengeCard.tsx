@@ -11,7 +11,7 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Challenge } from '@/types/api';
+import { Challenge } from '@/types';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Dumbbell, Heart, Brain, Zap, Activity, Clock, Coins, Trophy, ChevronsUp, ChevronsDown, Calendar } from 'lucide-react-native';
 

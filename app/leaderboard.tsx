@@ -12,7 +12,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardList } from '@/components/leaderboard';
 import { useAuth } from '@/hooks/useAuth';
-import { LeaderboardType } from '@/types/api';
+import { LeaderboardType } from '@/types';
 import { ArrowLeft, Trophy } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

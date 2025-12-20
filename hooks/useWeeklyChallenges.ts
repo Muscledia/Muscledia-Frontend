@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChallengeService } from '@/services/challengeService';
-import { Challenge } from '@/types/api';
+import { Challenge } from '@/types';
 
 const fetchWeeklyChallenges = async (): Promise<Challenge[]> => {
   try {

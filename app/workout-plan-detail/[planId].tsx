@@ -20,7 +20,7 @@ import {
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { WorkoutPlanService } from '@/services';
-import { WorkoutPlan, PlannedExercise } from '@/types/api';
+import { WorkoutPlan, PlannedExercise } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/hooks/useAuth';
 

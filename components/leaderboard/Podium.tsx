@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RankDisplay } from './RankDisplay';
-import { LeaderboardEntry } from '@/types/api';
+import { LeaderboardEntry } from '@/types';
 
 interface PodiumProps {
   topThree: LeaderboardEntry[];

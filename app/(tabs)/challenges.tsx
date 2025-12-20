@@ -8,7 +8,7 @@ import { ActiveChallengeCard } from '@/components/challenges/ActiveChallengeCard
 import { CelebrationScreen } from '@/components/challenges/CelebrationScreen';
 import { DUMMY_JOURNEY_NODES } from '@/data/dummyJourney';
 import { JourneyMap } from '@/components/journey/JourneyMap';
-import { Challenge, ActiveChallenge } from '@/types/api';
+import { Challenge, ActiveChallenge } from '@/types';
 import { Trophy, Calendar, Map as MapIcon } from 'lucide-react-native';
 import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
 

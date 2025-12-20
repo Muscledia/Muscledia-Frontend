@@ -10,7 +10,7 @@ import {
   CreateWorkoutPlanRequest,
   AddExerciseToWorkoutPlanRequest,
   Exercise,
-} from '@/types/api';
+} from '@/types';
 
 /**
  * WorkoutPlanService - Handles all workout plan CRUD operations

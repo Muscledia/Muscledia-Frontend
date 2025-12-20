@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 import ExerciseCard from './ExerciseCard';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';

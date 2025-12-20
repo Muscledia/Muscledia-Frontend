@@ -33,7 +33,7 @@ export type {
   UpdateSetRequest,
   Challenge,
   ActiveChallenge,
-} from '@/types/api';
+} from '@/types';
 
 // API Client exports
 export {

@@ -9,6 +9,7 @@ import ExerciseList from '@/components/exercises/ExerciseList';
 import ExerciseSearchBar from '@/components/exercises/ExerciseSearchBar';
 import ExerciseFilters from '@/components/exercises/ExerciseFilters';
 import ExerciseDetailModal from '@/components/exercises/ExerciseDetailModal';
+import { Exercise } from '@/types';
 
 export default function ExerciseExploreScreen() {
   const colorScheme = useColorScheme();
@@ -131,4 +132,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

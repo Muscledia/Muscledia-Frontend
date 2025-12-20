@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BadgeService } from '@/services/badgeService';
-import { BadgeStatus } from '@/types/api';
+import { BadgeStatus } from '@/types';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Award, Check, X, Filter, ChevronDown, Trophy, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';

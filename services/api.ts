@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import axiosRetry from 'axios-retry';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, buildURL } from '@/config/api';
-import { ApiResponse, ApiError } from '@/types/api';
+import { ApiResponse, ApiError } from '@/types';
 
 // Create axios instance with default configuration
 const createApiClient = (): AxiosInstance => {

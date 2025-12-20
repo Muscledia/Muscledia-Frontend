@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme } from 
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, Target, Package, TrendingUp, Repeat, Timer } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 
 interface ExerciseCardProps {
   exercise: Exercise;

@@ -1,6 +1,6 @@
 import { apiPost } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
-import { ApiResponse, AiRecommendationRequest, AiRecommendationResponse } from '@/types/api';
+import { ApiResponse, AiRecommendationRequest, AiRecommendationResponse } from '@/types';
 
 /**
  * AiService

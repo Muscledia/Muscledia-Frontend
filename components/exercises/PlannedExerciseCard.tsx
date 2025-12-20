@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, Repeat, Timer, Hash, Activity } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { PlannedExercise } from '@/types/api';
+import { PlannedExercise } from '@/types';
 
 interface PlannedExerciseCardProps {
   exercise: PlannedExercise;

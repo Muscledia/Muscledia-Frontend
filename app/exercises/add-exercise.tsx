@@ -7,7 +7,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { ExerciseBrowser } from '@/components/exercises/ExerciseBrowser';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { WorkoutPlanService, WorkoutService } from '@/services';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 
 export default function ExerciseBrowserScreen() {

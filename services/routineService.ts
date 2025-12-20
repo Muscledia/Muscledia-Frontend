@@ -1,7 +1,7 @@
 // services/RoutineService.ts - COMPLETE with all CRUD operations
 
 import { apiGet, apiPost, apiPut, apiDelete } from './api';
-import { ApiResponse, RoutineFolder, WorkoutPlan, SaveRoutineResponse, PlannedExercise } from '@/types/api';
+import { ApiResponse, RoutineFolder, WorkoutPlan, SaveRoutineResponse, PlannedExercise } from '@/types';
 
 /**
  * Routine Service

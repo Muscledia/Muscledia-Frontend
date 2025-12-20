@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image, Linking, useColorScheme } from 'react-native';
 import { X, Target, Package, Video, Clock, Repeat, TrendingUp } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 
 interface ExerciseDetailModalProps {
   exercise: Exercise | null;

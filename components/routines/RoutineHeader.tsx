@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, useColorScheme } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Clock, TrendingUp, User } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { RoutineFolder } from '@/types/api';
+import { RoutineFolder } from '@/types';
 
 interface RoutineHeaderProps {
   routine: RoutineFolder;

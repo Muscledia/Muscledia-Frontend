@@ -15,7 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Search, Filter, X } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { ExerciseService} from '@/services';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 import { ExerciseFilters } from '@/app/exercise-filters';
 

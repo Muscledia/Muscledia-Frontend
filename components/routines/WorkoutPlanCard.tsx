@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { ChevronRight, Dumbbell, Clock } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { WorkoutPlan } from '@/types/api';
+import { WorkoutPlan } from '@/types';
 
 interface WorkoutPlanCardProps {
   plan: WorkoutPlan;

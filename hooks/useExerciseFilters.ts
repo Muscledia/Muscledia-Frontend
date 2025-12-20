@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Exercise } from '@/types/api';
+import { Exercise } from '@/types';
 import { ExerciseService } from '@/services/exerciseService';
 
 export interface ExerciseFilters {

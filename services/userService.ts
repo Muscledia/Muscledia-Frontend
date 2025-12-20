@@ -1,6 +1,6 @@
 import { apiGet, apiPut } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
-import { User, ApiResponse } from '@/types/api';
+import { User, ApiResponse } from '@/types';
 
 export class UserService {
   /**

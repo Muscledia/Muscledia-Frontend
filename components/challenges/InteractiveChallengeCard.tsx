@@ -13,7 +13,7 @@ import Animated, {
 import Svg, { Circle, G } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { Challenge } from '@/types/api';
+import { Challenge } from '@/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Clock, Trophy, ChevronDown, ChevronUp, CheckCircle, Lock } from 'lucide-react-native';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { RankDisplay } from './RankDisplay';
-import { LeaderboardEntry } from '@/types/api';
+import { LeaderboardEntry } from '@/types';
 
 interface LeaderboardRowProps {
   entry: LeaderboardEntry;

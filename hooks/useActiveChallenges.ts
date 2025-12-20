@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChallengeService } from '@/services/challengeService';
-import { ActiveChallenge } from '@/types/api';
+import { ActiveChallenge } from '@/types';
 import { useAuth } from './useAuth';
 
 const fetchActiveChallenges = async (userId: string | number): Promise<ActiveChallenge[]> => {

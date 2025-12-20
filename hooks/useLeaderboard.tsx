@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LeaderboardService } from '@/services';
-import { LeaderboardResponse, LeaderboardType } from '@/types/api';
+import { LeaderboardResponse, LeaderboardType } from '@/types';
 import { useAuth } from './useAuth';
 
 interface UseLeaderboardReturn {

@@ -1,6 +1,6 @@
 import { apiPost, setAuthToken, clearAuthToken } from './api';
 import { API_CONFIG, buildURL, getDebugInfo } from '@/config/api';
-import { LoginRequest, LoginResponse, RegisterRequest, User, ApiResponse } from '@/types/api';
+import { LoginRequest, LoginResponse, RegisterRequest, User, ApiResponse } from '@/types';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

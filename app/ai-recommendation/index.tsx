@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Send, ArrowLeft } from 'lucide-react-native';
 import { AiService } from '@/services';
-import { AiRecommendationRequest, TrainingLevel } from '@/types/api';
+import { AiRecommendationRequest, TrainingLevel } from '@/types';
 import { getThemeColors, Colors } from '@/constants/Colors';
 import { useHaptics } from '@/hooks/useHaptics';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';

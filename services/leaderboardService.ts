@@ -1,6 +1,6 @@
 import { apiGet } from './api';
 import { buildURL } from '@/config/api';
-import { LeaderboardResponse, LeaderboardType } from '@/types/api';
+import { LeaderboardResponse, LeaderboardType } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CACHE_KEY_PREFIX = 'leaderboard_cache_';

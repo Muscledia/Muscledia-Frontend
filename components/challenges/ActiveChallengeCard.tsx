@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, useAnimatedStyle, withSpring, useSharedValue, withSequence } from 'react-native-reanimated';
 import { useRealtimeProgress } from '@/hooks/useRealtimeProgress';
 import { InteractiveChallengeCard, ChallengeCardState } from '@/components/challenges/InteractiveChallengeCard';
-import { Challenge } from '@/types/api';
+import { Challenge } from '@/types';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Plus, BarChart2 } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';

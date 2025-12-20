@@ -1,6 +1,6 @@
 import { apiGet } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
-import { Badge, BadgeStatus } from '@/types/api';
+import { Badge, BadgeStatus } from '@/types';
 
 type CacheEntry<T> = {
   value: T;

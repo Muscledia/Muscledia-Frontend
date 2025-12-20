@@ -27,7 +27,7 @@ import {
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { WorkoutPlanService } from '@/services';
-import { WorkoutPlan, PlannedSet } from '@/types/api';
+import { WorkoutPlan, PlannedSet } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Check } from 'lucide-react-native';
@@ -297,7 +297,7 @@ export default function EditRoutineScreen() {
             <Text style={[styles.exercisesTitle, { color: theme.text }]}>Exercises</Text>
 
             <TouchableOpacity
-              onPress={() => router.push({ pathname: '/exercises/browse', params: { planId } })}
+              onPress={() => router.push({ pathname: '/exercises/add-exercise', params: { planId } })}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
             >
               <Plus size={16} color={theme.accent} />

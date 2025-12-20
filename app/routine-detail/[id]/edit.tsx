@@ -27,7 +27,7 @@ import {
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { RoutineService, WorkoutPlanService } from '@/services';
-import { RoutineFolder, WorkoutPlan } from '@/types/api';
+import { RoutineFolder, WorkoutPlan } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 
 export default function EditRoutineScreen() {

@@ -43,7 +43,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
 import { RoutineService } from '@/services';
-import { RoutineFolder, WorkoutPlan } from '@/types/api';
+import { RoutineFolder, WorkoutPlan } from '@/types';
 import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
 

@@ -1,5 +1,5 @@
 import { apiGet, apiPost } from './api';
-import { ApiResponse, Challenge, ActiveChallenge } from '@/types/api';
+import { ApiResponse, Challenge, ActiveChallenge } from '@/types';
 
 export class ChallengeService {
   /**

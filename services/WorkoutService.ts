@@ -1,7 +1,7 @@
 // services/WorkoutService.ts
 
 import { apiDelete, apiGet, apiPost, apiPut } from './api';
-import { ApiResponse } from '@/types/api';
+import { ApiResponse } from '@/types';
 
 /**
  * Set type classification for training intensity tracking

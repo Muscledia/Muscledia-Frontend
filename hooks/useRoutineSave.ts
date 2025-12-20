@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { RoutineService } from '@/services';
 import { useAuth } from './useAuth';
-import { ApiError } from '@/types/api';
+import { ApiError } from '@/types';
 
 interface UseRoutineSaveResult {
   isSaving: boolean;

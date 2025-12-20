@@ -12,7 +12,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle2, X, Sparkles } from 'lucide-react-native';
-import { AiRecommendationResponse } from '@/types/api';
+import { AiRecommendationResponse } from '@/types';
 import { RoutineService } from '@/services';
 import { getThemeColors, Colors } from '@/constants/Colors';
 import { useHaptics } from '@/hooks/useHaptics';

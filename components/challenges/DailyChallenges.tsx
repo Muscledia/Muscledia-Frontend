@@ -5,7 +5,7 @@ import { ChallengeCard } from './ChallengeCard';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { useCharacter } from '@/hooks/useCharacter';
-import { JourneyPhase } from '@/types/api';
+import { JourneyPhase } from '@/types';
 import { Flag, Shield, Crown } from 'lucide-react-native';
 import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
 

@@ -1,7 +1,7 @@
 // services/ExerciseService.ts
 
 import { apiGet, apiPost, apiDelete } from './api';
-import { ApiResponse, Exercise } from '@/types/api';
+import { ApiResponse, Exercise } from '@/types';
 
 export interface ExerciseFilters {
   difficulty?: string[];

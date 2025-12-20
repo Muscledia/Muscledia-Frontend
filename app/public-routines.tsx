@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell, TrendingUp, Clock, ChevronRight } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { RoutineService } from '@/services';
-import { RoutineFolder } from '@/types/api';
+import { RoutineFolder } from '@/types';
 import { useHaptics } from '@/hooks/useHaptics';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { EmptyState } from '@/components/ui/EmptyState';

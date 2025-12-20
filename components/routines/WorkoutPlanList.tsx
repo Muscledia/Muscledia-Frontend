@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, useColorScheme } from 'react-native';
 import { Dumbbell } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { WorkoutPlan } from '@/types/api';
+import { WorkoutPlan } from '@/types';
 import WorkoutPlanCard from './WorkoutPlanCard';
 
 interface WorkoutPlanListProps {

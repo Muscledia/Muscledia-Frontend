@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { WorkoutPlanDetail, WorkoutPlan } from '@/types/api';
+import { WorkoutPlanDetail, WorkoutPlan } from '@/types';
 import { Target, Dumbbell, Clock } from 'lucide-react-native';
 
 interface PlanHeaderProps {

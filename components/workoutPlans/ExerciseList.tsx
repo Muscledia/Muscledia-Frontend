@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, useColorScheme } from 'react-native';
 import { Dumbbell } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
-import { PlannedExercise } from '@/types/api';
+import { PlannedExercise } from '@/types';
 import PlannedExerciseCard from '../exercises/PlannedExerciseCard';
 
 interface ExerciseListProps {

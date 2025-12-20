@@ -1,4 +1,4 @@
-import { Challenge } from '@/types/api';
+import { Challenge } from '@/types';
 
 export type JourneyNodeStatus = 'completed' | 'active' | 'locked' | 'available';
 export type JourneyPhase = 'Foundation' | 'Building' | 'Mastery';

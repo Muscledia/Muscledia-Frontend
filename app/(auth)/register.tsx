@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { Eye, EyeOff, Mail, Lock, User, Calendar } from 'lucide-react-native';
 import { AuthService } from '@/services/authService';
 import { StorageService } from '@/services/storageService';
-import { RegisterRequest } from '@/types/api';
+import { RegisterRequest } from '@/types';
 import { Colors, getThemeColors } from '@/constants/Colors';
 
 export default function RegisterScreen() {

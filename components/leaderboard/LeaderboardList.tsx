@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { LeaderboardRow } from './LeaderboardRow';
 import { Podium } from './Podium';
-import { LeaderboardEntry, LeaderboardResponse } from '@/types/api';
+import { LeaderboardEntry, LeaderboardResponse } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Trophy } from 'lucide-react-native';
 
