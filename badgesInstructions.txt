@@ -1,0 +1,542 @@
+This is a complete list of all badges that all users can achieve:
+Endpoint:
+http://89.168.117.65/api/badges
+Response:
+{
+    "success": true,
+    "message": "Operation completed successfully",
+    "data": [
+        {
+            "badgeId": "WELCOME",
+            "name": "Welcome to Muscledia!",
+            "description": "Welcome to your fitness journey!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 10,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 0
+            },
+            "createdAt": "2025-12-12T23:53:36.797Z"
+        },
+        {
+            "badgeId": "FIRST_WORKOUT",
+            "name": "First Steps",
+            "description": "Congratulations on completing your first workout!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 25,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 1
+            },
+            "createdAt": "2025-12-12T23:53:36.899Z"
+        },
+        {
+            "badgeId": "WORKOUT_5",
+            "name": "Getting Started",
+            "description": "Completed 5 workouts",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:36.907Z"
+        },
+        {
+            "badgeId": "WORKOUT_10",
+            "name": "Dedicated",
+            "description": "Completed 10 workouts",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 100,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 10
+            },
+            "createdAt": "2025-12-12T23:53:36.929Z"
+        },
+        {
+            "badgeId": "WORKOUT_25",
+            "name": "Committed",
+            "description": "Completed 25 workouts",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 200,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 25
+            },
+            "createdAt": "2025-12-12T23:53:36.936Z"
+        },
+        {
+            "badgeId": "WORKOUT_50",
+            "name": "Fitness Enthusiast",
+            "description": "Completed 50 workouts",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 400,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 50
+            },
+            "createdAt": "2025-12-12T23:53:36.945Z"
+        },
+        {
+            "badgeId": "WORKOUT_100",
+            "name": "Century Club",
+            "description": "Completed 100 workouts!",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 1000,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 100
+            },
+            "createdAt": "2025-12-12T23:53:36.950Z"
+        },
+        {
+            "badgeId": "STREAK_3",
+            "name": "Consistency Starter",
+            "description": "Complete 3 consecutive days of workouts",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 3
+            },
+            "createdAt": "2025-12-12T23:53:36.962Z"
+        },
+        {
+            "badgeId": "STREAK_5",
+            "name": "Workout Warrior",
+            "description": "Complete 5 consecutive days of workouts",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 100,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:36.968Z"
+        },
+        {
+            "badgeId": "STREAK_7",
+            "name": "Week Champion",
+            "description": "Complete 7 consecutive days of workouts",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 150,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 7
+            },
+            "createdAt": "2025-12-12T23:53:36.976Z"
+        },
+        {
+            "badgeId": "STREAK_14",
+            "name": "Two Week Warrior",
+            "description": "Complete 14 consecutive days of workouts",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 300,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 14
+            },
+            "createdAt": "2025-12-12T23:53:36.984Z"
+        },
+        {
+            "badgeId": "STREAK_30",
+            "name": "Monthly Master",
+            "description": "Complete 30 consecutive days of workouts",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 500,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 30
+            },
+            "createdAt": "2025-12-12T23:53:36.992Z"
+        },
+        {
+            "badgeId": "STREAK_90",
+            "name": "Unstoppable Force",
+            "description": "Complete 90 consecutive days of workouts",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 1500,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 90
+            },
+            "createdAt": "2025-12-12T23:53:37Z"
+        },
+        {
+            "badgeId": "STREAK_365",
+            "name": "Year-Long Legend",
+            "description": "Complete 365 consecutive days of workouts",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 5000,
+            "criteriaType": "WORKOUT_STREAK",
+            "criteriaParams": {
+                "targetValue": 365
+            },
+            "createdAt": "2025-12-12T23:53:37.011Z"
+        },
+        {
+            "badgeId": "FIRST_PR",
+            "name": "Record Breaker",
+            "description": "Achieved your first personal record!",
+            "badgeType": "PR",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "PERSONAL_RECORD",
+            "criteriaParams": {
+                "targetValue": 1
+            },
+            "createdAt": "2025-12-12T23:53:37.020Z"
+        },
+        {
+            "badgeId": "PR_5",
+            "name": "PR Hunter",
+            "description": "Achieved 5 personal records",
+            "badgeType": "PR",
+            "imageUrl": null,
+            "pointsAwarded": 150,
+            "criteriaType": "PERSONAL_RECORD",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:37.026Z"
+        },
+        {
+            "badgeId": "PR_10",
+            "name": "PR Master",
+            "description": "Achieved 10 personal records",
+            "badgeType": "PR",
+            "imageUrl": null,
+            "pointsAwarded": 300,
+            "criteriaType": "PERSONAL_RECORD",
+            "criteriaParams": {
+                "targetValue": 10
+            },
+            "createdAt": "2025-12-12T23:53:37.035Z"
+        },
+        {
+            "badgeId": "PR_25",
+            "name": "PR Dominator",
+            "description": "Achieved 25 personal records",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 800,
+            "criteriaType": "PERSONAL_RECORD",
+            "criteriaParams": {
+                "targetValue": 25
+            },
+            "createdAt": "2025-12-12T23:53:37.048Z"
+        },
+        {
+            "badgeId": "LEVEL_5",
+            "name": "Rising Star",
+            "description": "Reached Level 5!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "LEVEL_REACHED",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:37.059Z"
+        },
+        {
+            "badgeId": "LEVEL_10",
+            "name": "Experienced Athlete",
+            "description": "Reached Level 10!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 100,
+            "criteriaType": "LEVEL_REACHED",
+            "criteriaParams": {
+                "targetValue": 10
+            },
+            "createdAt": "2025-12-12T23:53:37.066Z"
+        },
+        {
+            "badgeId": "LEVEL_20",
+            "name": "Fitness Elite",
+            "description": "Reached Level 20!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 250,
+            "criteriaType": "LEVEL_REACHED",
+            "criteriaParams": {
+                "targetValue": 20
+            },
+            "createdAt": "2025-12-12T23:53:37.072Z"
+        },
+        {
+            "badgeId": "LEVEL_50",
+            "name": "Legendary",
+            "description": "Reached Level 50!",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 1000,
+            "criteriaType": "LEVEL_REACHED",
+            "criteriaParams": {
+                "targetValue": 50
+            },
+            "createdAt": "2025-12-12T23:53:37.079Z"
+        },
+        {
+            "badgeId": "HOUR_WORKOUT",
+            "name": "Hour Warrior",
+            "description": "Worked out for over an hour!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 30,
+            "criteriaType": "WORKOUT_DURATION",
+            "criteriaParams": {
+                "targetValue": 60
+            },
+            "createdAt": "2025-12-12T23:53:37.088Z"
+        },
+        {
+            "badgeId": "MARATHON_SESSION",
+            "name": "Marathon Session",
+            "description": "Completed a 2-hour workout!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 100,
+            "criteriaType": "WORKOUT_DURATION",
+            "criteriaParams": {
+                "targetValue": 120
+            },
+            "createdAt": "2025-12-12T23:53:37.105Z"
+        },
+        {
+            "badgeId": "WEIGHT_1000KG",
+            "name": "Ton Lifter",
+            "description": "Lifted a total of 1,000 kg!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 200,
+            "criteriaType": "WEIGHT_LIFTED_TOTAL",
+            "criteriaParams": {
+                "targetValue": 1000.0
+            },
+            "createdAt": "2025-12-12T23:53:37.115Z"
+        },
+        {
+            "badgeId": "WEIGHT_5000KG",
+            "name": "Mass Mover",
+            "description": "Lifted a total of 5,000 kg!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 500,
+            "criteriaType": "WEIGHT_LIFTED_TOTAL",
+            "criteriaParams": {
+                "targetValue": 5000.0
+            },
+            "createdAt": "2025-12-12T23:53:37.121Z"
+        },
+        {
+            "badgeId": "WEIGHT_10000KG",
+            "name": "Iron Champion",
+            "description": "Lifted a total of 10,000 kg!",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 1000,
+            "criteriaType": "WEIGHT_LIFTED_TOTAL",
+            "criteriaParams": {
+                "targetValue": 10000.0
+            },
+            "createdAt": "2025-12-12T23:53:37.128Z"
+        },
+        {
+            "badgeId": "EXERCISE_10",
+            "name": "Variety Seeker",
+            "description": "Performed 10 different exercises",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "EXERCISE_COUNT",
+            "criteriaParams": {
+                "targetValue": 10
+            },
+            "createdAt": "2025-12-12T23:53:37.141Z"
+        },
+        {
+            "badgeId": "EXERCISE_25",
+            "name": "Movement Master",
+            "description": "Performed 25 different exercises",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 150,
+            "criteriaType": "EXERCISE_COUNT",
+            "criteriaParams": {
+                "targetValue": 25
+            },
+            "createdAt": "2025-12-12T23:53:37.164Z"
+        },
+        {
+            "badgeId": "EXERCISE_50",
+            "name": "Exercise Encyclopedia",
+            "description": "Performed 50 different exercises",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 400,
+            "criteriaType": "EXERCISE_COUNT",
+            "criteriaParams": {
+                "targetValue": 50
+            },
+            "createdAt": "2025-12-12T23:53:37.169Z"
+        },
+        {
+            "badgeId": "WEEKLY_WARRIOR",
+            "name": "Weekly Warrior",
+            "description": "Completed 5 workouts in a single week",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 100,
+            "criteriaType": "WEEKLY_WORKOUTS",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:37.181Z"
+        },
+        {
+            "badgeId": "MONTHLY_CHAMPION",
+            "name": "Monthly Champion",
+            "description": "Completed 20 workouts in a single month",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 300,
+            "criteriaType": "MONTHLY_WORKOUTS",
+            "criteriaParams": {
+                "targetValue": 20
+            },
+            "createdAt": "2025-12-12T23:53:37.188Z"
+        },
+        {
+            "badgeId": "LOGIN_STREAK_7",
+            "name": "Daily Devotee",
+            "description": "Logged in for 7 consecutive days",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "LOGIN_STREAK",
+            "criteriaParams": {
+                "targetValue": 7
+            },
+            "createdAt": "2025-12-12T23:53:37.198Z"
+        },
+        {
+            "badgeId": "LOGIN_STREAK_30",
+            "name": "Ever-Present",
+            "description": "Logged in for 30 consecutive days",
+            "badgeType": "STREAK",
+            "imageUrl": null,
+            "pointsAwarded": 200,
+            "criteriaType": "LOGIN_STREAK",
+            "criteriaParams": {
+                "targetValue": 30
+            },
+            "createdAt": "2025-12-12T23:53:37.206Z"
+        },
+        {
+            "badgeId": "VOLUME_CRUSHER",
+            "name": "Volume Crusher",
+            "description": "Completed 20+ sets in a single workout!",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 200,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 20
+            },
+            "createdAt": "2025-12-12T23:53:37.215Z"
+        },
+        {
+            "badgeId": "POINTS_5000",
+            "name": "Point Master",
+            "description": "Earned 5,000 total points",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 500,
+            "criteriaType": "POINTS_EARNED",
+            "criteriaParams": {
+                "targetValue": 5000
+            },
+            "createdAt": "2025-12-12T23:53:37.222Z"
+        },
+        {
+            "badgeId": "POINTS_10000",
+            "name": "Point Legend",
+            "description": "Earned 10,000 total points",
+            "badgeType": "CHAMPION",
+            "imageUrl": null,
+            "pointsAwarded": 1000,
+            "criteriaType": "POINTS_EARNED",
+            "criteriaParams": {
+                "targetValue": 10000
+            },
+            "createdAt": "2025-12-12T23:53:37.228Z"
+        }
+    ],
+    "timestamp": "2025-12-21T17:15:32.628786140Z"
+}
+
+This endpoint returns badges that user claimed:
+Endpoint: http://89.168.117.65/api/badges/my-badges
+Response:
+{
+    "success": true,
+    "message": "Operation completed successfully",
+    "data": [
+        {
+            "badgeId": "FIRST_WORKOUT",
+            "name": "First Steps",
+            "description": "Congratulations on completing your first workout!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 25,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 1
+            },
+            "createdAt": "2025-12-12T23:53:36.899Z"
+        },
+        {
+            "badgeId": "WELCOME",
+            "name": "Welcome to Muscledia!",
+            "description": "Welcome to your fitness journey!",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 10,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 0
+            },
+            "createdAt": "2025-12-12T23:53:36.797Z"
+        },
+        {
+            "badgeId": "WORKOUT_5",
+            "name": "Getting Started",
+            "description": "Completed 5 workouts",
+            "badgeType": "EXERCISE",
+            "imageUrl": null,
+            "pointsAwarded": 50,
+            "criteriaType": "WORKOUT_COUNT",
+            "criteriaParams": {
+                "targetValue": 5
+            },
+            "createdAt": "2025-12-12T23:53:36.907Z"
+        }
+    ],
+    "timestamp": "2025-12-21T17:16:43.851729119Z"
+}

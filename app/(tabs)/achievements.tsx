@@ -165,29 +165,29 @@ const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onPress, isDark, theme }) 
           </Text>
         </View>
 
-        {/* Status */}
+        {/* Status or Progress Bar */}
         {isEarned ? (
           <View style={styles.earnedIndicator}>
             <Check size={14} color={colors[0]} />
             <Text style={[styles.earnedText, { color: colors[0] }]}>
-              {badge.earnedAt ? formatRelativeTime(badge.earnedAt) : 'Earned!'}
+              {badge.earnedAt ? formatRelativeTime(badge.earnedAt) : 'Earned'}
             </Text>
           </View>
-        ) : null}
-
-        {/* Progress Bar (if trackable) */}
-        {!isEarned && badge.progress !== undefined && (
+        ) : (
           <View style={styles.progressContainer}>
             <View style={[styles.progressBar, { backgroundColor: theme.background }]}>
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${Math.min(100, badge.progress)}%`, backgroundColor: colors[0] },
+                  { 
+                    width: `${Math.min(100, badge.progress ?? 0)}%`, 
+                    backgroundColor: colors[0] 
+                  },
                 ]}
               />
             </View>
             <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-              {Math.round(badge.progress)}%
+              {Math.round(badge.progress ?? 0)}%
             </Text>
           </View>
         )}
@@ -754,7 +754,9 @@ const styles = StyleSheet.create({
   earnedIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
+    minHeight: 22,
+    justifyContent: 'center',
   },
   earnedText: {
     fontSize: 11,
@@ -768,6 +770,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     width: '100%',
     marginTop: 8,
+    minHeight: 22,
   },
   progressBar: {
     height: 4,
