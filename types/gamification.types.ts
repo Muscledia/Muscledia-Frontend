@@ -89,3 +89,49 @@ export interface ActiveChallenge {
   completed: boolean;
   completedAt?: string;
 }
+
+// Gamification Profile Types
+export interface WorkoutStreak {
+  current: number;
+  lastUpdate: string | null;
+  longest: number;
+}
+
+export interface GamificationProfile {
+  id: string;
+  userId: number;
+  points: number;
+  username: string;
+  level: number;
+  lastLevelUpDate: string;
+  streaks: {
+    workout: WorkoutStreak;
+  };
+  earnedBadges: EarnedBadge[];
+  quests: Array<{
+    questId: string;
+    objectiveProgress: number;
+    status: string;
+    startDate: string;
+    completionDate: string | null;
+    createdAt: string;
+  }>;
+  totalWorkoutsCompleted: number;
+  lastWorkoutDate: string | null;
+  weeklyStreak: number;
+  longestWeeklyStreak: number;
+  currentWeekStartDate: string;
+  monthlyStreak: number;
+  longestMonthlyStreak: number;
+  currentMonthStartDate: string;
+  restDaysSinceLastWorkout: number;
+  profileCreatedAt: string;
+  lastUpdated: string;
+}
+
+export interface GamificationProfileResponse {
+  success: boolean;
+  message: string;
+  data: GamificationProfile;
+  timestamp: string;
+}

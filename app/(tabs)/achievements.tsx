@@ -57,15 +57,6 @@ const formatRelativeTime = (dateString?: string): string => {
   return `${Math.floor(diffDays / 365)} years ago`;
 };
 
-const isRecentlyEarned = (dateString?: string): boolean => {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  return diffDays < 7;
-};
-
 const getCriteriaDescription = (badge: BadgeStatus): string => {
   const { criteriaType, criteriaParams } = badge;
   const target = criteriaParams?.targetValue ?? 0;
@@ -112,7 +103,6 @@ interface BadgeCardProps {
 
 const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onPress, isDark, theme }) => {
   const isEarned = badge.isEarned;
-  const isRecent = isRecentlyEarned(badge.earnedAt);
   const colors = getBadgeTypeColor(badge.badgeType, isDark);
 
   return (
@@ -190,11 +180,6 @@ const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onPress, isDark, theme }) 
               {Math.round(badge.progress ?? 0)}%
             </Text>
           </View>
-        )}
-
-        {/* Recent Badge Pulse */}
-        {isEarned && isRecent && (
-          <View style={[styles.recentBadge, { borderColor: colors[0] }]} />
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -785,16 +770,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 10,
     textAlign: 'center',
-  },
-  recentBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    backgroundColor: 'transparent',
   },
   emptyContainer: {
     alignItems: 'center',

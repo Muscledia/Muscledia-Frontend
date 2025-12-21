@@ -13,6 +13,7 @@ export { ChallengeService } from './challengeService';
 export { AiService } from './aiService';
 export { BadgeService } from './badgeService';
 export { LeaderboardService } from './leaderboardService';
+export { GamificationService } from './gamificationService';
 
 // Types and DTOs
 export type {
