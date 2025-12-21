@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
     marginBottom: 12,
+    alignItems: 'center',
   },
   tab: {
     flex: 1,
