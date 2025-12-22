@@ -1,3 +1,5 @@
+// app/workout-session/[planId].tsx - FIXED TIMER LOGIC (Count Up & Stop on Complete)
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -12,7 +14,6 @@ import {
   Alert,
   Pressable,
 } from 'react-native';
-// FIX: Import useFocusEffect
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
   X,
@@ -58,19 +59,18 @@ export default function WorkoutSessionScreen() {
   const [restTimeRemaining, setRestTimeRemaining] = useState(0);
   const [showRestSettings, setShowRestSettings] = useState<number | null>(null);
 
-  // Warmup timer states
+  // Warmup/Duration timer states
   const [warmupTimers, setWarmupTimers] = useState<Record<string, number>>({});
   const [activeWarmupTimer, setActiveWarmupTimer] = useState<string | null>(null);
 
   const [localStartTime] = useState(new Date());
-  // Track if initial load is done to avoid double fetching issues
   const initialLoadComplete = useRef(false);
 
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const restTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const warmupTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initial Start (Only once on mount/planId change)
+  // Initial Start
   useEffect(() => {
     startWorkout();
 
@@ -81,8 +81,7 @@ export default function WorkoutSessionScreen() {
     };
   }, [planId]);
 
-  // FIX: Refresh when returning to screen (e.g. after adding exercise)
-  // Logic: If we have a workout ID, fetch the latest version.
+  // Refresh when returning to screen
   useFocusEffect(
     useCallback(() => {
       if (workout?.id && initialLoadComplete.current) {
@@ -145,21 +144,13 @@ export default function WorkoutSessionScreen() {
     };
   }, [activeRestTimer, restTimeRemaining]);
 
-  // Warmup timer countdown
+  // Warmup timer - Count Up
   useEffect(() => {
-    if (activeWarmupTimer && warmupTimers[activeWarmupTimer] > 0) {
+    if (activeWarmupTimer) {
       warmupTimerIntervalRef.current = setInterval(() => {
         setWarmupTimers(prev => {
-          const currentTime = prev[activeWarmupTimer];
-          if (currentTime <= 1) {
-            if (warmupTimerIntervalRef.current) {
-              clearInterval(warmupTimerIntervalRef.current);
-            }
-            impact('heavy');
-            setActiveWarmupTimer(null);
-            return { ...prev, [activeWarmupTimer]: 0 };
-          }
-          return { ...prev, [activeWarmupTimer]: currentTime - 1 };
+          const currentTime = prev[activeWarmupTimer] || 0;
+          return { ...prev, [activeWarmupTimer]: currentTime + 1 };
         });
       }, 1000);
     }
@@ -169,7 +160,7 @@ export default function WorkoutSessionScreen() {
         clearInterval(warmupTimerIntervalRef.current);
       }
     };
-  }, [activeWarmupTimer, warmupTimers]);
+  }, [activeWarmupTimer]);
 
   const startWorkout = async () => {
     try {
@@ -195,15 +186,22 @@ export default function WorkoutSessionScreen() {
     }
   };
 
-  // FIX: Silent refresh function
-  const refreshWorkoutSession = async (workoutId: string) => {
+  // FIX: Updated to accept reset flag
+  const refreshWorkoutSession = async (workoutId: string, reset: boolean = false) => {
     try {
       console.log('Refreshing workout session:', workoutId);
       const response = await WorkoutService.getWorkoutSession(workoutId);
       if (response.success && response.data) {
         setWorkout(response.data);
-        // MERGE local values instead of overwriting to preserve unsaved inputs
-        refreshLocalValues(response.data);
+        if (reset) {
+          // Full re-initialization for structural changes (e.g. deletion)
+          initializeLocalValues(response.data);
+          initializeRestTimers(response.data);
+          initializeWarmupTimers(response.data);
+        } else {
+          // Smart merge for updates (preserving input)
+          refreshLocalValues(response.data);
+        }
       }
     } catch (error) {
       console.error("Failed to refresh session", error);
@@ -229,15 +227,12 @@ export default function WorkoutSessionScreen() {
     setLocalSetTypes(initialTypes);
   };
 
-  // FIX: Smart merge for refreshing data
   const refreshLocalValues = (workoutData: WorkoutSession) => {
     setLocalSetValues(prev => {
       const next = { ...prev };
       workoutData.exercises.forEach((exercise, exIdx) => {
         exercise.sets.forEach((set, setIdx) => {
           const key = `${exIdx}-${setIdx}`;
-          // Only set if not already present (preserve user's unsaved typing)
-          // OR if the server has data (completed sets), prefer server data
           if (!next[key] || set.completed) {
             next[key] = {
               weightKg: set.weightKg?.toString() || '',
@@ -249,7 +244,6 @@ export default function WorkoutSessionScreen() {
       return next;
     });
 
-    // Sync types (safer to sync always as types change rarely by typing)
     setLocalSetTypes(prev => {
       const next = { ...prev };
       workoutData.exercises.forEach((exercise, exIdx) => {
@@ -276,9 +270,11 @@ export default function WorkoutSessionScreen() {
     const initialTimers: Record<string, number> = {};
     workoutData.exercises.forEach((exercise, exIdx) => {
       exercise.sets.forEach((set, setIdx) => {
-        if (set.durationSeconds) {
+        // If it's a duration exercise, we initialize local timer to 0 (unless we want to persist progress)
+        if (set.durationSeconds !== null && set.durationSeconds !== undefined) {
           const key = `${exIdx}-${setIdx}`;
-          initialTimers[key] = set.durationSeconds;
+          // Start at 0 for stopwatch feeling
+          initialTimers[key] = 0;
         }
       });
     });
@@ -340,7 +336,6 @@ export default function WorkoutSessionScreen() {
       [key]: nextType
     }));
 
-    // Sync to API in background
     try {
       WorkoutService.updateSetType(workout.id, exerciseIndex, setIndex, nextType);
     } catch (e) { console.error(e); }
@@ -350,14 +345,22 @@ export default function WorkoutSessionScreen() {
     if (!workout) return;
 
     await impact('medium');
+
+    const key = getLocalSetKey(exerciseIndex, setIndex);
+
+    if (activeWarmupTimer === key) {
+      setActiveWarmupTimer(null);
+    }
+
     setSavingSet(true);
 
     const currentSet = workout.exercises[exerciseIndex].sets[setIndex];
-    const key = getLocalSetKey(exerciseIndex, setIndex);
     const localValues = localSetValues[key];
     const localSetType = localSetTypes[key] || 'NORMAL';
 
-    const isDurationExercise = currentSet.durationSeconds !== null && currentSet.durationSeconds > 0;
+    // If warmupTimers has an entry (even 0), we treat it as duration exercise
+    const currentDuration = warmupTimers[key];
+    const isDurationExercise = currentDuration !== undefined;
 
     if (!currentSet.completed && !isDurationExercise) {
       const weightKg = localValues.weightKg ? parseFloat(localValues.weightKg) : null;
@@ -382,6 +385,7 @@ export default function WorkoutSessionScreen() {
           completed: !currentSet.completed,
           weightKg: isDurationExercise ? null : weightKg,
           reps: isDurationExercise ? null : reps,
+          durationSeconds: isDurationExercise ? currentDuration : null,
           setType: localSetType,
         }
       );
@@ -420,7 +424,6 @@ export default function WorkoutSessionScreen() {
     }
   };
 
-  // ... (Keep existing Timer functions: startWarmup, pause, reset, addSet, updateRest, skipRest, cancel, finish, stats) ...
   const startWarmupTimer = (exerciseIndex: number, setIndex: number) => {
     const key = getLocalSetKey(exerciseIndex, setIndex);
     setActiveWarmupTimer(key);
@@ -434,13 +437,7 @@ export default function WorkoutSessionScreen() {
 
   const resetWarmupTimer = (exerciseIndex: number, setIndex: number) => {
     const key = getLocalSetKey(exerciseIndex, setIndex);
-    const set = workout?.exercises[exerciseIndex].sets[setIndex];
-    if (set?.durationSeconds) {
-      setWarmupTimers(prev => ({
-        ...prev,
-        [key]: set.durationSeconds!
-      }));
-    }
+    setWarmupTimers(prev => ({ ...prev, [key]: 0 }));
     setActiveWarmupTimer(null);
     impact('light');
   };
@@ -476,11 +473,11 @@ export default function WorkoutSessionScreen() {
             reps: newSet.reps?.toString() || '',
           }
         }));
+        setLocalSetTypes(prev => ({ ...prev, [key]: newSet.setType || 'NORMAL' }));
 
-        setLocalSetTypes(prev => ({
-          ...prev,
-          [key]: newSet.setType || 'NORMAL'
-        }));
+        if (newSet.durationSeconds !== null && newSet.durationSeconds !== undefined) {
+          setWarmupTimers(prev => ({ ...prev, [key]: 0 })); // Init new set to 0
+        }
 
         await impact('success');
       }
@@ -490,86 +487,68 @@ export default function WorkoutSessionScreen() {
     }
   };
 
+  const removeExercise = async (exerciseIndex: number) => {
+    if (!workout) return;
+    Alert.alert("Exercise Options", "Choose an action", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove Exercise",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await impact('medium');
+            const response = await WorkoutService.deleteExercise(workout.id, exerciseIndex);
+            if (response.success) {
+              // FIX: Use reload with reset=true to handle index shifts safely
+              await refreshWorkoutSession(workout.id, true);
+
+              // Clear active timers as indices might have changed
+              setActiveRestTimer(null);
+              setActiveWarmupTimer(null);
+              await impact('success');
+            }
+          } catch (error) {
+            console.error('Failed to remove exercise:', error);
+            Alert.alert("Error", "Failed to remove exercise");
+          }
+        }
+      }
+    ]);
+  };
   const updateRestTimerPreference = (exerciseIndex: number, minutes: number) => {
     const seconds = minutes * 60;
-    setRestTimerPreferences(prev => ({
-      ...prev,
-      [exerciseIndex]: seconds
-    }));
+    setRestTimerPreferences(prev => ({ ...prev, [exerciseIndex]: seconds }));
     setShowRestSettings(null);
   };
-
-  const skipRestTimer = () => {
-    setActiveRestTimer(null);
-    setRestTimeRemaining(0);
-  };
-
+  const skipRestTimer = () => { setActiveRestTimer(null); setRestTimeRemaining(0); };
   const cancelWorkout = async () => {
     if (!workout) return;
-    Alert.alert(
-      'Cancel Workout',
-      'Are you sure you want to cancel this workout? All progress will be lost.',
-      [
-        { text: 'Continue Workout', style: 'cancel' },
-        {
-          text: 'Cancel Workout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await WorkoutService.cancelWorkout(workout.id);
-              await impact('medium');
-              router.back();
-            } catch (error) {
-              console.error('Failed to cancel workout:', error);
-            }
-          },
-        },
-      ]
-    );
+    Alert.alert('Cancel Workout', 'Are you sure you want to cancel? All progress lost.', [
+      { text: 'Continue', style: 'cancel' },
+      { text: 'Cancel Workout', style: 'destructive', onPress: async () => {
+          try { await WorkoutService.cancelWorkout(workout.id); await impact('medium'); router.back(); }
+          catch (error) { console.error('Failed to cancel:', error); }
+        }},
+    ]);
   };
-
   const finishWorkout = async () => {
     if (!workout) return;
     await impact('success');
-    Alert.alert(
-      'Finish Workout',
-      'Great job! Ready to finish this workout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Finish',
-          onPress: async () => {
-            try {
-              const response = await WorkoutService.completeWorkout(workout.id);
-              if (response.success) {
-                Alert.alert('Success', 'Workout completed!', [
-                  { text: 'OK', onPress: () => router.back() }
-                ]);
-              }
-            } catch (error) {
-              console.error('Failed to complete workout:', error);
-              Alert.alert('Error', 'Failed to complete workout');
-            }
-          },
-        },
-      ]
-    );
+    Alert.alert('Finish Workout', 'Ready to finish this workout?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Finish', onPress: async () => {
+          try {
+            const response = await WorkoutService.completeWorkout(workout.id);
+            if (response.success) Alert.alert('Success', 'Workout completed!', [{ text: 'OK', onPress: () => router.back() }]);
+          } catch (error) { console.error('Failed to complete:', error); Alert.alert('Error', 'Failed to complete workout'); }
+        }},
+    ]);
   };
-
   const calculateWorkoutStats = () => {
     if (!workout) return { volume: '0 kg', sets: 0 };
-    const totalVolume = workout.exercises.reduce((sum, ex) => {
-      return sum + ex.sets.reduce((setSum, set) => {
-        return setSum + (set.completed ? (set.weightKg || 0) * (set.reps || 0) : 0);
-      }, 0);
-    }, 0);
-    const completedSets = workout.exercises.reduce((sum, ex) => {
-      return sum + ex.sets.filter(s => s.completed).length;
-    }, 0);
-    return {
-      volume: `${totalVolume.toFixed(0)} kg`,
-      sets: completedSets,
-    };
+    const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((setSum, set) => setSum + (set.completed ? (set.weightKg || 0) * (set.reps || 0) : 0), 0), 0);
+    const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+    return { volume: `${totalVolume.toFixed(0)} kg`, sets: completedSets };
   };
 
   if (loading) {
@@ -593,7 +572,6 @@ export default function WorkoutSessionScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity style={styles.headerLeft}>
           <ChevronDown size={24} color={theme.text} />
@@ -613,7 +591,6 @@ export default function WorkoutSessionScreen() {
         </View>
       </View>
 
-      {/* Workout Stats */}
       <View style={[styles.statsBar, { backgroundColor: theme.background }]}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: theme.textMuted }]}>Duration</Text>
@@ -647,6 +624,7 @@ export default function WorkoutSessionScreen() {
             onToggleComplete={toggleSetComplete}
             onToggleSetType={toggleSetType}
             onAddSet={addSet}
+            onRemoveExercise={removeExercise}
             savingSet={savingSet}
             getPreviousSetData={getPreviousSetData}
             isRestTimerActive={activeRestTimer === exerciseIndex}
@@ -662,13 +640,12 @@ export default function WorkoutSessionScreen() {
           />
         ))}
 
-        {/* Add Exercise Button */}
         <TouchableOpacity
           style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
           onPress={async () => {
             await impact('medium');
             router.push({
-              pathname: '/exercises/add-exercise',
+              pathname: '/exercises/browse',
               params: { sessionId: workout.id },
             });
           }}
@@ -678,7 +655,6 @@ export default function WorkoutSessionScreen() {
           <Text style={[styles.addExerciseText, { color: theme.accent }]}>Add Exercise</Text>
         </TouchableOpacity>
 
-        {/* Cancel Workout Button */}
         <TouchableOpacity
           style={[styles.cancelButton, { borderColor: theme.error }]}
           onPress={cancelWorkout}
@@ -705,7 +681,6 @@ export default function WorkoutSessionScreen() {
               <Text style={[styles.settingsSubtitle, { color: theme.textMuted }]}>
                 {workout.exercises[showRestSettings].exerciseName}
               </Text>
-
               <View style={styles.timeOptions}>
                 {[1, 1.5, 2, 2.5, 3, 4, 5].map(minutes => (
                   <TouchableOpacity
@@ -753,7 +728,6 @@ export default function WorkoutSessionScreen() {
               <Text style={[styles.timerExerciseName, { color: theme.textMuted }]}>
                 {workout.exercises[activeRestTimer].exerciseName}
               </Text>
-
               <View style={styles.timerControls}>
                 <TouchableOpacity
                   onPress={() => setRestTimeRemaining(prev => Math.max(0, prev - 15))}
@@ -761,11 +735,9 @@ export default function WorkoutSessionScreen() {
                 >
                   <Text style={[styles.timerAdjustText, { color: theme.text }]}>-15</Text>
                 </TouchableOpacity>
-
                 <Text style={[styles.timerDisplay, { color: theme.accent }]}>
                   {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
                 </Text>
-
                 <TouchableOpacity
                   onPress={() => setRestTimeRemaining(prev => prev + 15)}
                   style={[styles.timerAdjustButton, { backgroundColor: theme.background }]}
@@ -773,7 +745,6 @@ export default function WorkoutSessionScreen() {
                   <Text style={[styles.timerAdjustText, { color: theme.text }]}>+15</Text>
                 </TouchableOpacity>
               </View>
-
               <TouchableOpacity
                 style={[styles.skipButton, { backgroundColor: theme.accent }]}
                 onPress={async () => {
@@ -803,6 +774,7 @@ interface ExerciseCardProps {
   onToggleComplete: (exerciseIndex: number, setIndex: number) => void;
   onToggleSetType: (exerciseIndex: number, setIndex: number) => void;
   onAddSet: (exerciseIndex: number) => void;
+  onRemoveExercise: (exerciseIndex: number) => void;
   savingSet: boolean;
   getPreviousSetData: (exerciseIndex: number, setIndex: number) => WorkoutSet | null;
   isRestTimerActive: boolean;
@@ -827,6 +799,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                                                      onToggleComplete,
                                                      onToggleSetType,
                                                      onAddSet,
+                                                     onRemoveExercise,
                                                      savingSet,
                                                      getPreviousSetData,
                                                      isRestTimerActive,
@@ -846,19 +819,14 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   };
 
   const isDurationExercise = exercise.sets.length > 0 &&
-    exercise.sets[0].durationSeconds !== null &&
-    exercise.sets[0].durationSeconds > 0;
+    exercise.sets[0].durationSeconds !== null && exercise.sets[0].durationSeconds !== undefined;
 
   const formatRestTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    if (mins > 0 && secs > 0) {
-      return `${mins}min ${secs}s`;
-    } else if (mins > 0) {
-      return `${mins}min`;
-    } else {
-      return `${secs}s`;
-    }
+    if (mins > 0 && secs > 0) return `${mins}min ${secs}s`;
+    else if (mins > 0) return `${mins}min`;
+    else return `${secs}s`;
   };
 
   const hasPR = (set: WorkoutSet, type?: string) => {
@@ -867,14 +835,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     return true;
   };
 
-  // Pre-calculate display numbers for sets
   let normalSetCount = 0;
   const setsWithDisplay = exercise.sets.map((s, idx) => {
     const key = `${exerciseIndex}-${idx}`;
     const type = localSetTypes[key] || s.setType || 'NORMAL';
     let label = '';
     let color = theme.text;
-
     if (type === 'NORMAL') {
       normalSetCount++;
       label = normalSetCount.toString();
@@ -888,7 +854,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
       label = 'F';
       color = '#FF3B30';
     }
-
     return { ...s, displayLabel: label, displayColor: color };
   });
 
@@ -899,19 +864,18 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <View style={[styles.exerciseIcon, { backgroundColor: theme.accent + '20' }]}>
             <Dumbbell size={20} color={theme.accent} />
           </View>
-          <Text style={[styles.exerciseName, { color: theme.accent }]}>
-            {exercise.exerciseName}
-          </Text>
+          <Text style={[styles.exerciseName, { color: theme.accent }]}>{exercise.exerciseName}</Text>
         </View>
-        <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => onRemoveExercise(exerciseIndex)}
+        >
           <MoreVertical size={20} color={theme.textMuted} />
         </TouchableOpacity>
       </View>
 
       {exercise.notes && (
-        <Text style={[styles.exerciseNotes, { color: theme.textSecondary }]}>
-          {exercise.notes}
-        </Text>
+        <Text style={[styles.exerciseNotes, { color: theme.textSecondary }]}>{exercise.notes}</Text>
       )}
 
       <TextInput
@@ -961,31 +925,15 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             const prevSet = getPreviousSetData(exerciseIndex, setIndex);
             const isCompleted = set.completed;
             const key = `${exerciseIndex}-${setIndex}`;
-            const currentTime = warmupTimers[key] || set.durationSeconds || 0;
+            const currentTime = warmupTimers[key] !== undefined ? warmupTimers[key] : 0; // FIX: use undefined check to start from 0
             const isActive = activeWarmupTimer === key;
             const minutes = Math.floor(currentTime / 60);
             const seconds = currentTime % 60;
 
             return (
-              <View
-                key={setIndex}
-                style={[
-                  styles.setRow,
-                  isCompleted && { backgroundColor: theme.accent + '15' }
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.setCol}
-                  onPress={() => onToggleSetType(exerciseIndex, setIndex)}
-                >
-                  <Text style={[
-                    styles.setText,
-                    {
-                      color: set.displayColor === theme.text && isCompleted
-                        ? theme.accent
-                        : set.displayColor
-                    }
-                  ]}>
+              <View key={setIndex} style={[styles.setRow, isCompleted && { backgroundColor: theme.accent + '15' }]}>
+                <TouchableOpacity style={styles.setCol} onPress={() => onToggleSetType(exerciseIndex, setIndex)}>
+                  <Text style={[styles.setText, { color: set.displayColor === theme.text && isCompleted ? theme.accent : set.displayColor }]}>
                     {set.displayLabel}
                   </Text>
                 </TouchableOpacity>
@@ -1008,11 +956,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                           onPress={() => isActive ? onPauseWarmupTimer() : onStartWarmupTimer(exerciseIndex, setIndex)}
                           style={[styles.timerControlButton, { backgroundColor: theme.accent + '20' }]}
                         >
-                          {isActive ? (
-                            <Pause size={16} color={theme.accent} />
-                          ) : (
-                            <Play size={16} color={theme.accent} />
-                          )}
+                          {isActive ? <Pause size={16} color={theme.accent} /> : <Play size={16} color={theme.accent} />}
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => onResetWarmupTimer(exerciseIndex, setIndex)}
@@ -1022,10 +966,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         </TouchableOpacity>
                       </>
                     )}
-                    <View style={[
-                      styles.timerDisplayBox,
-                      { backgroundColor: isCompleted ? theme.accent + '20' : theme.accent + '30' }
-                    ]}>
+                    <View style={[styles.timerDisplayBox, { backgroundColor: isCompleted ? theme.accent + '20' : theme.accent + '30' }]}>
                       <Text style={[styles.timerText, { color: isActive ? theme.accent : theme.text }]}>
                         {minutes}:{seconds.toString().padStart(2, '0')}
                       </Text>
@@ -1033,20 +974,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  style={styles.checkCol}
-                  onPress={() => onToggleComplete(exerciseIndex, setIndex)}
-                  disabled={savingSet}
-                >
-                  <View
-                    style={[
-                      styles.squareCheckbox,
-                      {
-                        backgroundColor: isCompleted ? theme.accent : 'transparent',
-                        borderColor: isCompleted ? theme.accent : theme.textMuted,
-                      }
-                    ]}
-                  >
+                <TouchableOpacity style={styles.checkCol} onPress={() => onToggleComplete(exerciseIndex, setIndex)} disabled={savingSet}>
+                  <View style={[styles.squareCheckbox, { backgroundColor: isCompleted ? theme.accent : 'transparent', borderColor: isCompleted ? theme.accent : theme.textMuted }]}>
                     {isCompleted && <Check size={16} color={theme.cardText} />}
                   </View>
                 </TouchableOpacity>
@@ -1070,29 +999,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             const isPR = hasPR(set);
 
             return (
-              <View
-                key={setIndex}
-                style={[
-                  styles.setRow,
-                  isCompleted && { backgroundColor: theme.accent + '15' }
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.setCol}
-                  onPress={() => onToggleSetType(exerciseIndex, setIndex)}
-                >
+              <View key={setIndex} style={[styles.setRow, isCompleted && { backgroundColor: theme.accent + '15' }]}>
+                <TouchableOpacity style={styles.setCol} onPress={() => onToggleSetType(exerciseIndex, setIndex)}>
                   <View style={styles.setNumberContainer}>
-                    <Text style={[
-                      styles.setText,
-                      {
-                        color: set.displayColor === theme.text && isCompleted
-                          ? theme.accent
-                          : set.displayColor
-                      }
-                    ]}>
+                    <Text style={[styles.setText, { color: set.displayColor === theme.text && isCompleted ? theme.accent : set.displayColor }]}>
                       {set.displayLabel}
                     </Text>
-
                     {isPR && (
                       <View style={[styles.prBadge, { backgroundColor: '#FFD700' }]}>
                         <Award size={10} color="#000" />
@@ -1114,14 +1026,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
                 <View style={styles.kgCol}>
                   <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        color: theme.text,
-                        backgroundColor: isCompleted ? theme.accent + '20' : theme.surface,
-                        borderColor: isCompleted ? theme.accent : theme.surface,
-                      }
-                    ]}
+                    style={[styles.input, { color: theme.text, backgroundColor: isCompleted ? theme.accent + '20' : theme.surface, borderColor: isCompleted ? theme.accent : theme.surface }]}
                     value={getLocalValue(setIndex, 'weightKg')}
                     onChangeText={(text) => onUpdateLocalValue(exerciseIndex, setIndex, 'weightKg', text)}
                     keyboardType="decimal-pad"
@@ -1133,14 +1038,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
                 <View style={styles.repsCol}>
                   <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        color: theme.text,
-                        backgroundColor: isCompleted ? theme.accent + '20' : theme.surface,
-                        borderColor: isCompleted ? theme.accent : theme.surface,
-                      }
-                    ]}
+                    style={[styles.input, { color: theme.text, backgroundColor: isCompleted ? theme.accent + '20' : theme.surface, borderColor: isCompleted ? theme.accent : theme.surface }]}
                     value={getLocalValue(setIndex, 'reps')}
                     onChangeText={(text) => onUpdateLocalValue(exerciseIndex, setIndex, 'reps', text)}
                     keyboardType="number-pad"
@@ -1150,20 +1048,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   />
                 </View>
 
-                <TouchableOpacity
-                  style={styles.checkCol}
-                  onPress={() => onToggleComplete(exerciseIndex, setIndex)}
-                  disabled={savingSet}
-                >
-                  <View
-                    style={[
-                      styles.squareCheckbox,
-                      {
-                        backgroundColor: isCompleted ? theme.accent : 'transparent',
-                        borderColor: isCompleted ? theme.accent : theme.textMuted,
-                      }
-                    ]}
-                  >
+                <TouchableOpacity style={styles.checkCol} onPress={() => onToggleComplete(exerciseIndex, setIndex)} disabled={savingSet}>
+                  <View style={[styles.squareCheckbox, { backgroundColor: isCompleted ? theme.accent : 'transparent', borderColor: isCompleted ? theme.accent : theme.textMuted }]}>
                     {isCompleted && <Check size={16} color={theme.cardText} />}
                   </View>
                 </TouchableOpacity>
@@ -1173,11 +1059,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </>
       )}
 
-      <TouchableOpacity
-        style={styles.addSetButton}
-        onPress={() => onAddSet(exerciseIndex)}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.addSetButton} onPress={() => onAddSet(exerciseIndex)} activeOpacity={0.7}>
         <Plus size={16} color={theme.text} />
         <Text style={[styles.addSetText, { color: theme.text }]}>Add Set</Text>
       </TouchableOpacity>
@@ -1186,375 +1068,74 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  timerButton: {
-    padding: 8,
-  },
-  finishButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  finishButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  statsBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
-    marginRight: 32,
-  },
-  statLabel: {
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  muscleIcons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginLeft: 'auto',
-  },
-  content: {
-    flex: 1,
-  },
-  exerciseCard: {
-    padding: 16,
-    borderBottomWidth: 8,
-    borderBottomColor: 'rgba(0,0,0,0.2)',
-  },
-  exerciseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  exerciseInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  exerciseIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-  },
-  exerciseNotes: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  notesInput: {
-    fontSize: 13,
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-  },
-  restTimerContainer: {
-    marginBottom: 12,
-  },
-  restBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  restBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  activeTimer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  activeTimerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  skipTimerText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    marginBottom: 4,
-  },
-  headerText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-  setCol: {
-    width: 40,
-    alignItems: 'center',
-  },
-  setNumberContainer: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  prBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  prBadgeText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  prevCol: {
-    flex: 1.2,
-    paddingHorizontal: 4,
-  },
-  kgCol: {
-    flex: 0.8,
-    paddingHorizontal: 4,
-  },
-  repsCol: {
-    flex: 0.8,
-    paddingHorizontal: 4,
-  },
-  checkCol: {
-    width: 40,
-    alignItems: 'center',
-  },
-  setText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  prevText: {
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  input: {
-    height: 36,
-    borderRadius: 6,
-    borderWidth: 1,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  timerDisplayBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  timerText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  timerControlButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerControlText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  squareCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addSetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    marginTop: 8,
-  },
-  addSetText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  addExerciseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
-  },
-  addExerciseText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'flex-end',
-  },
-  settingsModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 48,
-  },
-  settingsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  settingsSubtitle: {
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  timeOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  timeOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  timeOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerModal: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 32,
-    paddingBottom: 48,
-    alignItems: 'center',
-  },
-  timerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  timerExerciseName: {
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  timerAdjustButton: {
-    width: 60,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerAdjustText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timerDisplay: {
-    fontSize: 56,
-    fontWeight: 'bold',
-    minWidth: 140,
-    textAlign: 'center',
-  },
-  skipButton: {
-    paddingHorizontal: 64,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container: { flex: 1 },
+  centerContent: { justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 16, fontSize: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 60, paddingBottom: 12 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  headerTitle: { fontSize: 17, fontWeight: '600' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  timerButton: { padding: 8 },
+  finishButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  finishButtonText: { fontSize: 15, fontWeight: '600' },
+  statsBar: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center' },
+  statItem: { alignItems: 'center', marginRight: 32 },
+  statLabel: { fontSize: 11, marginBottom: 2 },
+  statValue: { fontSize: 15, fontWeight: '600' },
+  muscleIcons: { flexDirection: 'row', gap: 8, marginLeft: 'auto' },
+  content: { flex: 1 },
+  exerciseCard: { padding: 16, borderBottomWidth: 8, borderBottomColor: 'rgba(0,0,0,0.2)' },
+  exerciseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  exerciseInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  exerciseIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  exerciseName: { fontSize: 16, fontWeight: '600', flex: 1 },
+  exerciseNotes: { fontSize: 13, lineHeight: 18, marginBottom: 8 },
+  notesInput: { fontSize: 13, paddingVertical: 8, paddingHorizontal: 0, marginBottom: 12, borderBottomWidth: 1 },
+  restTimerContainer: { marginBottom: 12 },
+  restBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, alignSelf: 'flex-start' },
+  restBadgeText: { fontSize: 12, fontWeight: '500' },
+  activeTimer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8, marginTop: 8 },
+  activeTimerText: { fontSize: 18, fontWeight: 'bold' },
+  skipTimerText: { fontSize: 14, fontWeight: '600' },
+  tableHeader: { flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, marginBottom: 4 },
+  headerText: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
+  setRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderRadius: 6, marginBottom: 4 },
+  setCol: { width: 40, alignItems: 'center' },
+  setNumberContainer: { alignItems: 'center', gap: 2 },
+  prBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
+  prBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#000' },
+  prevCol: { flex: 1.2, paddingHorizontal: 4 },
+  kgCol: { flex: 0.8, paddingHorizontal: 4 },
+  repsCol: { flex: 0.8, paddingHorizontal: 4 },
+  checkCol: { width: 40, alignItems: 'center' },
+  setText: { fontSize: 15, fontWeight: '600' },
+  prevText: { fontSize: 12, textAlign: 'center' },
+  input: { height: 36, borderRadius: 6, borderWidth: 1, textAlign: 'center', fontSize: 14, fontWeight: '500' },
+  timerDisplayBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 },
+  timerText: { fontSize: 14, fontWeight: '600' },
+  timerControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  timerControlButton: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  timerControlText: { fontSize: 10, fontWeight: '600' },
+  squareCheckbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  addSetButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginTop: 8 },
+  addSetText: { fontSize: 14, fontWeight: '500' },
+  addExerciseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 16, marginTop: 16, borderRadius: 12 },
+  addExerciseText: { fontSize: 16, fontWeight: '600' },
+  cancelButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 16, marginTop: 12, borderRadius: 12, borderWidth: 2 },
+  cancelButtonText: { fontSize: 16, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)', justifyContent: 'flex-end' },
+  settingsModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  settingsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
+  settingsSubtitle: { fontSize: 14, marginBottom: 24 },
+  timeOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  timeOption: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8, borderWidth: 2 },
+  timeOptionText: { fontSize: 14, fontWeight: '600' },
+  timerModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 32, paddingBottom: 48, alignItems: 'center' },
+  timerTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  timerExerciseName: { fontSize: 14, marginBottom: 24 },
+  timerAdjustButton: { width: 60, height: 40, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  timerAdjustText: { fontSize: 14, fontWeight: '600' },
+  timerDisplay: { fontSize: 56, fontWeight: 'bold', minWidth: 140, textAlign: 'center' },
+  skipButton: { paddingHorizontal: 64, paddingVertical: 14, borderRadius: 12 },
+  skipButtonText: { fontSize: 16, fontWeight: '600' },
 });

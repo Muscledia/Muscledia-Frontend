@@ -4,18 +4,11 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="fix(workout-plans): resolve 400 error when adding exercises&#10;&#10;- Convert instructions from string to array format (backend expects List&lt;String&gt;)&#10;- Add formatInstructionsArray helper to properly split instructions&#10;- Remove null values from payload before sending to prevent deserialization errors&#10;- Update workoutPlanService to pass ALL metadata fields (bodyPart, equipment, targetMuscle, etc.)&#10;- Ensure PlannedSet structure matches backend (no restSeconds at set level)&#10;&#10;Fixes: 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;Files: browse.tsx, workoutPlanService.ts">
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/exercise-filters.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/exercise-filters.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routine-workout/[id].tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plan-detail/[planId].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-plans/[planId]/add-exercise.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-plans/[planId]/edit.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/workout-session/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-session/[planId].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-session/add-exercise.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/exercises/ExerciseBrowser.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/exercises/ExerciseBrowser.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,7 +65,7 @@
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;integration-branch&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/ericm/spring-boot-Uni/Muscledia-Frontend&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ericm/Interview Prep/Technical-interview-study-plan&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -126,7 +119,15 @@
       <workItem from="1765131558423" duration="11040000" />
       <workItem from="1765191973048" duration="11812000" />
       <workItem from="1765243374011" duration="1431000" />
-      <workItem from="1765282829255" duration="20825000" />
+      <workItem from="1765282829255" duration="21342000" />
+      <workItem from="1765656206063" duration="4622000" />
+      <workItem from="1765663189011" duration="820000" />
+      <workItem from="1765793966677" duration="115000" />
+      <workItem from="1765882284540" duration="947000" />
+      <workItem from="1766023198968" duration="2954000" />
+      <workItem from="1766252921495" duration="4796000" />
+      <workItem from="1766368363684" duration="303000" />
+      <workItem from="1766419305230" duration="3582000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />
@@ -416,7 +417,79 @@
       <option name="project" value="LOCAL" />
       <updated>1765307819062</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="chore(types): add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface with all metadata fields&#10;- Add AddExerciseToWorkoutSessionRequest interface for active workouts&#10;- Update PlannedSet to remove restSeconds (exercise-level only)&#10;- Add ApiError interface for error handling&#10;- Document field differences between workout plans and sessions&#10;&#10;Files: api.ts">
+      <option name="closed" value="true" />
+      <created>1765307852183</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307852183</updated>
+    </task>
+    <task id="LOCAL-00038" summary="feat(exercises): enhance exercise browser with proper field mapping&#10;&#10;- Add removeNullValues helper to clean payloads&#10;- Implement formatInstructionsArray for proper backend compatibility&#10;- Add mapDifficulty and mapCategory helpers for enum validation&#10;- Extract targetPlanId and currentWorkoutId from route params&#10;- Add comprehensive metadata field support (bodyPart, equipment, targetMuscle)&#10;&#10;Files: ExerciseBrowser.tsx, browse.tsx">
+      <option name="closed" value="true" />
+      <created>1765307904580</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307904580</updated>
+    </task>
+    <task id="LOCAL-00039" summary="refactor(workouts): standardize exercise addition for active sessions&#10;&#10;- Implement WorkoutSet structure with session-specific fields&#10;- Add proper field mapping for exerciseId, exerciseName, primaryMuscleGroup&#10;- Include restSeconds at set level (different from workout plans)&#10;- Add completed flag initialization for new sets&#10;&#10;Files: [planId].tsx (workout-session), add-exercise.tsx (workout-session)">
+      <option name="closed" value="true" />
+      <created>1765307945937</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307945937</updated>
+    </task>
+    <task id="LOCAL-00040" summary="chore(navigation): update tab navigation and index files&#10;&#10;- Update index.tsx with proper navigation structure&#10;- Add route parameter handling for planId and sessionId&#10;&#10;Files: index.tsx">
+      <option name="closed" value="true" />
+      <created>1765307980085</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307980085</updated>
+    </task>
+    <task id="LOCAL-00041" summary="fix: resolve exercise addition errors and improve type safety&#10;&#10;Core Changes:&#10;- Fix 400 error when adding exercises to workout plans&#10;- Convert instructions format from string to array (List&lt;String&gt;)&#10;- Remove null values from payloads to prevent deserialization errors&#10;- Pass all metadata fields through service layer&#10;&#10;Type System:&#10;- Add comprehensive type definitions for exercise operations&#10;- Update PlannedSet structure (remove set-level restSeconds)&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Document field differences between plans and sessions&#10;&#10;Field Mapping:&#10;- Workout Plans: exerciseTemplateId, title, instructions (array)&#10;- Workout Sessions: exerciseId, exerciseName, primaryMuscleGroup&#10;- Add metadata fields: bodyPart, equipment, targetMuscle, difficulty, category&#10;&#10;Improvements:&#10;- Add formatInstructionsArray helper&#10;- Add removeNullValues helper for payload cleaning&#10;- Add mapDifficulty and mapCategory enum validators&#10;- Enhance error handling and logging&#10;&#10;Fixes:&#10;- 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;- Missing metadata fields in workout plan exercises&#10;- Type mismatches between frontend and backend&#10;&#10;Files: browse.tsx, workoutPlanService.ts, api.ts, ExerciseBrowser.tsx, &#10;       [planId].tsx (multiple), add-exercise.tsx (multiple), exercise-filters.tsx">
+      <option name="closed" value="true" />
+      <created>1765308015194</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1765308015194</updated>
+    </task>
+    <task id="LOCAL-00042" summary="chore: update .gitignore for environment files&#10;&#10;- Exclude .env.development from version control&#10;- Exclude .env.staging from version control&#10;- Exclude .env.production from version control&#10;- Prevent sensitive environment variables from being committed">
+      <option name="closed" value="true" />
+      <created>1765663163574</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663163577</updated>
+    </task>
+    <task id="LOCAL-00043" summary="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables">
+      <option name="closed" value="true" />
+      <created>1765663227221</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663227221</updated>
+    </task>
+    <task id="LOCAL-00044" summary="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
+      <option name="closed" value="true" />
+      <created>1765663415557</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663415557</updated>
+    </task>
+    <task id="LOCAL-00045" summary="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
+      <option name="closed" value="true" />
+      <created>1765663440686</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663440686</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -434,14 +507,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(workouts): add workout plan detail screen&#10;&#10;- Create Hevy-style workout plan detail view&#10;- Display workout stats (duration, exercises, sets)&#10;- Show exercise list with sets, reps, and rest timers&#10;- Add Start Routine button&#10;- Include share and edit options&#10;- Show username instead of user ID" />
-    <MESSAGE value="feat(workouts): implement workout session tracking screen&#10;&#10;- Create exercise-by-exercise workout flow&#10;- Add set logging with weight and reps inputs&#10;- Implement completion checkboxes for sets&#10;- Add rest timer modal&#10;- Include progress bar and navigation&#10;- Support warmup, normal, and failure set types" />
-    <MESSAGE value="fix(services): handle multiple response formats in savePublicRoutine&#10;&#10;- Support both wrapped and direct response formats&#10;- Add fallback mechanism for 404/405 errors&#10;- Improve error handling and logging&#10;- Maintain backward compatibility" />
-    <MESSAGE value="feat(workouts): add workout plan detail screen with exercise breakdown&#10;&#10;- Create Hevy-style workout plan detail view with stats&#10;- Display duration, exercise count, and total sets&#10;- Show complete exercise list with sets and rep ranges&#10;- Add Start Routine button with navigation to session&#10;- Include share and edit options in header&#10;- Display creator username instead of user ID&#10;- Add exercise cards with rest timers and notes&#10;- Support warmup sets and rep ranges display" />
-    <MESSAGE value="feat(routines): add public routine detail screen" />
-    <MESSAGE value="chore: update IDE workspace configuration" />
-    <MESSAGE value="feat(workout-session): add rest timers, warmup controls, and cancel button&#10;&#10;- Implement adjustable rest timer (1-5 min) with modal settings per exercise&#10;- Add warmup timer with play/pause/reset functionality&#10;- Add cancel workout button at bottom with confirmation&#10;- Fix workout duration to use local time and format with hours&#10;- Add rest timer countdown modal with +15/-15 second adjustments&#10;- Improve timer state management with separate refs for each timer type" />
-    <MESSAGE value="feat(services): add personalRecords field to WorkoutSet type&#10;&#10;- Add personalRecords?: string[] field to WorkoutSet interface&#10;- Enable PR type tracking for individual sets&#10;- Support backend PR detection response structure" />
     <MESSAGE value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
     <MESSAGE value="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators" />
     <MESSAGE value="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search" />
@@ -459,6 +524,14 @@
     <MESSAGE value="fix: correct exercise payload structure for workout sessions&#10;&#10;- Use exerciseId/exerciseName instead of exerciseTemplateId/title&#10;- Add primaryMuscleGroup and exerciseCategory fields&#10;- Include complete exercise metadata in session requests&#10;- Fix set structure for WorkoutSet schema&#10;&#10;Resolves 400 errors when adding exercises to active workout sessions" />
     <MESSAGE value="feat: add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Update PlannedExercise with metadata fields&#10;- Update WorkoutExercise with denormalized properties&#10;- Add proper set type definitions for both contexts" />
     <MESSAGE value="fix(workout-plans): resolve 400 error when adding exercises&#10;&#10;- Convert instructions from string to array format (backend expects List&lt;String&gt;)&#10;- Add formatInstructionsArray helper to properly split instructions&#10;- Remove null values from payload before sending to prevent deserialization errors&#10;- Update workoutPlanService to pass ALL metadata fields (bodyPart, equipment, targetMuscle, etc.)&#10;- Ensure PlannedSet structure matches backend (no restSeconds at set level)&#10;&#10;Fixes: 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;Files: browse.tsx, workoutPlanService.ts" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(workout-plans): resolve 400 error when adding exercises&#10;&#10;- Convert instructions from string to array format (backend expects List&lt;String&gt;)&#10;- Add formatInstructionsArray helper to properly split instructions&#10;- Remove null values from payload before sending to prevent deserialization errors&#10;- Update workoutPlanService to pass ALL metadata fields (bodyPart, equipment, targetMuscle, etc.)&#10;- Ensure PlannedSet structure matches backend (no restSeconds at set level)&#10;&#10;Fixes: 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;Files: browse.tsx, workoutPlanService.ts" />
+    <MESSAGE value="chore(types): add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface with all metadata fields&#10;- Add AddExerciseToWorkoutSessionRequest interface for active workouts&#10;- Update PlannedSet to remove restSeconds (exercise-level only)&#10;- Add ApiError interface for error handling&#10;- Document field differences between workout plans and sessions&#10;&#10;Files: api.ts" />
+    <MESSAGE value="feat(exercises): enhance exercise browser with proper field mapping&#10;&#10;- Add removeNullValues helper to clean payloads&#10;- Implement formatInstructionsArray for proper backend compatibility&#10;- Add mapDifficulty and mapCategory helpers for enum validation&#10;- Extract targetPlanId and currentWorkoutId from route params&#10;- Add comprehensive metadata field support (bodyPart, equipment, targetMuscle)&#10;&#10;Files: ExerciseBrowser.tsx, browse.tsx" />
+    <MESSAGE value="refactor(workouts): standardize exercise addition for active sessions&#10;&#10;- Implement WorkoutSet structure with session-specific fields&#10;- Add proper field mapping for exerciseId, exerciseName, primaryMuscleGroup&#10;- Include restSeconds at set level (different from workout plans)&#10;- Add completed flag initialization for new sets&#10;&#10;Files: [planId].tsx (workout-session), add-exercise.tsx (workout-session)" />
+    <MESSAGE value="chore(navigation): update tab navigation and index files&#10;&#10;- Update index.tsx with proper navigation structure&#10;- Add route parameter handling for planId and sessionId&#10;&#10;Files: index.tsx" />
+    <MESSAGE value="fix: resolve exercise addition errors and improve type safety&#10;&#10;Core Changes:&#10;- Fix 400 error when adding exercises to workout plans&#10;- Convert instructions format from string to array (List&lt;String&gt;)&#10;- Remove null values from payloads to prevent deserialization errors&#10;- Pass all metadata fields through service layer&#10;&#10;Type System:&#10;- Add comprehensive type definitions for exercise operations&#10;- Update PlannedSet structure (remove set-level restSeconds)&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Document field differences between plans and sessions&#10;&#10;Field Mapping:&#10;- Workout Plans: exerciseTemplateId, title, instructions (array)&#10;- Workout Sessions: exerciseId, exerciseName, primaryMuscleGroup&#10;- Add metadata fields: bodyPart, equipment, targetMuscle, difficulty, category&#10;&#10;Improvements:&#10;- Add formatInstructionsArray helper&#10;- Add removeNullValues helper for payload cleaning&#10;- Add mapDifficulty and mapCategory enum validators&#10;- Enhance error handling and logging&#10;&#10;Fixes:&#10;- 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;- Missing metadata fields in workout plan exercises&#10;- Type mismatches between frontend and backend&#10;&#10;Files: browse.tsx, workoutPlanService.ts, api.ts, ExerciseBrowser.tsx, &#10;       [planId].tsx (multiple), add-exercise.tsx (multiple), exercise-filters.tsx" />
+    <MESSAGE value="chore: update .gitignore for environment files&#10;&#10;- Exclude .env.development from version control&#10;- Exclude .env.staging from version control&#10;- Exclude .env.production from version control&#10;- Prevent sensitive environment variables from being committed" />
+    <MESSAGE value="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables" />
+    <MESSAGE value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
   </component>
 </project>
