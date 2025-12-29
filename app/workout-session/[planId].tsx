@@ -645,7 +645,7 @@ export default function WorkoutSessionScreen() {
           onPress={async () => {
             await impact('medium');
             router.push({
-              pathname: '/exercises/browse',
+              pathname: '/exercises/add-exercise',
               params: { sessionId: workout.id },
             });
           }}
