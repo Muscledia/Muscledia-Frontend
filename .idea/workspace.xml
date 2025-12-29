@@ -4,11 +4,13 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint.">
+      <change beforePath="$PROJECT_DIR$/.env.production" beforeDir="false" afterPath="$PROJECT_DIR$/.env.production" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/workout-session/[planId].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workout-session/[planId].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/config/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/aiService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/aiService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/ai.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/ai.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,7 +129,10 @@
       <workItem from="1766023198968" duration="2954000" />
       <workItem from="1766252921495" duration="4796000" />
       <workItem from="1766368363684" duration="303000" />
-      <workItem from="1766419305230" duration="3582000" />
+      <workItem from="1766419305230" duration="3975000" />
+      <workItem from="1766612231568" duration="711000" />
+      <workItem from="1766751455733" duration="6697000" />
+      <workItem from="1767003906544" duration="1009000" />
     </task>
     <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
       <option name="closed" value="true" />
@@ -489,7 +494,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765663440686</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint.">
+      <option name="closed" value="true" />
+      <created>1766426389003</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1766426389003</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -507,7 +520,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators" />
     <MESSAGE value="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators" />
     <MESSAGE value="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search" />
     <MESSAGE value="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods" />
@@ -532,6 +544,7 @@
     <MESSAGE value="chore: update .gitignore for environment files&#10;&#10;- Exclude .env.development from version control&#10;- Exclude .env.staging from version control&#10;- Exclude .env.production from version control&#10;- Prevent sensitive environment variables from being committed" />
     <MESSAGE value="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables" />
     <MESSAGE value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
+    <MESSAGE value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
   </component>
 </project>
