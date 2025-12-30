@@ -38,7 +38,7 @@ interface LocalSetData {
 }
 
 export default function WorkoutSessionScreen() {
-  const { planId } = useLocalSearchParams<{ planId: string }>();
+  const { planId, existingSession } = useLocalSearchParams<{ planId: string; existingSession?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -165,7 +165,13 @@ export default function WorkoutSessionScreen() {
   const startWorkout = async () => {
     try {
       setLoading(true);
-      const response = await WorkoutService.startWorkoutFromPlan(planId);
+      
+      let response;
+      if (existingSession === 'true') {
+        response = await WorkoutService.getWorkoutSession(planId);
+      } else {
+        response = await WorkoutService.startWorkoutFromPlan(planId);
+      }
 
       if (response.success && response.data) {
         setWorkout(response.data);
@@ -611,49 +617,78 @@ export default function WorkoutSessionScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {workout.exercises.map((exercise, exerciseIndex) => (
-          <ExerciseCard
-            key={exerciseIndex}
-            exercise={exercise}
-            exerciseIndex={exerciseIndex}
-            workout={workout}
-            theme={theme}
-            localSetValues={localSetValues}
-            localSetTypes={localSetTypes}
-            onUpdateLocalValue={updateLocalValue}
-            onToggleComplete={toggleSetComplete}
-            onToggleSetType={toggleSetType}
-            onAddSet={addSet}
-            onRemoveExercise={removeExercise}
-            savingSet={savingSet}
-            getPreviousSetData={getPreviousSetData}
-            isRestTimerActive={activeRestTimer === exerciseIndex}
-            restTimeRemaining={activeRestTimer === exerciseIndex ? restTimeRemaining : 0}
-            restTimerPreference={restTimerPreferences[exerciseIndex] || 120}
-            onSkipRestTimer={skipRestTimer}
-            onShowRestSettings={() => setShowRestSettings(exerciseIndex)}
-            warmupTimers={warmupTimers}
-            activeWarmupTimer={activeWarmupTimer}
-            onStartWarmupTimer={startWarmupTimer}
-            onPauseWarmupTimer={pauseWarmupTimer}
-            onResetWarmupTimer={resetWarmupTimer}
-          />
-        ))}
+        {workout.exercises.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Dumbbell size={48} color={theme.textMuted} />
+            <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
+              No Exercises Yet
+            </Text>
+            <Text style={[styles.emptyStateSubtitle, { color: theme.textMuted }]}>
+              Add your first exercise to get started
+            </Text>
+            <TouchableOpacity
+              style={[styles.addFirstExerciseButton, { backgroundColor: theme.accent }]}
+              onPress={async () => {
+                await impact('medium');
+                router.push({
+                  pathname: '/exercises/add-exercise',
+                  params: { sessionId: workout.id },
+                });
+              }}
+            >
+              <Plus size={20} color={theme.cardText} />
+              <Text style={[styles.addFirstExerciseText, { color: theme.cardText }]}>
+                Add Exercise
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {workout.exercises.map((exercise, exerciseIndex) => (
+              <ExerciseCard
+                key={exerciseIndex}
+                exercise={exercise}
+                exerciseIndex={exerciseIndex}
+                workout={workout}
+                theme={theme}
+                localSetValues={localSetValues}
+                localSetTypes={localSetTypes}
+                onUpdateLocalValue={updateLocalValue}
+                onToggleComplete={toggleSetComplete}
+                onToggleSetType={toggleSetType}
+                onAddSet={addSet}
+                onRemoveExercise={removeExercise}
+                savingSet={savingSet}
+                getPreviousSetData={getPreviousSetData}
+                isRestTimerActive={activeRestTimer === exerciseIndex}
+                restTimeRemaining={activeRestTimer === exerciseIndex ? restTimeRemaining : 0}
+                restTimerPreference={restTimerPreferences[exerciseIndex] || 120}
+                onSkipRestTimer={skipRestTimer}
+                onShowRestSettings={() => setShowRestSettings(exerciseIndex)}
+                warmupTimers={warmupTimers}
+                activeWarmupTimer={activeWarmupTimer}
+                onStartWarmupTimer={startWarmupTimer}
+                onPauseWarmupTimer={pauseWarmupTimer}
+                onResetWarmupTimer={resetWarmupTimer}
+              />
+            ))}
 
-        <TouchableOpacity
-          style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
-          onPress={async () => {
-            await impact('medium');
-            router.push({
-              pathname: '/exercises/add-exercise',
-              params: { sessionId: workout.id },
-            });
-          }}
-          activeOpacity={0.7}
-        >
-          <Plus size={20} color={theme.accent} />
-          <Text style={[styles.addExerciseText, { color: theme.accent }]}>Add Exercise</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
+              onPress={async () => {
+                await impact('medium');
+                router.push({
+                  pathname: '/exercises/add-exercise',
+                  params: { sessionId: workout.id },
+                });
+              }}
+              activeOpacity={0.7}
+            >
+              <Plus size={20} color={theme.accent} />
+              <Text style={[styles.addExerciseText, { color: theme.accent }]}>Add Exercise</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <TouchableOpacity
           style={[styles.cancelButton, { borderColor: theme.error }]}
@@ -1138,4 +1173,33 @@ const styles = StyleSheet.create({
   timerDisplay: { fontSize: 56, fontWeight: 'bold', minWidth: 140, textAlign: 'center' },
   skipButton: { paddingHorizontal: 64, paddingVertical: 14, borderRadius: 12 },
   skipButtonText: { fontSize: 16, fontWeight: '600' },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  addFirstExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  addFirstExerciseText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

@@ -35,6 +35,7 @@ import {
   Compass,
   Sparkles,
   Trophy,
+  Dumbbell,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
@@ -42,7 +43,7 @@ import { getThemeColors } from '@/constants/Colors';
 // FIX: Import useFocusEffect
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
-import { RoutineService } from '@/services';
+import { RoutineService, WorkoutService } from '@/services';
 import { RoutineFolder, WorkoutPlan } from '@/types';
 import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
@@ -107,6 +108,26 @@ export default function HomeScreen() {
     } finally {
       setLoadingRoutines(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleStartEmptyWorkout = async () => {
+    try {
+      await impact('medium');
+      const response = await WorkoutService.startEmptyWorkout({
+        workoutName: "Quick Workout",
+        workoutType: "STRENGTH",
+        location: "Gym",
+      });
+      
+      if (response.success && response.data) {
+        router.push({
+          pathname: `/workout-session/${response.data.id}`,
+          params: { existingSession: 'true' }
+        });
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to start workout');
     }
   };
 
@@ -471,6 +492,15 @@ export default function HomeScreen() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: theme.surface }]}
+            onPress={handleStartEmptyWorkout}
+            activeOpacity={0.9}
+          >
+            <Dumbbell size={18} color={theme.text} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Quick Workout</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.surface }]}
             onPress={async () => { 
               await impact('medium'); 
               router.push('/ai-recommendation'); 
@@ -478,7 +508,7 @@ export default function HomeScreen() {
             activeOpacity={0.9}
           >
             <Sparkles size={18} color={theme.text} />
-            <Text style={[styles.actionButtonText, { color: theme.text }]}>Get AI Recommendation</Text>
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>AI Coach</Text>
           </TouchableOpacity>
         </View>
 

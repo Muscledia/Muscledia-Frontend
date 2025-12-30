@@ -116,11 +116,21 @@ export class WorkoutService {
   /**
    * Start an empty workout session
    */
-  static async startEmptyWorkout(workoutName: string): Promise<ApiResponse<WorkoutSession>> {
-    console.log('Starting empty workout:', workoutName);
+  static async startEmptyWorkout(params: {
+    workoutName: string;
+    workoutType: string;
+    location?: string;
+    notes?: string;
+    tags?: string[];
+  }): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Starting empty workout:', params.workoutName);
+    
     const response = await apiPost<WorkoutSession>('/api/v1/workouts', {
-      workoutName,
-      workoutType: 'STRENGTH',
+      workoutName: params.workoutName,
+      workoutType: params.workoutType,
+      location: params.location,
+      notes: params.notes || '',
+      tags: params.tags || [],
       useWorkoutPlan: false
     });
     return response;
@@ -305,13 +315,28 @@ export class WorkoutService {
     console.log('Workout ID:', workoutId);
     console.log('Completion data:', data);
 
-    const requestBody: CompleteWorkoutRequest = {
+    const requestBody: any = {
       completedAt: new Date().toISOString(),
-      rating: data?.rating ?? null,
-      notes: data?.notes ?? null,
-      caloriesBurned: data?.caloriesBurned ?? null,
       additionalTags: []
     };
+
+    if (data?.rating !== undefined && data?.rating !== null) {
+      requestBody.rating = data.rating;
+    }
+    
+    // Explicitly set notes to empty string if undefined/null to satisfy backend if it expects a string
+    if (data?.notes) {
+      requestBody.notes = data.notes;
+    } else {
+        requestBody.notes = "";
+    }
+    
+    // Explicitly set caloriesBurned to 0 if undefined/null
+    if (data?.caloriesBurned !== undefined && data?.caloriesBurned !== null) {
+      requestBody.caloriesBurned = data.caloriesBurned;
+    } else {
+        requestBody.caloriesBurned = 0;
+    }
 
     console.log('Request body:', requestBody);
 
