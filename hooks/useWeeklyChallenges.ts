@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { ChallengeService } from '@/services/challengeService';
+import challengeService from '@/services/challengeService';
 import { Challenge } from '@/types';
 
 const fetchWeeklyChallenges = async (): Promise<Challenge[]> => {
   try {
-    const response = await ChallengeService.getWeeklyChallenges();
+    const response = await challengeService.getWeeklyChallenges();
     if (response.success && response.data) {
       return response.data;
     }

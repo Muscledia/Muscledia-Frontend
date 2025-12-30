@@ -1,12 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChallengeService } from '@/services/challengeService';
-import { ActiveChallenge } from '@/types';
-import { useAuth } from './useAuth';
+import { useQuery } from '@tanstack/react-query';
+import challengeService from '@/services/challengeService';
+import { UserChallenge } from '@/types';
 
-const fetchActiveChallenges = async (userId: string | number): Promise<ActiveChallenge[]> => {
-  if (!userId) return [];
+const fetchActiveChallenges = async (): Promise<UserChallenge[]> => {
   try {
-    const response = await ChallengeService.getActiveChallenges(userId);
+    const response = await challengeService.getActiveChallenges();
     if (response.success && response.data) {
       return response.data;
     }
@@ -18,28 +16,11 @@ const fetchActiveChallenges = async (userId: string | number): Promise<ActiveCha
 };
 
 export const useActiveChallenges = () => {
-  const { user } = useAuth();
-  const userId = user?.id;
-
   return useQuery({
-    queryKey: ['challenges', 'active', userId],
-    queryFn: () => fetchActiveChallenges(userId!),
-    enabled: !!userId, // Only run if userId is available
+    queryKey: ['challenges', 'active'],
+    queryFn: fetchActiveChallenges,
     refetchInterval: 2 * 60 * 1000, // Frequent updates for active progress
     staleTime: 30 * 1000,
     retry: 2,
-  });
-};
-
-export const useUpdateChallengeProgress = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ challengeId, progress }: { challengeId: string; progress: number }) => 
-      ChallengeService.updateChallengeProgress(challengeId, progress),
-    onSuccess: () => {
-      // Invalidate active challenges to show new progress
-      queryClient.invalidateQueries({ queryKey: ['challenges', 'active'] });
-    },
   });
 };

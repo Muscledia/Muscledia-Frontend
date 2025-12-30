@@ -77,18 +77,38 @@ export interface Challenge {
   name: string;
   description: string;
   type: 'DAILY' | 'WEEKLY';
-  points: number;
-  requirements: unknown;
+  objectiveType: string;
+  targetValue: number;
+  rewardPoints: number;
+  difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+  progressUnit: string;
+  startDate: string;
+  endDate: string;
+  active: boolean;
 }
 
-export interface ActiveChallenge {
+export interface UserChallenge {
   id: string;
-  challengeId: string;
   userId: number;
-  progress: number;
-  completed: boolean;
+  challengeId: string;
+  challengeName: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'FAILED';
+  currentProgress: number;
+  targetValue: number;
+  progressUnit: string;
+  progressPercentage: number;
+  progressDisplay: string;
+  timeRemaining: string;
+  statusColor: 'green' | 'yellow' | 'blue' | 'red';
+  isNearCompletion: boolean;
+  pointsEarned: number;
+  startedAt: string;
   completedAt?: string;
+  expiresAt: string;
 }
+
+// Legacy alias for backward compatibility (deprecated - use UserChallenge instead)
+export type ActiveChallenge = UserChallenge;
 
 // Gamification Profile Types
 export interface WorkoutStreak {

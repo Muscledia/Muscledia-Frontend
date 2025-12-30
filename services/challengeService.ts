@@ -1,65 +1,59 @@
 import { apiGet, apiPost } from './api';
-import { ApiResponse, Challenge, ActiveChallenge } from '@/types';
+import { ApiResponse, Challenge, UserChallenge } from '@/types';
 
-export class ChallengeService {
+/**
+ * Challenge Service
+ * API service layer for challenge-related endpoints to communicate with the gamification service.
+ */
+const challengeService = {
   /**
-   * Fetch daily challenges
+   * Get available challenges by type (DAILY or WEEKLY)
+   * @param type The type of challenges to retrieve ('DAILY' or 'WEEKLY')
+   * @returns Promise resolving to ApiResponse containing an array of Challenge objects
    */
-  static async getDailyChallenges(): Promise<ApiResponse<Challenge[]>> {
-    // Assuming backend supports filtering by type via query param
-    return apiGet<Challenge[]>('/api/quests?type=DAILY');
-  }
+  getAvailableChallenges: async (
+    type: 'DAILY' | 'WEEKLY'
+  ): Promise<ApiResponse<Challenge[]>> => {
+    return apiGet<Challenge[]>(`/api/challenges/available?type=${type}`);
+  },
 
   /**
-   * Fetch weekly challenges
+   * Get daily challenges (convenience method)
+   * @returns Promise resolving to ApiResponse containing an array of daily Challenge objects
    */
-  static async getWeeklyChallenges(): Promise<ApiResponse<Challenge[]>> {
-    return apiGet<Challenge[]>('/api/quests?type=WEEKLY');
-  }
+  getDailyChallenges: async (): Promise<ApiResponse<Challenge[]>> => {
+    return apiGet<Challenge[]>('/api/challenges/daily');
+  },
 
   /**
-   * Fetch all challenges (quests)
+   * Get weekly challenges (convenience method)
+   * @returns Promise resolving to ApiResponse containing an array of weekly Challenge objects
    */
-  static async getAllChallenges(): Promise<ApiResponse<Challenge[]>> {
-    return apiGet<Challenge[]>('/api/quests');
-  }
+  getWeeklyChallenges: async (): Promise<ApiResponse<Challenge[]>> => {
+    return apiGet<Challenge[]>('/api/challenges/weekly');
+  },
 
   /**
-   * Fetch active challenges for the current user
-   * @param userId The ID of the user
-   */
-  static async getActiveChallenges(userId: string | number): Promise<ApiResponse<ActiveChallenge[]>> {
-    return apiGet<ActiveChallenge[]>(`/api/quests/user/${userId}/active`);
-  }
-
-  /**
-   * Start a challenge (quest)
+   * Start a challenge for the current user
+   * The user is determined from the authentication token
    * @param challengeId The ID of the challenge to start
-   * @param userId The ID of the user
+   * @returns Promise resolving to ApiResponse containing the started UserChallenge object
    */
-  static async startChallenge(challengeId: string, userId: string | number): Promise<ApiResponse<ActiveChallenge>> {
-    return apiPost<ActiveChallenge>(`/api/quests/${challengeId}/start/${userId}`);
-  }
+  startChallenge: async (challengeId: string): Promise<ApiResponse<UserChallenge>> => {
+    return apiPost<UserChallenge>(`/api/challenges/${challengeId}/start`);
+  },
 
   /**
-   * Complete a challenge
-   * @param challengeId The ID of the challenge
-   * @param userId The ID of the user
+   * Get user's active challenges
+   * The user is determined from the authentication token
+   * @returns Promise resolving to ApiResponse containing an array of UserChallenge objects
    */
-  static async completeChallenge(challengeId: string, userId: string | number): Promise<ApiResponse<any>> {
-    return apiPost<any>(`/api/quests/${challengeId}/complete/${userId}`);
-  }
+  getActiveChallenges: async (): Promise<ApiResponse<UserChallenge[]>> => {
+    return apiGet<UserChallenge[]>('/api/challenges/active');
+  },
+};
 
-  /**
-   * Update challenge progress
-   * @param challengeId The ID of the challenge (quest ID)
-   * @param progress The new progress value or increment
-   * @param userId The ID of the user (optional if handled by backend session, but likely needed)
-   */
-  static async updateChallengeProgress(challengeId: string, progress: number): Promise<ApiResponse<any>> {
-     // The endpoint is PUT /api/quests/{questId}/progress
-     // It likely expects a body with progress value.
-     // I'll assume { progress: number }
-     return apiPost<any>(`/api/quests/${challengeId}/progress`, { progress });
-  }
-}
+export default challengeService;
+
+// Named export for backward compatibility with class-based usage
+export const ChallengeService = challengeService;

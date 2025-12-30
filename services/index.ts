@@ -34,6 +34,7 @@ export type {
   UpdateSetRequest,
   Challenge,
   ActiveChallenge,
+  UserChallenge,
 } from '@/types';
 
 // API Client exports
