@@ -3,10 +3,17 @@ import { API_CONFIG, buildURL } from '@/config/api';
 import { GamificationProfile, GamificationProfileResponse, ApiResponse } from '@/types';
 
 export interface StreakInfo {
-  weeklyStreak: number;
-  monthlyStreak: number;
-  longestWeeklyStreak: number;
-  longestMonthlyStreak: number;
+  restDaysSinceLastWorkout: number;
+  monthly: {
+    currentStreak: number;
+    longestStreak: number;
+    periodStart: string;
+  };
+  weekly: {
+    currentStreak: number;
+    longestStreak: number;
+    periodStart: string;
+  };
   lastWorkoutDate: string;
 }
 

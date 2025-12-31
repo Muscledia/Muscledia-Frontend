@@ -213,14 +213,14 @@ export default function ProfileScreen() {
               <View style={styles.statCard}>
                 <Flame size={20} color={theme.accent} />
                 <Text style={[styles.statValue, { color: theme.text }]}>
-                  {streakInfo.weeklyStreak}
+                  {streakInfo.weekly.currentStreak}
                 </Text>
                 <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Week Streak</Text>
               </View>
               <View style={styles.statCard}>
                 <TrendingUp size={20} color={theme.accent} />
                 <Text style={[styles.statValue, { color: theme.text }]}>
-                  {streakInfo.monthlyStreak}
+                  {streakInfo.monthly.currentStreak}
                 </Text>
                 <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Month Streak</Text>
               </View>
@@ -310,28 +310,28 @@ export default function ProfileScreen() {
               <Flame size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Current Weekly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weeklyStreak} days</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.currentStreak} days</Text>
               </View>
             </View>
             <View style={styles.streakItem}>
               <TrendingUp size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Current Monthly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.monthlyStreak} months</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.monthly.currentStreak} months</Text>
               </View>
             </View>
             <View style={styles.streakItem}>
               <Flame size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Longest Weekly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.longestWeeklyStreak} days</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.longestStreak} days</Text>
               </View>
             </View>
             <View style={styles.streakItem}>
               <TrendingUp size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Longest Monthly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.longestMonthlyStreak} months</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.monthly.longestStreak} months</Text>
               </View>
             </View>
           </View>
