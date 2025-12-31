@@ -1,6 +1,14 @@
 import { apiGet } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
-import { GamificationProfile, GamificationProfileResponse } from '@/types';
+import { GamificationProfile, GamificationProfileResponse, ApiResponse } from '@/types';
+
+export interface StreakInfo {
+  weeklyStreak: number;
+  monthlyStreak: number;
+  longestWeeklyStreak: number;
+  longestMonthlyStreak: number;
+  lastWorkoutDate: string;
+}
 
 type CacheEntry<T> = {
   value: T;
@@ -41,6 +49,23 @@ export class GamificationService {
         return this.profileCache!.value;
       }
 
+      throw error;
+    }
+  }
+
+  /**
+   * Get streak information from /api/gamification/streaks
+   */
+  static async getStreaks(): Promise<ApiResponse<StreakInfo>> {
+    const url = buildURL('/api/gamification/streaks');
+    
+    try {
+      const response = await apiGet<StreakInfo>(url, {
+        timeout: API_CONFIG.REQUEST.TIMEOUT,
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch streaks:', error);
       throw error;
     }
   }

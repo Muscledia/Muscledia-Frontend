@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,44 +11,39 @@ import {
   Linking,
   Platform,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useCharacter } from '@/hooks/useCharacter';
 import { useAuth } from '@/hooks/useAuth';
-import CharacterAvatar from '@/components/CharacterAvatar';
-import ProgressBar from '@/components/ProgressBar';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLeagues } from '@/hooks/useLeagues';
 import { useHaptics } from '@/hooks/useHaptics';
-import { ArrowLeft, Heart, Star, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Flame, TrendingUp, Activity } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
  
 import { useNotifications } from '@/hooks/useNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useWorkouts } from '@/hooks/useWorkouts';
+import { CalendarService, CalendarData } from '@/services/CalendarService';
+import { GamificationService, StreakInfo } from '@/services/gamificationService';
 
 export default function ProfileScreen() {
-  const { character, updateCharacter } = useCharacter();
+  const { character } = useCharacter();
   const { logout, user } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
-  const { workouts, loading: workoutsLoading } = useWorkouts();
-  // Compute user initials for default avatar
-  const displayName = user?.email?.split('@')[0] || 'User';
-  const initials = (() => {
-    const parts = displayName.split(/[^A-Za-z0-9]+/).filter(Boolean);
-    if (parts.length === 0) return (displayName[0] || 'U').toUpperCase();
-    const letters = parts.slice(0, 2).map(p => p[0].toUpperCase()).join('');
-    return letters || (displayName[0] || 'U').toUpperCase();
-  })();
-  const { state: leagues, currentDivision, nextDivision, progressToNext, claimPendingReward, daysUntilReset } = useLeagues();
   const { impact } = useHaptics();
   const { isGranted, requestPermission, scheduleInSeconds, scheduleDailyReminder, cancelAll } = useNotifications();
 
   const [notifEnabled, setNotifEnabled] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [calendarData, setCalendarData] = useState<CalendarData>({});
+  const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
+  const [currentMonthCount, setCurrentMonthCount] = useState<number>(0);
+  const [monthCountLoading, setMonthCountLoading] = useState<boolean>(false);
+  const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
+  const [streakLoading, setStreakLoading] = useState<boolean>(false);
 
   const formatDate = (d: Date) => {
     const y = d.getFullYear();
@@ -57,7 +52,88 @@ export default function ProfileScreen() {
     return `${y}-${m}-${day}`;
   };
 
-  const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+  // Load calendar data for current month
+  useEffect(() => {
+    loadMonthCalendarData(currentMonth);
+  }, [currentMonth]);
+
+  // Load current month workout count
+  useEffect(() => {
+    loadCurrentMonthCount();
+  }, []);
+
+  // Load streak information
+  useEffect(() => {
+    loadStreakInfo();
+  }, []);
+
+  const loadMonthCalendarData = async (date: Date) => {
+    try {
+      setCalendarLoading(true);
+      // Use range endpoint to get workout counts for the month
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const startOfMonthDate = new Date(year, month, 1);
+      const endOfMonthDate = new Date(year, month + 1, 0);
+      
+      // Format dates as ISO-8601 with time
+      const startDateISO = `${startOfMonthDate.getFullYear()}-${String(startOfMonthDate.getMonth() + 1).padStart(2, '0')}-${String(startOfMonthDate.getDate()).padStart(2, '0')}T00:00:00Z`;
+      const endDateISO = `${endOfMonthDate.getFullYear()}-${String(endOfMonthDate.getMonth() + 1).padStart(2, '0')}-${String(endOfMonthDate.getDate()).padStart(2, '0')}T23:59:59Z`;
+
+      const response = await CalendarService.getCalendarRange(startDateISO, endDateISO);
+      
+      if (response.success && response.data) {
+        setCalendarData(response.data);
+      } else {
+        console.error('Failed to load calendar data:', response.message);
+        setCalendarData({});
+      }
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
+      Alert.alert('Error', 'Failed to load calendar data');
+      setCalendarData({});
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const loadCurrentMonthCount = async () => {
+    try {
+      setMonthCountLoading(true);
+      const response = await CalendarService.getCurrentMonthCount();
+      
+      if (response.success && response.data !== undefined) {
+        setCurrentMonthCount(response.data);
+      } else {
+        console.error('Failed to load current month count:', response.message);
+        setCurrentMonthCount(0);
+      }
+    } catch (error) {
+      console.error('Error loading current month count:', error);
+      setCurrentMonthCount(0);
+    } finally {
+      setMonthCountLoading(false);
+    }
+  };
+
+  const loadStreakInfo = async () => {
+    try {
+      setStreakLoading(true);
+      const response = await GamificationService.getStreaks();
+      
+      if (response.success && response.data) {
+        setStreakInfo(response.data);
+      } else {
+        console.error('Failed to load streak info:', response.message);
+        setStreakInfo(null);
+      }
+    } catch (error) {
+      console.error('Error loading streak info:', error);
+      setStreakInfo(null);
+    } finally {
+      setStreakLoading(false);
+    }
+  };
 
   const changeMonth = (delta: number) => {
     const next = new Date(currentMonth);
@@ -84,19 +160,6 @@ export default function ProfileScreen() {
     return cells;
   };
 
-  // Build a map of dates with workouts
-  const workoutDatesSet = React.useMemo(() => {
-    const set = new Set<string>();
-    workouts.forEach(w => {
-      const d = new Date(w.timestamp);
-      set.add(formatDate(d));
-    });
-    return set;
-  }, [workouts]);
-
-  const selectedWorkouts = React.useMemo(() => {
-    return workouts.filter(w => formatDate(new Date(w.timestamp)) === selectedDate);
-  }, [workouts, selectedDate]);
 
   React.useEffect(() => {
     (async () => {
@@ -120,35 +183,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Derived progress values with guards to avoid NaN/Infinity
-  const healthProgress = character.maxHealth > 0
-    ? Math.min(Math.max(character.currentHealth / character.maxHealth, 0), 1)
-    : 0;
-  const xpProgress = character.xpToNextLevel > 0
-    ? Math.min(Math.max(character.xp / character.xpToNextLevel, 0), 1)
-    : 0;
-
-  const strength = Math.min(999, Math.floor(character.totalXP / 50) + character.level * 2);
-  const stamina = Math.min(999, character.maxHealth + character.level * 3);
-  const agility = Math.min(999, 50 + character.level * 2);
-  const focus = Math.min(999, 30 + Math.floor(character.streak * 1.5));
-  const luck = Math.min(999, 10 + Math.floor(character.level / 2));
-
-  const attributes = [
-    { name: 'Strength', value: strength.toString() },
-    { name: 'Stamina', value: stamina.toString() },
-    { name: 'Agility', value: agility.toString() },
-    { name: 'Focus', value: focus.toString() },
-    { name: 'Luck', value: luck.toString() },
-    { name: 'Level', value: character.level.toString() },
-  ];
-
-  const skills = [
-    { name: 'SKILL_NAME1', info: 'Skill_info' },
-    { name: 'SKILL_NAME1', info: 'Skill_info' },
-    { name: 'SKILL_NAME1', info: 'Skill_info' },
-    { name: 'SKILL_NAME1', info: 'Skill_info' },
-  ];
 
   return (
     <ScrollView 
@@ -164,49 +198,36 @@ export default function ProfileScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Character Section */}
-      <LinearGradient
-        colors={[theme.accent, theme.accentSecondary]}
-        locations={[0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.characterSection]}
-      >
-        <View style={styles.topRow}>
-          {/* Left: Avatar (no editing) */}
-          <View style={styles.avatarContainer}>
-            <CharacterAvatar 
-              level={character.level} 
-              gender={character.gender} 
-              streak={character.streak}
-              size="large"
-              initials={initials}
-            />
+      {/* Stats Section */}
+      <View style={[styles.statsContainer, { backgroundColor: theme.surface }]}>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Activity size={20} color={theme.accent} />
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {monthCountLoading ? '...' : currentMonthCount}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>This Month</Text>
           </View>
-
-          {/* Right: Username and dates */}
-          <View style={styles.identityBlock}>
-            <Text style={[styles.identityName, { color: theme.cardText }]}>{user?.email?.split('@')[0] || 'egemenerin'}</Text>
-            <Text style={[styles.identityMeta, { color: theme.cardText }]}>Member Since • 2 Jan 2025</Text>
-            <Text style={[styles.identityMeta, { color: theme.cardText }]}>Last Login • 26 Mar 2025</Text>
-          </View>
+          {streakInfo && (
+            <>
+              <View style={styles.statCard}>
+                <Flame size={20} color={theme.accent} />
+                <Text style={[styles.statValue, { color: theme.text }]}>
+                  {streakInfo.weeklyStreak}
+                </Text>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Week Streak</Text>
+              </View>
+              <View style={styles.statCard}>
+                <TrendingUp size={20} color={theme.accent} />
+                <Text style={[styles.statValue, { color: theme.text }]}>
+                  {streakInfo.monthlyStreak}
+                </Text>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Month Streak</Text>
+              </View>
+            </>
+          )}
         </View>
-
-        <View style={styles.barsContainer}>
-          {/* Health Bar */}
-          <View style={styles.barItem}>
-            <View style={styles.barTitleRow}><Heart size={14} color={theme.cardText} /><Text style={[styles.barLabel, { color: theme.cardText, marginLeft: 6 }]}>Health</Text></View>
-            <ProgressBar progress={healthProgress} color={theme.health} height={8} />
-            <Text style={[styles.barText, { color: theme.cardText }]}>{character.currentHealth}/{character.maxHealth}</Text>
-          </View>
-          {/* XP Bar */}
-          <View style={styles.barItem}>
-            <View style={styles.barTitleRow}><Star size={14} color={theme.cardText} /><Text style={[styles.barLabel, { color: theme.cardText, marginLeft: 6 }]}>Level {character.level}</Text></View>
-            <ProgressBar progress={xpProgress} color={theme.xp} height={8} />
-            <Text style={[styles.barText, { color: theme.cardText }]}>{character.xp}/{character.xpToNextLevel}</Text>
-          </View>
-        </View>
-      </LinearGradient>
+      </View>
 
       {/* Workout History */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Workout History</Text>
@@ -240,7 +261,8 @@ export default function ProfileScreen() {
             const dateStr = formatDate(cell.date as Date);
             const isSelected = selectedDate === dateStr;
             const isToday = dateStr === formatDate(new Date());
-            const hasWorkout = workoutDatesSet.has(dateStr);
+            const hasWorkout = calendarData[dateStr] !== undefined;
+            const workoutCount = calendarData[dateStr] || 0;
             return (
               <TouchableOpacity
                 key={idx}
@@ -256,7 +278,12 @@ export default function ProfileScreen() {
                   {cell.dayNum}
                 </Text>
                 {hasWorkout && (
-                  <View style={[styles.dayDot, { backgroundColor: isSelected ? theme.cardText : theme.accent }]} />
+                  <View style={[styles.dayDot, { backgroundColor: isSelected ? theme.cardText : (workoutCount > 1 ? '#FF9800' : theme.accent) }]} />
+                )}
+                {workoutCount > 1 && (
+                  <Text style={[styles.dayCountBadge, { color: isSelected ? theme.cardText : theme.text }]}>
+                    {workoutCount}
+                  </Text>
                 )}
               </TouchableOpacity>
             );
@@ -274,59 +301,50 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Workouts on selected date */}
-      <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Selected Day</Text>
-        <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>
-          {new Date(selectedDate).toLocaleDateString()}
-        </Text>
-        {workoutsLoading ? (
-          <Text style={{ color: theme.textSecondary }}>Loading...</Text>
-        ) : selectedWorkouts.length === 0 ? (
-          <Text style={{ color: theme.textSecondary }}>No workouts on this day.</Text>
-        ) : (
-          <View style={styles.workoutList}>
-            {selectedWorkouts.map((w, i) => (
-              <View key={`${w.timestamp}-${i}`} style={[styles.workoutItem, { borderColor: theme.border }]}> 
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.workoutName, { color: theme.text }]} numberOfLines={1}>{w.name}</Text>
-                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                    {w.sets} sets
-                  </Text>
-                  {Array.isArray((w as any).details) && (w as any).details.length > 0 && (
-                    <View style={{ marginTop: 6, gap: 6 }}>
-                      {(w as any).details.map((ex: any) => (
-                        <View key={ex.exerciseId}>
-                          <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600' }}>{ex.name}</Text>
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                            {ex.sets.map((s: any, idx: number) => (
-                              <View key={s.id || idx} style={{
-                                borderWidth: 1,
-                                borderColor: theme.border,
-                                borderRadius: 8,
-                                paddingHorizontal: 8,
-                                paddingVertical: 4,
-                                backgroundColor: s.completed ? 'rgba(0,0,0,0.06)' : 'transparent',
-                              }}>
-                                <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                                  #{idx + 1} • {s.weight}kg × {s.reps}{s.completed ? ' ✓' : ''}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <Text style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8 }}>
-                  {new Date(w.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
+      {/* Streak Information */}
+      {streakInfo && (
+        <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Streak Information</Text>
+          <View style={styles.streakGrid}>
+            <View style={styles.streakItem}>
+              <Flame size={18} color={theme.accent} />
+              <View style={styles.streakContent}>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Current Weekly Streak</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weeklyStreak} days</Text>
               </View>
-            ))}
+            </View>
+            <View style={styles.streakItem}>
+              <TrendingUp size={18} color={theme.accent} />
+              <View style={styles.streakContent}>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Current Monthly Streak</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.monthlyStreak} months</Text>
+              </View>
+            </View>
+            <View style={styles.streakItem}>
+              <Flame size={18} color={theme.accent} />
+              <View style={styles.streakContent}>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Longest Weekly Streak</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.longestWeeklyStreak} days</Text>
+              </View>
+            </View>
+            <View style={styles.streakItem}>
+              <TrendingUp size={18} color={theme.accent} />
+              <View style={styles.streakContent}>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Longest Monthly Streak</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.longestMonthlyStreak} months</Text>
+              </View>
+            </View>
           </View>
-        )}
-      </View>
+          {streakInfo.lastWorkoutDate && (
+            <View style={[styles.lastWorkoutRow, { borderTopColor: theme.border }]}>
+              <CalendarIcon size={16} color={theme.textSecondary} />
+              <Text style={[styles.lastWorkoutText, { color: theme.textSecondary }]}>
+                Last workout: {new Date(streakInfo.lastWorkoutDate).toLocaleDateString()}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Equipment */}
       <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
@@ -335,64 +353,6 @@ export default function ProfileScreen() {
         <View style={styles.infoRow}><Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Pants</Text><Text style={[styles.infoValue, { color: theme.text }]}>{character.equippedPants || 'None'}</Text></View>
         <View style={styles.infoRow}><Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Equipment</Text><Text style={[styles.infoValue, { color: theme.text }]}>{character.equippedEquipment || 'None'}</Text></View>
       </View>
-
-      {/* Leagues Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Leagues</Text>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={async () => { await impact('selection'); router.push('/leagues'); }}
-      >
-      <View style={[styles.leaguesCard, { backgroundColor: theme.surface }]}> 
-        <Text style={[styles.leagueTitle, { color: theme.text }]}>Current: {currentDivision.name}</Text>
-        <Text style={[styles.leagueSub, { color: theme.textSecondary }]}>Month {leagues.monthKey} • Resets in {daysUntilReset}d</Text>
-        <View style={styles.leagueRow}>
-          <Text style={[styles.leaguePoints, { color: theme.text }]}>{leagues.points} pts</Text>
-          <Text style={[styles.leagueNext, { color: theme.textSecondary }]}>
-            {nextDivision ? `Next ${nextDivision.name} at ${nextDivision.minPoints}` : 'Top division'}
-          </Text>
-        </View>
-        <View style={[styles.progressBarShell, { backgroundColor: theme.background }]}>
-          <View style={[styles.progressBarFill, { width: `${progressToNext * 100}%`, backgroundColor: theme.accent }]} />
-        </View>
-        {leagues.pendingRewardXp > 0 && (
-          <TouchableOpacity
-            style={[styles.claimButton]}
-            onPress={async () => { await impact('success'); claimPendingReward(); }}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={[theme.accent, theme.accentSecondary]}
-              locations={[0.55, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.claimGradient}
-            >
-              <Text style={[styles.claimText, { color: theme.cardText }]}>Claim {leagues.pendingRewardXp} XP</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </View>
-      </TouchableOpacity>
-
-      {/* Attributes Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Attributes</Text>
-      <View style={styles.attributesGrid}>
-        {attributes.map((attr, index) => (
-          <LinearGradient
-            key={index}
-            colors={[theme.accent, theme.accentSecondary]}
-            locations={[0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.attributeCard]}
-          >
-            <Text style={[styles.attributeName, { color: theme.cardText }]}>{attr.name}</Text>
-            <Text style={[styles.attributeValue, { color: theme.cardText }]}>{attr.value}</Text>
-          </LinearGradient>
-        ))}
-      </View>
-
-      {/* Skills removed per request */}
 
       {/* Settings */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Settings</Text>
@@ -728,6 +688,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginTop: 4,
   },
+  dayCountBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    fontSize: 9,
+    fontWeight: '700',
+  },
   calendarLegend: {
     flexDirection: 'row',
     gap: 16,
@@ -746,4 +713,61 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   workoutName: { fontSize: 14, fontWeight: '600' },
+  statsContainer: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  streakGrid: {
+    gap: 12,
+  },
+  streakItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  streakContent: {
+    flex: 1,
+  },
+  streakLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  streakValue: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  lastWorkoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  lastWorkoutText: {
+    fontSize: 12,
+  },
 }); 

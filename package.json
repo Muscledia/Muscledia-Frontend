@@ -19,6 +19,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "axios": "^1.12.2",
     "axios-retry": "^4.5.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "expo": "~54.0.29",
     "expo-blur": "~15.0.8",
