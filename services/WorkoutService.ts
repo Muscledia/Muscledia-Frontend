@@ -116,11 +116,20 @@ export class WorkoutService {
   /**
    * Start an empty workout session
    */
-  static async startEmptyWorkout(workoutName: string): Promise<ApiResponse<WorkoutSession>> {
-    console.log('Starting empty workout:', workoutName);
+  static async startEmptyWorkout(params: {
+    workoutName: string;
+    workoutType: string;
+    location?: string;
+    notes?: string;
+    tags?: string[];
+  }): Promise<ApiResponse<WorkoutSession>> {
+    console.log('Starting empty workout:', params.workoutName);
     const response = await apiPost<WorkoutSession>('/api/v1/workouts', {
-      workoutName,
-      workoutType: 'STRENGTH',
+      workoutName: params.workoutName,
+      workoutType: params.workoutType,
+      location: params.location,
+      notes: params.notes || '',
+      tags: params.tags || [],
       useWorkoutPlan: false
     });
     return response;
