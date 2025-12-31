@@ -35,6 +35,7 @@ import {
   Compass,
   Sparkles,
   Trophy,
+  Dumbbell,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
@@ -42,7 +43,7 @@ import { getThemeColors } from '@/constants/Colors';
 // FIX: Import useFocusEffect
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
-import { RoutineService } from '@/services';
+import { RoutineService, WorkoutService } from '@/services';
 import { RoutineFolder, WorkoutPlan } from '@/types';
 import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
@@ -152,6 +153,26 @@ export default function HomeScreen() {
     setNewFolderName(selectedFolder.title);
     setActiveMenu(null);
     setRenameModalVisible(true);
+  };
+
+  const handleStartEmptyWorkout = async () => {
+    try {
+      await impact('medium');
+      const response = await WorkoutService.startEmptyWorkout({
+        workoutName: "Quick Workout",
+        workoutType: "STRENGTH",
+        location: "Gym",
+      });
+      
+      if (response.success && response.data) {
+        router.push({
+          pathname: `/workout-session/${response.data.id}`,
+          params: { isExistingSession: 'true' }
+        });
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to start workout');
+    }
   };
 
   // OPTIMISTIC RENAME
@@ -448,38 +469,49 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.surface }]}
-            onPress={async () => { await impact('medium'); router.push('/routine-builder'); }}
-            activeOpacity={0.9}
-          >
-            <FileText size={18} color={theme.text} />
-            <Text style={[styles.actionButtonText, { color: theme.text }]}>New Routine</Text>
-          </TouchableOpacity>
+        <View style={styles.actionButtonsGrid}>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.surface }]}
+              onPress={handleStartEmptyWorkout}
+              activeOpacity={0.9}
+            >
+              <Dumbbell size={18} color={theme.accent} />
+              <Text style={[styles.actionButtonText, { color: theme.text }]}>Quick Workout</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.surface }]}
-            onPress={async () => { await impact('medium'); router.push('/public-routines'); }}
-            activeOpacity={0.9}
-          >
-            <Search size={18} color={theme.text} />
-            <Text style={[styles.actionButtonText, { color: theme.text }]}>Explore</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.surface }]}
+              onPress={async () => { await impact('medium'); router.push('/routine-builder'); }}
+              activeOpacity={0.9}
+            >
+              <FileText size={18} color={theme.text} />
+              <Text style={[styles.actionButtonText, { color: theme.text }]}>New Routine</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.surface }]}
-            onPress={async () => { 
-              await impact('medium'); 
-              router.push('/ai-recommendation'); 
-            }}
-            activeOpacity={0.9}
-          >
-            <Sparkles size={18} color={theme.text} />
-            <Text style={[styles.actionButtonText, { color: theme.text }]}>Get AI Recommendation</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.surface }]}
+              onPress={async () => { await impact('medium'); router.push('/public-routines'); }}
+              activeOpacity={0.9}
+            >
+              <Search size={18} color={theme.text} />
+              <Text style={[styles.actionButtonText, { color: theme.text }]}>Explore</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.surface }]}
+              onPress={async () => { 
+                await impact('medium'); 
+                router.push('/ai-recommendation'); 
+              }}
+              activeOpacity={0.9}
+            >
+              <Sparkles size={18} color={theme.text} />
+              <Text style={[styles.actionButtonText, { color: theme.text }]}>AI Coach</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {loadingRoutines ? (
@@ -632,7 +664,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },
   exploreBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6 },
   exploreText: { fontSize: 14, fontWeight: '600' },
-  actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  actionButtonsGrid: { gap: 12, marginBottom: 20 },
+  actionRow: { flexDirection: 'row', gap: 12 },
   actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 12 },
   actionButtonText: { fontSize: 14, fontWeight: '600' },
   routineSection: { marginBottom: 16 },

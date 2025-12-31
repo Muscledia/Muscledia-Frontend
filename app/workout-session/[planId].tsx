@@ -38,7 +38,7 @@ interface LocalSetData {
 }
 
 export default function WorkoutSessionScreen() {
-  const { planId } = useLocalSearchParams<{ planId: string }>();
+  const { planId, isExistingSession } = useLocalSearchParams<{ planId: string; isExistingSession?: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -165,7 +165,15 @@ export default function WorkoutSessionScreen() {
   const startWorkout = async () => {
     try {
       setLoading(true);
-      const response = await WorkoutService.startWorkoutFromPlan(planId);
+      
+      let response;
+      if (isExistingSession === 'true') {
+        // Load existing session (planId is actually the session ID here)
+        response = await WorkoutService.getWorkoutSession(planId);
+      } else {
+        // Start new session from plan
+        response = await WorkoutService.startWorkoutFromPlan(planId);
+      }
 
       if (response.success && response.data) {
         setWorkout(response.data);
@@ -611,7 +619,33 @@ export default function WorkoutSessionScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {workout.exercises.map((exercise, exerciseIndex) => (
+        {workout.exercises.length === 0 ? (
+          <View style={styles.emptyStateContainer}>
+            <Dumbbell size={48} color={theme.textMuted} />
+            <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
+              No Exercises Yet
+            </Text>
+            <Text style={[styles.emptyStateSubtitle, { color: theme.textMuted }]}>
+              Add your first exercise to get started
+            </Text>
+            <TouchableOpacity
+              style={[styles.addFirstExerciseButton, { backgroundColor: theme.accent }]}
+              onPress={async () => {
+                await impact('medium');
+                router.push({
+                  pathname: '/exercises/add-exercise',
+                  params: { sessionId: workout.id },
+                });
+              }}
+            >
+              <Plus size={20} color={theme.cardText} />
+              <Text style={[styles.addFirstExerciseText, { color: theme.cardText }]}>
+                Add Exercise
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          workout.exercises.map((exercise, exerciseIndex) => (
           <ExerciseCard
             key={exerciseIndex}
             exercise={exercise}
@@ -638,9 +672,11 @@ export default function WorkoutSessionScreen() {
             onPauseWarmupTimer={pauseWarmupTimer}
             onResetWarmupTimer={resetWarmupTimer}
           />
-        ))}
+        ))
+        )}
 
-        <TouchableOpacity
+        {workout.exercises.length > 0 && (
+          <TouchableOpacity
           style={[styles.addExerciseButton, { backgroundColor: theme.surface }]}
           onPress={async () => {
             await impact('medium');
@@ -654,6 +690,7 @@ export default function WorkoutSessionScreen() {
           <Plus size={20} color={theme.accent} />
           <Text style={[styles.addExerciseText, { color: theme.accent }]}>Add Exercise</Text>
         </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.cancelButton, { borderColor: theme.error }]}
@@ -1138,4 +1175,33 @@ const styles = StyleSheet.create({
   timerDisplay: { fontSize: 56, fontWeight: 'bold', minWidth: 140, textAlign: 'center' },
   skipButton: { paddingHorizontal: 64, paddingVertical: 14, borderRadius: 12 },
   skipButtonText: { fontSize: 16, fontWeight: '600' },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  addFirstExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  addFirstExerciseText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
