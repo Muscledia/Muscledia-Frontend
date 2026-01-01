@@ -44,6 +44,8 @@ export default function ProfileScreen() {
   const [monthCountLoading, setMonthCountLoading] = useState<boolean>(false);
   const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
   const [streakLoading, setStreakLoading] = useState<boolean>(false);
+  const [selectedDateWorkoutCount, setSelectedDateWorkoutCount] = useState<number>(0);
+  const [selectedDateLoading, setSelectedDateLoading] = useState<boolean>(false);
 
   const formatDate = (d: Date) => {
     const y = d.getFullYear();
@@ -66,6 +68,11 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadStreakInfo();
   }, []);
+
+  // Load workout count for selected date
+  useEffect(() => {
+    loadSelectedDateWorkoutCount();
+  }, [selectedDate]);
 
   const loadMonthCalendarData = async (date: Date) => {
     try {
@@ -132,6 +139,25 @@ export default function ProfileScreen() {
       setStreakInfo(null);
     } finally {
       setStreakLoading(false);
+    }
+  };
+
+  const loadSelectedDateWorkoutCount = async () => {
+    try {
+      setSelectedDateLoading(true);
+      const response = await CalendarService.getDateWorkoutCount(selectedDate);
+      
+      if (response.success && response.data !== undefined) {
+        setSelectedDateWorkoutCount(response.data);
+      } else {
+        console.error('Failed to load selected date workout count:', response.message);
+        setSelectedDateWorkoutCount(0);
+      }
+    } catch (error) {
+      console.error('Error loading selected date workout count:', error);
+      setSelectedDateWorkoutCount(0);
+    } finally {
+      setSelectedDateLoading(false);
     }
   };
 
@@ -298,6 +324,23 @@ export default function ProfileScreen() {
             <View style={[styles.legendSquare, { borderColor: theme.accent }]} />
             <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Today</Text>
           </View>
+        </View>
+      </View>
+
+      {/* Selected Date Workout Count */}
+      <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Selected Date</Text>
+        <View style={styles.infoRow}>
+          <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Selected date:</Text>
+          <Text style={[styles.infoValue, { color: theme.text }]}>
+            {new Date(selectedDate).toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Number of workouts:</Text>
+          <Text style={[styles.infoValue, { color: theme.text }]}>
+            {selectedDateLoading ? '...' : selectedDateWorkoutCount}
+          </Text>
         </View>
       </View>
 
