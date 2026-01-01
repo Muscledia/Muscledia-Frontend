@@ -27,10 +27,15 @@ import {
   Pause,
   Settings,
   Award,
+  Trophy,
+  Flame,
+  TrendingUp,
+  Star,
 } from 'lucide-react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { WorkoutService, WorkoutSession, WorkoutExercise, WorkoutSet, SetType } from '@/services/WorkoutService';
 import { useHaptics } from '@/hooks/useHaptics';
+import WorkoutAnalytics from '@/components/WorkoutAnalytics';
 
 interface LocalSetData {
   weightKg: string;
@@ -49,6 +54,8 @@ export default function WorkoutSessionScreen() {
   const [loading, setLoading] = useState(true);
   const [savingSet, setSavingSet] = useState(false);
   const [workoutDuration, setWorkoutDuration] = useState('0s');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [completedWorkout, setCompletedWorkout] = useState<WorkoutSession | null>(null);
 
   const [localSetValues, setLocalSetValues] = useState<Record<string, LocalSetData>>({});
   const [localSetTypes, setLocalSetTypes] = useState<Record<string, string>>({});
@@ -547,8 +554,24 @@ export default function WorkoutSessionScreen() {
       { text: 'Finish', onPress: async () => {
           try {
             const response = await WorkoutService.completeWorkout(workout.id);
-            if (response.success) Alert.alert('Success', 'Workout completed!', [{ text: 'OK', onPress: () => router.back() }]);
-          } catch (error) { console.error('Failed to complete:', error); Alert.alert('Error', 'Failed to complete workout'); }
+            if (response.success && response.data) {
+              // Refresh to get updated workout with metrics
+              const updatedResponse = await WorkoutService.getWorkoutSession(workout.id);
+              if (updatedResponse.success && updatedResponse.data) {
+                setCompletedWorkout(updatedResponse.data);
+                setShowAnalytics(true);
+              } else {
+                // Fallback to response data if refresh fails
+                setCompletedWorkout(response.data);
+                setShowAnalytics(true);
+              }
+            } else {
+              Alert.alert('Error', response.message || 'Failed to complete workout');
+            }
+          } catch (error) {
+            console.error('Failed to complete:', error);
+            Alert.alert('Error', 'Failed to complete workout');
+          }
         }},
     ]);
   };
@@ -795,6 +818,16 @@ export default function WorkoutSessionScreen() {
           </View>
         </Modal>
       )}
+
+      {/* Workout Analytics Modal */}
+      <WorkoutAnalytics
+        visible={showAnalytics}
+        workout={completedWorkout}
+        onClose={() => {
+          setShowAnalytics(false);
+          router.back();
+        }}
+      />
     </View>
   );
 }
@@ -870,6 +903,17 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     if (!set.personalRecords || set.personalRecords.length === 0) return false;
     if (type) return set.personalRecords.includes(type);
     return true;
+  };
+
+  const getPRIcons = (prTypes: string[] | null) => {
+    if (!prTypes || prTypes.length === 0) return [];
+    const iconMap: Record<string, { icon: any; emoji: string }> = {
+      MAX_WEIGHT: { icon: Trophy, emoji: '💪' },
+      MAX_REPS: { icon: Flame, emoji: '🔥' },
+      MAX_VOLUME: { icon: TrendingUp, emoji: '📊' },
+      ESTIMATED_1RM: { icon: Star, emoji: '⭐' },
+    };
+    return prTypes.map(type => iconMap[type] || { icon: Award, emoji: '🏆' });
   };
 
   let normalSetCount = 0;
@@ -1042,10 +1086,16 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
                     <Text style={[styles.setText, { color: set.displayColor === theme.text && isCompleted ? theme.accent : set.displayColor }]}>
                       {set.displayLabel}
                     </Text>
-                    {isPR && (
-                      <View style={[styles.prBadge, { backgroundColor: '#FFD700' }]}>
-                        <Award size={10} color="#000" />
-                        <Text style={styles.prBadgeText}>PR</Text>
+                    {isPR && set.personalRecords && set.personalRecords.length > 0 && (
+                      <View style={styles.prBadgesContainer}>
+                        {getPRIcons(set.personalRecords).map((prIcon, idx) => {
+                          const IconComponent = prIcon.icon;
+                          return (
+                            <View key={idx} style={[styles.prBadge, { backgroundColor: '#FFD700' }]}>
+                              <IconComponent size={10} color="#000" />
+                            </View>
+                          );
+                        })}
                       </View>
                     )}
                   </View>
@@ -1139,7 +1189,8 @@ const styles = StyleSheet.create({
   setRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderRadius: 6, marginBottom: 4 },
   setCol: { width: 40, alignItems: 'center' },
   setNumberContainer: { alignItems: 'center', gap: 2 },
-  prBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
+  prBadgesContainer: { flexDirection: 'row', gap: 2, marginTop: 2 },
+  prBadge: { width: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   prBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#000' },
   prevCol: { flex: 1.2, paddingHorizontal: 4 },
   kgCol: { flex: 0.8, paddingHorizontal: 4 },

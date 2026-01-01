@@ -14,7 +14,7 @@ Show analytics screen/modal automatically when workout status changes to COMPLET
 
 User can access analytics from workout detail screen
 
-Analytics visible for both in-progress and completed workouts
+Analytics visible for completed workouts
 2. Metrics to Display
 Core Metrics:
 
@@ -173,4 +173,110 @@ interface WorkoutSet {
   weightKg: number;
   reps: number;
   personalRecords: string[] | null;  // ["MAX_WEIGHT", "MAX_VOLUME", etc.]
+}
+
+
+
+Endpoint: /api/workouts/{workoutId}
+Response:
+{
+  "id": "6956e5723267682530bff154",
+  "status": "COMPLETED",
+  "exercises": [
+    {
+      "equipment": "barbell",
+      "sets": [
+        {
+          "reps": 8,
+          "rpe": null,
+          "completed": true,
+          "notes": null,
+          "volume": 320,
+          "setNumber": 1,
+          "weightKg": 40,
+          "durationSeconds": null,
+          "distanceMeters": null,
+          "restSeconds": null,
+          "setType": "NORMAL",
+          "startedAt": "2026-01-01T21:23:11.733",
+          "completedAt": "2026-01-01T21:23:11.733",
+          "personalRecords": null
+        },
+        {
+          "reps": 9,
+          "rpe": null,
+          "completed": true,
+          "notes": null,
+          "volume": 450,
+          "setNumber": 2,
+          "weightKg": 50,
+          "durationSeconds": null,
+          "distanceMeters": null,
+          "restSeconds": null,
+          "setType": "NORMAL",
+          "startedAt": "2026-01-01T21:23:29.685",
+          "completedAt": "2026-01-01T21:23:29.685",
+          "personalRecords": [
+            "MAX_REPS",
+            "MAX_WEIGHT",
+            "MAX_VOLUME",
+            "ESTIMATED_1RM"
+          ]
+        },
+        {
+          "reps": 9,
+          "rpe": null,
+          "completed": true,
+          "notes": null,
+          "volume": 450,
+          "setNumber": 3,
+          "weightKg": 50,
+          "durationSeconds": null,
+          "distanceMeters": null,
+          "restSeconds": null,
+          "setType": "NORMAL",
+          "startedAt": "2026-01-01T21:23:32.010",
+          "completedAt": "2026-01-01T21:23:32.010",
+          "personalRecords": null
+        }
+      ],
+      "notes": "The barbell bench press is a classic compound exercise that primarily targets the pectoral muscles, while also engaging the triceps and shoulders. It is performed by lying on a bench and pressing a barbell up and down in a controlled manner.",
+      "exerciseId": "693dc4e1e120db3474a6e47d",
+      "exerciseName": "barbell bench press",
+      "exerciseOrder": 1,
+      "exerciseCategory": "STRENGTH",
+      "primaryMuscleGroup": "pectorals",
+      "secondaryMuscleGroups": [],
+      "startedAt": null,
+      "completedAt": null,
+      "totalVolume": 1220,
+      "totalReps": 26,
+      "maxWeight": 50,
+      "averageRpe": 0,
+      "completedSets": 3
+    }
+  ],
+  "metrics": {
+    "totalVolume": 1220,
+    "totalSets": 3,
+    "totalReps": 26,
+    "caloriesBurned": 12,
+    "workedMuscleGroups": [
+      "pectorals"
+    ],
+    "personalRecordsAchieved": 4
+  },
+  "context": {
+    "location": "Gym",
+    "notes": "",
+    "rating": null,
+    "tags": []
+  },
+  "userId": 5344340181227182,
+  "workoutName": "Quick Workout",
+  "workoutPlanId": null,
+  "workoutType": "STRENGTH",
+  "startedAt": "2026-01-01T21:21:54.969",
+  "completedAt": "2026-01-01T21:23:41.563",
+  "durationMinutes": 1
 }

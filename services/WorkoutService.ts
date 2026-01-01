@@ -62,7 +62,7 @@ export interface WorkoutSession {
     totalReps: number;
     caloriesBurned: number;
     workedMuscleGroups: string[];
-    personalRecordsAchieved: any | null;
+    personalRecordsAchieved: number; // Count of total PRs
   };
   context: {
     location: string | null;

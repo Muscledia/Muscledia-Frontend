@@ -125,7 +125,7 @@ export default function EditRoutineScreen() {
 
     // Navigate to workout plan selection screen
     router.push({
-      pathname: '/workout-plans/browse',
+      pathname: '/exercises/add-exercise',
       params: {
         selectMode: 'true',
         routineId: id,
