@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import challengeService from '@/services/challengeService';
 import { UserChallenge } from '@/types';
 
@@ -22,5 +22,23 @@ export const useActiveChallenges = () => {
     refetchInterval: 2 * 60 * 1000, // Frequent updates for active progress
     staleTime: 30 * 1000,
     retry: 2,
+  });
+};
+
+export const useUpdateChallengeProgress = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ challengeId, progress }: { challengeId: string; progress: number }) => {
+      // Note: If there's a specific endpoint for updating progress, add it to challengeService
+      // For now, this will just invalidate queries to refresh data
+      // Progress might be tracked automatically by the backend when workouts are logged
+      return Promise.resolve({ success: true });
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh challenge data
+      queryClient.invalidateQueries({ queryKey: ['challenges', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+    },
   });
 };

@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
   calendarLegend: {
     flexDirection: 'row',
     gap: 16,
-    marginTop: 6,
+    marginTop: -70,
     paddingHorizontal: 4,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },

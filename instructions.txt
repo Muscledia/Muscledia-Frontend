@@ -1,0 +1,176 @@
+Feature Request: Workout Completion Analytics Display
+Overview
+When a user completes a workout, display comprehensive analytics including performance metrics, personal records achieved, and workout summary.
+
+User Story
+As a user
+I want to see my workout performance metrics immediately after completing a workout
+So that I can track my progress and celebrate achievements
+
+Acceptance Criteria
+1. Analytics Display Trigger
+
+Show analytics screen/modal automatically when workout status changes to COMPLETED
+
+User can access analytics from workout detail screen
+
+Analytics visible for both in-progress and completed workouts
+2. Metrics to Display
+Core Metrics:
+
+
+Total Volume (kg) - metrics.totalVolume
+
+Total Sets - metrics.totalSets
+
+Total Reps - metrics.totalReps
+
+Duration (minutes) - durationMinutes
+
+Calories Burned - metrics.caloriesBurned
+Personal Records:
+
+
+Total PRs Achieved - metrics.personalRecordsAchieved (count)
+
+PR Badges on Individual Sets - exercises[].sets[].personalRecords[]
+
+Visual highlight for sets with PRs (e.g., badge, color, icon)
+Muscle Groups:
+
+
+Worked Muscle Groups - metrics.workedMuscleGroups[]
+3. Visual Design
+PR Display Requirements:
+
+
+Show total PR count prominently (e.g., "🏆 3 Personal Records!")
+
+Display PR badges on individual sets with icons:
+MAX_WEIGHT - 💪
+MAX_REPS - 🔥
+MAX_VOLUME - 📊
+ESTIMATED_1RM - ⭐
+
+Use celebratory colors/animations for PRs
+Layout Example:
+
+┌─────────────────────────────────┐
+│  Workout Complete! 🎉          │
+├─────────────────────────────────┤
+│  Duration: 25 minutes           │
+│  Total Volume: 2,075 kg         │
+│  Total Sets: 3 | Reps: 25       │
+│                                 │
+│  🏆 3 Personal Records!         │
+│  ├─ MAX_WEIGHT: 95kg            │
+│  ├─ MAX_VOLUME: 900kg           │
+│  └─ ESTIMATED_1RM: 120kg        │
+│                                 │
+│  💪 Muscles Worked              │
+│  Biceps, Forearms               │
+└─────────────────────────────────┘
+4. Technical Implementation
+API Response Structure:
+
+{
+  "id": "6945da116b21092cf2bcbfbc",
+  "status": "COMPLETED",
+  "durationMinutes": 25,
+  "metrics": {
+    "totalVolume": 2075,
+    "totalSets": 3,
+    "totalReps": 25,
+    "caloriesBurned": 120,
+    "workedMuscleGroups": ["Biceps", "Forearms"],
+    "personalRecordsAchieved": 3  // ⬅️ Total count
+  },
+  "exercises": [
+    {
+      "sets": [
+        {
+          "setNumber": 1,
+          "weightKg": 70,
+          "reps": 10,
+          "personalRecords": null  // No PRs
+        },
+        {
+          "setNumber": 2,
+          "weightKg": 90,
+          "reps": 10,
+          "personalRecords": ["MAX_VOLUME", "ESTIMATED_1RM"]  // 2 PRs
+        },
+        {
+          "setNumber": 3,
+          "weightKg": 95,
+          "reps": 5,
+          "personalRecords": ["MAX_WEIGHT"]  // 1 PR
+        }
+      ]
+    }
+  ]
+}
+Endpoints:
+
+GET /api/workouts/{workoutId} - Fetch workout details with metrics
+PUT /api/workouts/{workoutId}/complete - Complete workout (triggers analytics)
+5. User Experience
+Flow:
+
+User clicks "Finish Workout"
+System processes completion
+Analytics screen appears with:
+Confetti animation (if PRs achieved)
+Metrics summary
+PR highlights
+Share/Save options
+User can:
+View detailed breakdown
+Share on social media
+Return to workout list
+Edge Cases:
+
+
+Handle zero PRs gracefully (no PRs section shown)
+
+Display "In Progress" metrics for active workouts
+
+Show partial metrics if workout incomplete
+Design Reference
+PR Badge Examples:
+
+Set with MAX_WEIGHT: 💪 Set 3: 95kg × 5 (MAX WEIGHT!)
+Set with multiple PRs: 🏆 Set 2: 90kg × 10 (VOLUME • 1RM)
+Color Scheme:
+
+PR Badge Background: Gold/Yellow (#FFD700)
+PR Text: Dark text on light background
+Confetti colors: Multi-color celebration
+API Documentation
+Workout Response:
+
+interface WorkoutResponse {
+  id: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  durationMinutes: number | null;
+  metrics: {
+    totalVolume: number;
+    totalSets: number;
+    totalReps: number;
+    caloriesBurned: number;
+    workedMuscleGroups: string[];
+    personalRecordsAchieved: number;  // Count of total PRs
+  };
+  exercises: Exercise[];
+}
+
+interface Exercise {
+  sets: WorkoutSet[];
+}
+
+interface WorkoutSet {
+  setNumber: number;
+  weightKg: number;
+  reps: number;
+  personalRecords: string[] | null;  // ["MAX_WEIGHT", "MAX_VOLUME", etc.]
+}

@@ -82,24 +82,25 @@ export default function ChallengesScreen() {
         return activeChallenges
           .filter(a => a.status === 'ACTIVE')
           .map(a => {
+            // Find the challenge type by looking up in daily/weekly challenges
+            const foundChallenge = [...dailyChallenges, ...weeklyChallenges].find(
+              c => c.id === a.challengeId
+            );
+            const challengeType = foundChallenge?.type || 'DAILY'; // Default to DAILY if not found
+            
             // Construct a Challenge object from ActiveChallenge
-            // Note: This is partial as ActiveChallenge doesn't have all details
             const challenge: Challenge = {
               id: a.challengeId,
               name: a.challengeName,
-              description: 'Complete the objective to earn rewards!', // Placeholder
-              type: a.challengeType,
-              objective: `Target: ${a.targetValue} ${a.progressUnit}`,
+              description: foundChallenge?.description || 'Complete the objective to earn rewards!',
+              type: challengeType,
+              objectiveType: foundChallenge?.objectiveType || 'WORKOUT_COUNT',
               targetValue: a.targetValue,
-              rewardPoints: a.pointsEarned || 0, // Points EARNED or REWARD? Using earned/potential
-              difficulty: 'INTERMEDIATE', // Placeholder
-              autoEnroll: false,
+              rewardPoints: foundChallenge?.rewardPoints || a.pointsEarned || 0,
+              difficultyLevel: foundChallenge?.difficultyLevel || 'INTERMEDIATE',
+              progressUnit: a.progressUnit,
               startDate: a.startedAt,
               endDate: a.expiresAt,
-              progressUnit: a.progressUnit,
-              formattedTarget: `${a.targetValue} ${a.progressUnit}`,
-              estimatedDuration: a.timeRemaining,
-              alreadyStarted: true,
               active: true,
             };
             return {
