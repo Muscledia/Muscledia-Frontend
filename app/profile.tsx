@@ -25,6 +25,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CalendarService, CalendarData } from '@/services/CalendarService';
 import { GamificationService, StreakInfo } from '@/services/gamificationService';
+import { GamificationProfile } from '@/types';
+import CharacterAvatar from '@/components/CharacterAvatar';
 
 export default function ProfileScreen() {
   const { character } = useCharacter();
@@ -46,6 +48,8 @@ export default function ProfileScreen() {
   const [streakLoading, setStreakLoading] = useState<boolean>(false);
   const [selectedDateWorkoutCount, setSelectedDateWorkoutCount] = useState<number>(0);
   const [selectedDateLoading, setSelectedDateLoading] = useState<boolean>(false);
+  const [profile, setProfile] = useState<GamificationProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState<boolean>(true);
 
   const formatDate = (d: Date) => {
     const y = d.getFullYear();
@@ -73,6 +77,23 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadSelectedDateWorkoutCount();
   }, [selectedDate]);
+
+  // Load gamification profile
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setProfileLoading(true);
+      const data = await GamificationService.getProfile();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const loadMonthCalendarData = async (date: Date) => {
     try {
@@ -222,6 +243,32 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Profile</Text>
         <View style={{ width: 24 }} />
+      </View>
+
+      {/* User Profile Section */}
+      <View style={[styles.profileHeader, { backgroundColor: theme.surface }]}>
+        <CharacterAvatar 
+          level={profile?.level || 1} 
+          size="large" 
+          initials={profile?.username?.substring(0, 2) || user?.username?.substring(0, 2) || 'MD'} 
+          gender="male" 
+          streak={0} 
+        />
+        <View style={styles.profileDetails}>
+          <Text style={[styles.usernameText, { color: theme.text }]}>
+            {profileLoading ? 'Loading...' : (profile?.username || user?.username || 'User')}
+          </Text>
+          <View style={[styles.levelBadgeContainer, { backgroundColor: theme.accent + '20' }]}>
+            <Text style={[styles.levelText, { color: theme.accent }]}>
+              Level {profileLoading ? '...' : (profile?.level || 1)}
+            </Text>
+          </View>
+          {profile && (
+            <Text style={[styles.pointsText, { color: theme.textSecondary }]}>
+              {profile.points} Points
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Stats Section */}
@@ -812,5 +859,36 @@ const styles = StyleSheet.create({
   },
   lastWorkoutText: {
     fontSize: 12,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
+    gap: 20,
+  },
+  profileDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  usernameText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  levelBadgeContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  levelText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  pointsText: {
+    fontSize: 14,
   },
 }); 
