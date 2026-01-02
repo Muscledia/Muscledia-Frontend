@@ -44,12 +44,12 @@ export function Podium({ topThree, theme }: PodiumProps) {
             <View key={index} style={styles.podiumItem}>
               {entry ? (
                 <>
+                  <Text style={[styles.displayName, { color: theme.text }]} numberOfLines={1}>
+                    {entry.displayName}
+                  </Text>
                   <View style={[styles.avatarContainer, { height: getPodiumHeight(actualRank) }]}>
                     <LinearGradient
-                      colors={isFirst 
-                        ? [theme.accent, theme.accentSecondary]
-                        : [theme.surface, theme.surfaceLight]
-                      }
+                      colors={[theme.surface, theme.surfaceLight]}
                       style={styles.avatar}
                     >
                       <RankDisplay rank={actualRank!} theme={theme} size="large" />
@@ -97,6 +97,13 @@ const styles = StyleSheet.create({
   podiumItem: {
     flex: 1,
     alignItems: 'center',
+  },
+  displayName: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
   avatarContainer: {
     width: '100%',
