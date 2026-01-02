@@ -18,7 +18,7 @@ import { useCharacter } from '@/hooks/useCharacter';
 import { useAuth } from '@/hooks/useAuth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
-import { ArrowLeft, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Flame, TrendingUp, Activity } from 'lucide-react-native';
+import { ArrowLeft, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Flame, TrendingUp, Activity, Trophy } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
  
 import { useNotifications } from '@/hooks/useNotifications';
@@ -274,6 +274,22 @@ export default function ProfileScreen() {
       {/* Stats Section */}
       <View style={[styles.statsContainer, { backgroundColor: theme.surface }]}>
         <View style={styles.statsRow}>
+          <TouchableOpacity 
+            style={styles.statCard} 
+            activeOpacity={0.7}
+            onPress={() => {
+              impact('selection');
+              // Navigate to PR screen
+              router.push('/personal-records');
+            }}
+          >
+            <Trophy size={20} color={theme.accent} />
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              PRs
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Records</Text>
+          </TouchableOpacity>
+
           <View style={styles.statCard}>
             <Activity size={20} color={theme.accent} />
             <Text style={[styles.statValue, { color: theme.text }]}>
@@ -281,23 +297,15 @@ export default function ProfileScreen() {
             </Text>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>This Month</Text>
           </View>
+
           {streakInfo && (
-            <>
-              <View style={styles.statCard}>
-                <Flame size={20} color={theme.accent} />
-                <Text style={[styles.statValue, { color: theme.text }]}>
-                  {streakInfo.weekly.currentStreak}
-                </Text>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Week Streak</Text>
-              </View>
-              <View style={styles.statCard}>
-                <TrendingUp size={20} color={theme.accent} />
-                <Text style={[styles.statValue, { color: theme.text }]}>
-                  {streakInfo.monthly.currentStreak}
-                </Text>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Month Streak</Text>
-              </View>
-            </>
+            <View style={styles.statCard}>
+              <Flame size={20} color={theme.accent} />
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {streakInfo.weekly.currentStreak}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Week Streak</Text>
+            </View>
           )}
         </View>
       </View>
