@@ -30,9 +30,12 @@ export const ActiveChallengeCard: React.FC<ActiveChallengeCardProps> = ({
   // Sync internal hook state with parent state whenever progress changes
   useEffect(() => {
     if (progress !== initialProgress) {
+        // Prevent infinite loop by checking if progress actually changed significantly
+        // or ensure onUpdate is stable
         onUpdate(challenge.id, progress);
     }
-  }, [progress, challenge.id, onUpdate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress, challenge.id]);
 
   const handleManualUpdate = () => {
     // Simulate adding 5 reps/units

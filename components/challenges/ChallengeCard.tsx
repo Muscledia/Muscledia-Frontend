@@ -1,343 +1,194 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, useColorScheme } from 'react-native';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-  interpolate,
-  Extrapolation,
-  withTiming
-} from 'react-native-reanimated';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Challenge } from '@/types';
-import { Colors, getThemeColors } from '@/constants/Colors';
-import { Dumbbell, Heart, Brain, Zap, Activity, Clock, Coins, Trophy, ChevronsUp, ChevronsDown, Calendar } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.75;
-const CARD_HEIGHT = 380;
 
 interface ChallengeCardProps {
   challenge: Challenge;
-  onAccept: (id: string) => void;
-  onDismiss: (id: string) => void;
+  onStart: (challengeId: string) => void;
+  isLoading?: boolean;
 }
 
-const getIconForType = (type: string, color: string) => {
-  // Map backend types if known, otherwise default or generic
-  const normalizedType = type?.toUpperCase();
-  if (normalizedType?.includes('STRENGTH')) return <Dumbbell size={24} color={color} />;
-  if (normalizedType?.includes('CARDIO')) return <Heart size={24} color={color} />;
-  if (normalizedType?.includes('SKILL')) return <Zap size={24} color={color} />;
-  if (normalizedType?.includes('FLEXIBILITY')) return <Activity size={24} color={color} />;
-  if (normalizedType?.includes('MINDFULNESS')) return <Brain size={24} color={color} />;
-  if (normalizedType === 'DAILY') return <Calendar size={24} color={color} />;
-  
-  return <Trophy size={24} color={color} />;
-};
+const ChallengeCard: React.FC<ChallengeCardProps> = ({ 
+  challenge, 
+  onStart, 
+  isLoading = false 
+}) => {
+  const objectiveIcon = getObjectiveIcon(challenge.objectiveType);
+  const difficultyStyle = getDifficultyStyle(challenge.difficultyLevel);
 
-const mapDifficulty = (difficulty: string) => {
-  const d = difficulty?.toUpperCase();
-  if (d === 'BEGINNER') return 'Easy';
-  if (d === 'INTERMEDIATE') return 'Medium';
-  if (d === 'ADVANCED') return 'Hard';
-  return difficulty || 'Medium';
-};
-
-const DifficultyIndicator = ({ difficulty }: { difficulty: string }) => {
-  const displayDifficulty = mapDifficulty(difficulty);
-  const dots = displayDifficulty === 'Easy' ? 1 : displayDifficulty === 'Medium' ? 2 : 3;
-  const color = displayDifficulty === 'Easy' ? '#4CAF50' : displayDifficulty === 'Medium' ? '#FFD700' : '#F44336';
-  
   return (
-    <View style={styles.difficultyContainer}>
-      {[...Array(3)].map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.difficultyDot,
-            { backgroundColor: i < dots ? color : '#333' }
-          ]}
-        />
-      ))}
-      <Text style={[styles.difficultyText, { color }]}>{displayDifficulty}</Text>
+    <View style={styles.card}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.icon}>{objectiveIcon}</Text>
+        <View style={styles.info}>
+          <Text style={styles.name}>{challenge.name}</Text>
+          <Text style={styles.description}>{challenge.description}</Text>
+        </View>
+        <View style={[styles.difficultyBadge, difficultyStyle]}>
+          <Text style={styles.difficultyText}>
+            {challenge.difficultyLevel}
+          </Text>
+        </View>
+      </View>
+
+      {/* Progress Section */}
+      <View style={styles.progressSection}>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: '0%' }]} />
+        </View>
+        <Text style={styles.progressText}>
+          0/{challenge.targetValue} {challenge.progressUnit}
+        </Text>
+      </View>
+
+      {/* Reward Section */}
+      <View style={styles.rewardSection}>
+        <Text style={styles.rewardText}>
+          🏆 {challenge.rewardPoints} XP
+        </Text>
+      </View>
+
+      {/* Start Button */}
+      <TouchableOpacity 
+        style={styles.startButton}
+        onPress={() => onStart(challenge.id)}
+        disabled={isLoading}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.gradientButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.startButtonText}>START CHALLENGE</Text>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 };
 
-export const ChallengeCard = ({ challenge, onAccept, onDismiss }: ChallengeCardProps) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const theme = getThemeColors(isDark);
-  
-  const translateY = useSharedValue(0);
-  const startY = useSharedValue(0);
+const getObjectiveIcon = (type: string): string => {
+  const icons: { [key: string]: string } = {
+    EXERCISES: '🏋️',
+    REPS: '🔢',
+    DURATION: '⏱️',
+    TIME_BASED: '📅',
+    VOLUME_BASED: '💪',
+    CALORIES: '🔥',
+    PERSONAL_RECORDS: '🏆',
+    ACHIEVEMENT_BASED: '⭐',
+  };
+  return icons[type] || '🎯';
+};
 
-  const gesture = Gesture.Pan()
-    .onStart(() => {
-      startY.value = translateY.value;
-    })
-    .onUpdate((event) => {
-      translateY.value = startY.value + event.translationY;
-    })
-    .onEnd((event) => {
-      if (event.translationY < -100) {
-        // Swipe Up (Accept)
-        runOnJS(onAccept)(challenge.id);
-        translateY.value = withTiming(-500);
-      } else if (event.translationY > 100) {
-        // Swipe Down (Dismiss)
-        runOnJS(onDismiss)(challenge.id);
-        translateY.value = withTiming(500);
-      } else {
-        translateY.value = withSpring(0);
-      }
-    });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateY.value,
-      [-200, 0, 200],
-      [0.8, 1, 0.8],
-      Extrapolation.CLAMP
-    );
-
-    const scale = interpolate(
-      translateY.value,
-      [-200, 0, 200],
-      [0.9, 1, 0.9],
-      Extrapolation.CLAMP
-    );
-
-    return {
-      transform: [{ translateY: translateY.value }, { scale }],
-      opacity,
-    };
-  });
-
-  // Action Indicators
-  const acceptOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(translateY.value, [-150, -50], [1, 0], Extrapolation.CLAMP),
-  }));
-
-  const dismissOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(translateY.value, [50, 150], [0, 1], Extrapolation.CLAMP),
-  }));
-
-  return (
-    <View style={styles.container}>
-      <GestureDetector gesture={gesture}>
-        <Animated.View style={[styles.cardContainer, animatedStyle]}>
-          <LinearGradient
-            colors={isDark ? ['#2A2A2A', '#1C1C1C'] : ['#FFFFFF', '#F0F0F0']}
-            style={[styles.card, { borderColor: theme.border }]}
-          >
-            {/* Action Overlays */}
-            <Animated.View style={[styles.overlay, styles.acceptOverlay, acceptOpacity]}>
-              <View style={styles.actionContent}>
-                <ChevronsUp size={40} color="#4CAF50" />
-                <Text style={styles.acceptText}>ACCEPT</Text>
-              </View>
-            </Animated.View>
-            
-            <Animated.View style={[styles.overlay, styles.dismissOverlay, dismissOpacity]}>
-               <View style={styles.actionContent}>
-                <ChevronsDown size={40} color="#F44336" />
-                <Text style={styles.dismissText}>DISMISS</Text>
-              </View>
-            </Animated.View>
-
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.surfaceLight }]}>
-                {getIconForType(challenge.type, theme.accent)}
-              </View>
-              <DifficultyIndicator difficulty={challenge.difficulty} />
-            </View>
-
-            {/* Content */}
-            <View style={styles.content}>
-              <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
-                {challenge.name}
-              </Text>
-              <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={3}>
-                {challenge.description}
-              </Text>
-            </View>
-
-            {/* Footer */}
-            <View style={[styles.footer, { borderTopColor: theme.border }]}>
-              <View style={styles.rewardContainer}>
-                <View style={styles.rewardItem}>
-                  <Trophy size={16} color={theme.xp} />
-                  <Text style={[styles.rewardText, { color: theme.xp }]}>{challenge.rewardPoints} XP</Text>
-                </View>
-                {/* 
-                <View style={styles.rewardItem}>
-                  <Coins size={16} color={theme.accent} />
-                  <Text style={[styles.rewardText, { color: theme.accent }]}>{0}</Text>
-                </View>
-                */}
-              </View>
-              <View style={styles.timeContainer}>
-                <Clock size={16} color={theme.textSecondary} />
-                <Text style={[styles.timeText, { color: theme.textSecondary }]}>{challenge.estimatedDuration || 'N/A'}</Text>
-              </View>
-            </View>
-            
-             <View style={styles.swipeHint}>
-                <Text style={[styles.swipeText, { color: theme.textMuted }]}>Swipe up to accept</Text>
-             </View>
-
-          </LinearGradient>
-        </Animated.View>
-      </GestureDetector>
-    </View>
-  );
+const getDifficultyStyle = (difficulty: string) => {
+  const styles: { [key: string]: object } = {
+    BEGINNER: { backgroundColor: '#10b981' },
+    INTERMEDIATE: { backgroundColor: '#f59e0b' },
+    ADVANCED: { backgroundColor: '#ef4444' },
+    ELITE: { backgroundColor: '#8b5cf6' },
+  };
+  return styles[difficulty] || { backgroundColor: '#6b7280' };
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginRight: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardContainer: {
-    width: '100%',
-    height: '100%',
-  },
   card: {
-    flex: 1,
-    borderRadius: 24,
-    padding: 20,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    width: 300,
     borderWidth: 1,
+    borderColor: '#334155',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    justifyContent: 'space-between',
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  icon: {
+    fontSize: 32,
+    marginRight: 12,
   },
-  difficultyContainer: {
-    alignItems: 'flex-end',
+  info: {
+    flex: 1,
   },
-  difficultyDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginHorizontal: 1,
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  description: {
+    fontSize: 14,
+    color: '#94a3b8',
+    lineHeight: 18,
+  },
+  difficultyBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   difficultyText: {
     fontSize: 10,
     fontWeight: 'bold',
-    marginTop: 4,
+    color: '#fff',
     textTransform: 'uppercase',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  progressSection: {
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
+  progressBar: {
+    height: 8,
+    backgroundColor: '#334155',
+    borderRadius: 4,
+    overflow: 'hidden',
     marginBottom: 8,
-    lineHeight: 28,
   },
-  description: {
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#667eea',
+  },
+  progressText: {
     fontSize: 14,
-    lineHeight: 20,
+    color: '#94a3b8',
+    textAlign: 'right',
+    fontWeight: '600',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 16,
-    borderTopWidth: 1,
-  },
-  rewardContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  rewardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  rewardSection: {
+    marginBottom: 12,
   },
   rewardText: {
     fontSize: 14,
+    color: '#fbbf24',
+    fontWeight: '600',
+  },
+  startButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  startButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeText: {
-    fontSize: 12,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 24,
-  },
-  acceptOverlay: {
-    backgroundColor: 'rgba(76, 175, 80, 0.9)',
-    bottom: '50%', 
-    top: 0, 
-    height: '100%',
-  },
-  dismissOverlay: {
-    backgroundColor: 'rgba(244, 67, 54, 0.9)',
-    top: 0,
-    height: '100%',
-  },
-  actionContent: {
-    alignItems: 'center',
-    transform: [{ scale: 1.2 }],
-  },
-  acceptText: {
-    color: '#FFF',
-    fontWeight: '900',
-    fontSize: 24,
-    marginTop: 8,
-    letterSpacing: 2,
-  },
-  dismissText: {
-    color: '#FFF',
-    fontWeight: '900',
-    fontSize: 24,
-    marginTop: 8,
-    letterSpacing: 2,
-  },
-  swipeHint: {
-      position: 'absolute',
-      bottom: 60,
-      width: '100%',
-      alignItems: 'center',
-      opacity: 0.6,
-  },
-  swipeText: {
-      fontSize: 10,
-      textTransform: 'uppercase',
-  }
 });
+
+export default ChallengeCard;
