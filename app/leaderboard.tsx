@@ -13,7 +13,7 @@ import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardList } from '@/components/leaderboard';
 import { useAuth } from '@/hooks/useAuth';
 import { LeaderboardType } from '@/types';
-import { ArrowLeft, Trophy } from 'lucide-react-native';
+import { ArrowLeft, Trophy, Flame } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -124,9 +124,12 @@ export default function LeaderboardScreen() {
             </View>
             {currentUserEntry.currentStreak !== undefined && (
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: theme.streak }]}>
-                  🔥 {currentUserEntry.currentStreak}
-                </Text>
+                <View style={styles.streakContainer}>
+                  <Flame size={18} color={theme.streak} />
+                  <Text style={[styles.statValue, { color: theme.streak, marginLeft: 4 }]}>
+                    {currentUserEntry.currentStreak}
+                  </Text>
+                </View>
                 <Text style={[styles.statLabel, { color: theme.textMuted }]}>Streak</Text>
               </View>
             )}
@@ -222,6 +225,11 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   statValue: {
     fontSize: 18,

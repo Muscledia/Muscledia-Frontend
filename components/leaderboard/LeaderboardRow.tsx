@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { RankDisplay } from './RankDisplay';
 import { LeaderboardEntry } from '@/types';
+import { Flame, Dumbbell, Award } from 'lucide-react-native';
 
 interface LeaderboardRowProps {
   entry: LeaderboardEntry;
@@ -28,23 +29,32 @@ export function LeaderboardRow({ entry, isCurrentUser, theme, onPress }: Leaderb
       
       <View style={styles.userInfo}>
         <Text style={[styles.userId, { color: theme.text }]} numberOfLines={1}>
-          User {entry.userId}
+          {entry.displayName}
         </Text>
         <View style={styles.statsRow}>
           <Text style={[styles.statText, { color: theme.textSecondary }]}>
             Lv {entry.level}
           </Text>
           {entry.currentStreak !== undefined && (
-            <Text style={[styles.statText, { color: theme.streak }]}>
-              🔥 {entry.currentStreak}
-            </Text>
+            <View style={styles.statItem}>
+              <Flame size={14} color={theme.streak} />
+              <Text style={[styles.statText, { color: theme.streak, marginLeft: 4 }]}>
+                {entry.currentStreak}
+              </Text>
+            </View>
           )}
-          <Text style={[styles.statText, { color: theme.textSecondary }]}>
-            🏋️ {entry.totalWorkouts}
-          </Text>
-          <Text style={[styles.statText, { color: theme.textSecondary }]}>
-            🏅 {entry.totalBadges}
-          </Text>
+          <View style={styles.statItem}>
+            <Dumbbell size={14} color={theme.textSecondary} />
+            <Text style={[styles.statText, { color: theme.textSecondary, marginLeft: 4 }]}>
+              {entry.totalWorkouts}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Award size={14} color={theme.textSecondary} />
+            <Text style={[styles.statText, { color: theme.textSecondary, marginLeft: 4 }]}>
+              {entry.totalBadges}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -96,6 +106,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   statText: {
     fontSize: 12,

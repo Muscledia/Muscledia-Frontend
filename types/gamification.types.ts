@@ -46,6 +46,8 @@ export interface LeaderboardEntry {
   rank: number;
   points: number;
   level: number;
+  username: string;
+  displayName: string;
   currentStreak?: number;
   totalWorkouts: number;
   totalBadges: number;
