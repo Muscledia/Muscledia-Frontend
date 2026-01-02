@@ -54,8 +54,10 @@ export default function WorkoutSessionScreen() {
   const [loading, setLoading] = useState(true);
   const [savingSet, setSavingSet] = useState(false);
   const [workoutDuration, setWorkoutDuration] = useState('0s');
+  const [workoutDurationSeconds, setWorkoutDurationSeconds] = useState(0);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [completedWorkout, setCompletedWorkout] = useState<WorkoutSession | null>(null);
+  const [showShortWorkoutModal, setShowShortWorkoutModal] = useState(false);
 
   const [localSetValues, setLocalSetValues] = useState<Record<string, LocalSetData>>({});
   const [localSetTypes, setLocalSetTypes] = useState<Record<string, string>>({});
@@ -105,6 +107,8 @@ export default function WorkoutSessionScreen() {
         const durationMs = now.getTime() - localStartTime.getTime();
 
         const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+        setWorkoutDurationSeconds(totalSeconds);
+        
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
@@ -548,6 +552,13 @@ export default function WorkoutSessionScreen() {
   };
   const finishWorkout = async () => {
     if (!workout) return;
+    
+    // Check if workout duration is less than 1 minute (60 seconds)
+    if (workoutDurationSeconds < 60) {
+      setShowShortWorkoutModal(true);
+      return;
+    }
+    
     await impact('success');
     Alert.alert('Finish Workout', 'Ready to finish this workout?', [
       { text: 'Cancel', style: 'cancel' },
@@ -818,6 +829,66 @@ export default function WorkoutSessionScreen() {
           </View>
         </Modal>
       )}
+
+      {/* Short Workout Warning Modal */}
+      <Modal
+        visible={showShortWorkoutModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowShortWorkoutModal(false)}
+      >
+        <View style={styles.centeredModalOverlay}>
+          <View style={[styles.shortWorkoutModal, { backgroundColor: theme.surface }]}>
+            <View style={styles.shortWorkoutHeader}>
+              <Text style={[styles.shortWorkoutTitle, { color: theme.text }]}>
+                Workout Too Short
+              </Text>
+            </View>
+            
+            <Text style={[styles.shortWorkoutMessage, { color: theme.text }]}>
+              You cannot finish a workout if you've been training for less than 1 minute.
+            </Text>
+            
+            <Text style={[styles.shortWorkoutSubMessage, { color: theme.textMuted }]}>
+              If you want to discard this workout, press "Discard Workout" below.
+            </Text>
+            
+            <View style={styles.shortWorkoutActions}>
+              <TouchableOpacity
+                style={[styles.discardButton, { backgroundColor: theme.error }]}
+                onPress={async () => {
+                  if (!workout) return;
+                  await impact('medium');
+                  setShowShortWorkoutModal(false);
+                  try {
+                    await WorkoutService.cancelWorkout(workout.id);
+                    router.back();
+                  } catch (error) {
+                    console.error('Failed to discard workout:', error);
+                    Alert.alert('Error', 'Failed to discard workout');
+                  }
+                }}
+              >
+                <Text style={[styles.discardButtonText, { color: '#FFFFFF' }]}>
+                  Discard Workout
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.continueButton, { borderColor: theme.accent }]}
+                onPress={() => {
+                  setShowShortWorkoutModal(false);
+                  impact('light');
+                }}
+              >
+                <Text style={[styles.continueButtonText, { color: theme.accent }]}>
+                  Continue Training
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Workout Analytics Modal */}
       <WorkoutAnalytics
@@ -1212,6 +1283,7 @@ const styles = StyleSheet.create({
   cancelButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 16, marginTop: 12, borderRadius: 12, borderWidth: 2 },
   cancelButtonText: { fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)', justifyContent: 'flex-end' },
+  centeredModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)', justifyContent: 'center', alignItems: 'center' },
   settingsModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
   settingsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
   settingsSubtitle: { fontSize: 14, marginBottom: 24 },
@@ -1252,6 +1324,58 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   addFirstExerciseText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  shortWorkoutModal: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  shortWorkoutHeader: {
+    marginBottom: 16,
+  },
+  shortWorkoutTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  shortWorkoutMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  shortWorkoutSubMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  shortWorkoutActions: {
+    width: '100%',
+    gap: 12,
+  },
+  discardButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  discardButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  continueButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
