@@ -36,6 +36,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { WorkoutService, WorkoutSession, WorkoutExercise, WorkoutSet, SetType } from '@/services/WorkoutService';
 import { useHaptics } from '@/hooks/useHaptics';
 import WorkoutAnalytics from '@/components/WorkoutAnalytics';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface LocalSetData {
   weightKg: string;
@@ -49,6 +50,7 @@ export default function WorkoutSessionScreen() {
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
   const { impact } = useHaptics();
+  const queryClient = useQueryClient();
 
   const [workout, setWorkout] = useState<WorkoutSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -566,6 +568,10 @@ export default function WorkoutSessionScreen() {
           try {
             const response = await WorkoutService.completeWorkout(workout.id);
             if (response.success && response.data) {
+              // Invalidate to trigger refresh
+              queryClient.invalidateQueries({ queryKey: ['challenges', 'active'] });
+              queryClient.invalidateQueries({ queryKey: ['gamification', 'profile'] });
+              
               // Refresh to get updated workout with metrics
               const updatedResponse = await WorkoutService.getWorkoutSession(workout.id);
               if (updatedResponse.success && updatedResponse.data) {

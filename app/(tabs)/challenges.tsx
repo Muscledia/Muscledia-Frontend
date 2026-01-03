@@ -6,6 +6,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { InteractiveChallengeCard, ChallengeCardState } from '@/components/challenges/InteractiveChallengeCard';
 import { ActiveChallengeCard } from '@/components/challenges/ActiveChallengeCard';
 import { CelebrationScreen } from '@/components/challenges/CelebrationScreen';
+import { ChallengeCompletionModal } from '@/components/challenges/ChallengeCompletionModal';
 import { DUMMY_JOURNEY_NODES } from '@/data/dummyJourney';
 import { JourneyMap } from '@/components/journey/JourneyMap';
 import { Challenge, ActiveChallenge } from '@/types';
@@ -16,6 +17,7 @@ import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
 import { useDailyChallenges, useAcceptChallenge } from '@/hooks/useDailyChallenges';
 import { useWeeklyChallenges } from '@/hooks/useWeeklyChallenges';
 import { useActiveChallenges, useUpdateChallengeProgress } from '@/hooks/useActiveChallenges';
+import { useChallengeProgress } from '@/hooks/useChallengeProgress';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +40,9 @@ export default function ChallengesScreen() {
   const { data: dailyChallenges = [], isLoading: loadingDaily, refetch: refetchDaily } = useDailyChallenges();
   const { data: weeklyChallenges = [], isLoading: loadingWeekly, refetch: refetchWeekly } = useWeeklyChallenges();
   const { data: activeChallenges = [], isLoading: loadingActive, refetch: refetchActive } = useActiveChallenges();
+  
+  // Use challenge progress hook for completion detection
+  const { challenges, completionEvent, dismissCompletion } = useChallengeProgress();
   
   const acceptChallenge = useAcceptChallenge();
   const updateProgress = useUpdateChallengeProgress();
@@ -295,6 +300,16 @@ export default function ChallengesScreen() {
             pointsEarned: celebrationData.points,
           }}
           onClose={() => setCelebrationData(null)}
+        />
+      )}
+
+      {/* Challenge Completion Modal */}
+      {completionEvent && (
+        <ChallengeCompletionModal
+          visible={!!completionEvent}
+          challengeName={completionEvent.challengeName}
+          pointsEarned={completionEvent.pointsEarned}
+          onClose={dismissCompletion}
         />
       )}
     </SafeAreaView>

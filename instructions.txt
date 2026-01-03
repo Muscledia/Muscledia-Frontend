@@ -1,0 +1,30 @@
+Tasks
+Invalidate challenge queries after workout completion
+Add ChallengeCompletionModal to ActiveChallengesScreen
+Use useChallengeProgress hook
+Code
+// In WorkoutScreen after completion
+const completeWorkout = async () => {
+  await workoutService.completeWorkout(workoutId);
+  
+  // Invalidate to trigger refresh
+  queryClient.invalidateQueries({ queryKey: ['challenges', 'active'] });
+  queryClient.invalidateQueries({ queryKey: ['gamification', 'profile'] });
+  
+  navigation.navigate('WorkoutSummary');
+};
+
+// In ActiveChallengesScreen
+const { challenges, completionEvent, dismissCompletion } = useChallengeProgress();
+
+return (
+  
+    
+    
+  
+);
+Acceptance
+Challenge progress updates after workout
+Completion modal appears automatically
+XP updates in profile
+No duplicate celebrations
