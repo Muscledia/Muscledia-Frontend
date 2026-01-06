@@ -55,11 +55,12 @@ export const InteractiveChallengeCard: React.FC<ChallengeCardProps> = ({
   const scale = useSharedValue(1);
   const expandHeight = useSharedValue(0);
 
-  // Initialize progress
+  // Initialize progress - use currentProgress prop if provided, otherwise use challenge.currentProgress
   useEffect(() => {
-    const targetProgress = Math.min(Math.max(currentProgress / challenge.targetValue, 0), 1);
+    const progressValue = currentProgress !== undefined ? currentProgress : challenge.currentProgress;
+    const targetProgress = Math.min(Math.max(progressValue / challenge.targetValue, 0), 1);
     progress.value = withTiming(targetProgress, { duration: 800 });
-  }, [currentProgress, challenge.targetValue]);
+  }, [currentProgress, challenge.currentProgress, challenge.targetValue]);
 
   // Handle expand animation
   useEffect(() => {
@@ -169,7 +170,9 @@ export const InteractiveChallengeCard: React.FC<ChallengeCardProps> = ({
   };
 
   const colors = getStatusColors();
-  const percentage = Math.round((currentProgress / challenge.targetValue) * 100);
+  // Use currentProgress prop if provided, otherwise use challenge.currentProgress or completionPercentage
+  const progressValue = currentProgress !== undefined ? currentProgress : (challenge.currentProgress || 0);
+  const percentage = state === 'available' ? 0 : Math.round((progressValue / challenge.targetValue) * 100);
 
   return (
     <Pressable
@@ -200,7 +203,7 @@ export const InteractiveChallengeCard: React.FC<ChallengeCardProps> = ({
                 {state === 'locked' && <Lock size={16} color={colors.icon} />}
               </View>
               <Text style={[styles.description, { color: colors.text, opacity: 0.8 }]}>
-                {challenge.objective}
+                {challenge.description}
               </Text>
             </View>
             
@@ -258,7 +261,7 @@ export const InteractiveChallengeCard: React.FC<ChallengeCardProps> = ({
               <View style={[styles.stat, { backgroundColor: colors.badge }]}>
                 <Clock size={16} color={colors.icon} />
                 <Text style={[styles.statText, { color: colors.text }]}>
-                  {challenge.estimatedDuration || '7 days'}
+                  {challenge.timeRemaining || '7 days'}
                 </Text>
               </View>
             </View>

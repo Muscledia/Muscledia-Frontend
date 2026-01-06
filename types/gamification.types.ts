@@ -79,14 +79,26 @@ export interface Challenge {
   name: string;
   description: string;
   type: 'DAILY' | 'WEEKLY';
-  objectiveType: string;
-  targetValue: number;
-  rewardPoints: number;
+  category: string | null;
   difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+  journeyTags: string[];
+  journeyPhase: string;
+  targetValue: number;
   progressUnit: string;
-  startDate: string;
-  endDate: string;
-  active: boolean;
+  currentProgress: number;
+  completionPercentage: number;
+  timeRemaining: string;
+  rewardPoints: number;
+  rewardCoins: number;
+  experiencePoints: number;
+  isMilestone: boolean;
+  isLegendary: boolean;
+  completionMessage: string;
+  exerciseFocus: string[];
+  safetyNote: string | null;
+  tips: string[];
+  prerequisites: string[];
+  unlocks: string[];
 }
 
 export interface UserChallenge {

@@ -94,19 +94,37 @@ export default function ChallengesScreen() {
             const challengeType = foundChallenge?.type || 'DAILY'; // Default to DAILY if not found
             
             // Construct a Challenge object from ActiveChallenge
-            const challenge: Challenge = {
+            // Use foundChallenge if available, otherwise create minimal Challenge from ActiveChallenge
+            const challenge: Challenge = foundChallenge ? {
+              ...foundChallenge,
+              currentProgress: a.currentProgress,
+              completionPercentage: a.progressPercentage,
+              timeRemaining: a.timeRemaining,
+            } : {
               id: a.challengeId,
               name: a.challengeName,
-              description: foundChallenge?.description || 'Complete the objective to earn rewards!',
+              description: 'Complete the objective to earn rewards!',
               type: challengeType,
-              objectiveType: foundChallenge?.objectiveType || 'WORKOUT_COUNT',
+              category: null,
+              difficultyLevel: 'INTERMEDIATE',
+              journeyTags: [],
+              journeyPhase: 'foundation',
               targetValue: a.targetValue,
-              rewardPoints: foundChallenge?.rewardPoints || a.pointsEarned || 0,
-              difficultyLevel: foundChallenge?.difficultyLevel || 'INTERMEDIATE',
               progressUnit: a.progressUnit,
-              startDate: a.startedAt,
-              endDate: a.expiresAt,
-              active: true,
+              currentProgress: a.currentProgress,
+              completionPercentage: a.progressPercentage,
+              timeRemaining: a.timeRemaining,
+              rewardPoints: a.pointsEarned || 0,
+              rewardCoins: 0,
+              experiencePoints: 0,
+              isMilestone: false,
+              isLegendary: false,
+              completionMessage: 'Great job completing this challenge!',
+              exerciseFocus: [],
+              safetyNote: null,
+              tips: [],
+              prerequisites: [],
+              unlocks: [],
             };
             return {
               challenge,
