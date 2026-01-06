@@ -6,6 +6,7 @@ import { getThemeColors } from '@/constants/Colors';
 import { InteractiveChallengeCard, ChallengeCardState } from '@/components/challenges/InteractiveChallengeCard';
 import { ActiveChallengeCard } from '@/components/challenges/ActiveChallengeCard';
 import { CelebrationScreen } from '@/components/challenges/CelebrationScreen';
+import { ChallengeCompletionModal } from '@/components/challenges/ChallengeCompletionModal';
 import { DUMMY_JOURNEY_NODES } from '@/data/dummyJourney';
 import { JourneyMap } from '@/components/journey/JourneyMap';
 import { Challenge, ActiveChallenge } from '@/types';
@@ -16,6 +17,7 @@ import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
 import { useDailyChallenges, useAcceptChallenge } from '@/hooks/useDailyChallenges';
 import { useWeeklyChallenges } from '@/hooks/useWeeklyChallenges';
 import { useActiveChallenges, useUpdateChallengeProgress } from '@/hooks/useActiveChallenges';
+import { useChallengeProgress } from '@/hooks/useChallengeProgress';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +40,9 @@ export default function ChallengesScreen() {
   const { data: dailyChallenges = [], isLoading: loadingDaily, refetch: refetchDaily } = useDailyChallenges();
   const { data: weeklyChallenges = [], isLoading: loadingWeekly, refetch: refetchWeekly } = useWeeklyChallenges();
   const { data: activeChallenges = [], isLoading: loadingActive, refetch: refetchActive } = useActiveChallenges();
+  
+  // Use challenge progress hook for completion detection
+  const { challenges, completionEvent, dismissCompletion } = useChallengeProgress();
   
   const acceptChallenge = useAcceptChallenge();
   const updateProgress = useUpdateChallengeProgress();
@@ -89,19 +94,37 @@ export default function ChallengesScreen() {
             const challengeType = foundChallenge?.type || 'DAILY'; // Default to DAILY if not found
             
             // Construct a Challenge object from ActiveChallenge
-            const challenge: Challenge = {
+            // Use foundChallenge if available, otherwise create minimal Challenge from ActiveChallenge
+            const challenge: Challenge = foundChallenge ? {
+              ...foundChallenge,
+              currentProgress: a.currentProgress,
+              completionPercentage: a.progressPercentage,
+              timeRemaining: a.timeRemaining,
+            } : {
               id: a.challengeId,
               name: a.challengeName,
-              description: foundChallenge?.description || 'Complete the objective to earn rewards!',
+              description: 'Complete the objective to earn rewards!',
               type: challengeType,
-              objectiveType: foundChallenge?.objectiveType || 'WORKOUT_COUNT',
+              category: null,
+              difficultyLevel: 'INTERMEDIATE',
+              journeyTags: [],
+              journeyPhase: 'foundation',
               targetValue: a.targetValue,
-              rewardPoints: foundChallenge?.rewardPoints || a.pointsEarned || 0,
-              difficultyLevel: foundChallenge?.difficultyLevel || 'INTERMEDIATE',
               progressUnit: a.progressUnit,
-              startDate: a.startedAt,
-              endDate: a.expiresAt,
-              active: true,
+              currentProgress: a.currentProgress,
+              completionPercentage: a.progressPercentage,
+              timeRemaining: a.timeRemaining,
+              rewardPoints: a.pointsEarned || 0,
+              rewardCoins: 0,
+              experiencePoints: 0,
+              isMilestone: false,
+              isLegendary: false,
+              completionMessage: 'Great job completing this challenge!',
+              exerciseFocus: [],
+              safetyNote: null,
+              tips: [],
+              prerequisites: [],
+              unlocks: [],
             };
             return {
               challenge,
@@ -295,6 +318,16 @@ export default function ChallengesScreen() {
             pointsEarned: celebrationData.points,
           }}
           onClose={() => setCelebrationData(null)}
+        />
+      )}
+
+      {/* Challenge Completion Modal */}
+      {completionEvent && (
+        <ChallengeCompletionModal
+          visible={!!completionEvent}
+          challengeName={completionEvent.challengeName}
+          pointsEarned={completionEvent.pointsEarned}
+          onClose={dismissCompletion}
         />
       )}
     </SafeAreaView>

@@ -14,7 +14,8 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   onStart, 
   isLoading = false 
 }) => {
-  const objectiveIcon = getObjectiveIcon(challenge.objectiveType);
+  // Derive icon from progressUnit or use default
+  const objectiveIcon = getObjectiveIcon(challenge.progressUnit);
   const difficultyStyle = getDifficultyStyle(challenge.difficultyLevel);
 
   return (
@@ -36,17 +37,17 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
       {/* Progress Section */}
       <View style={styles.progressSection}>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: '0%' }]} />
+          <View style={[styles.progressFill, { width: `${challenge.completionPercentage}%` }]} />
         </View>
         <Text style={styles.progressText}>
-          0/{challenge.targetValue} {challenge.progressUnit}
+          {challenge.currentProgress}/{challenge.targetValue} {challenge.progressUnit}
         </Text>
       </View>
 
       {/* Reward Section */}
       <View style={styles.rewardSection}>
         <Text style={styles.rewardText}>
-          🏆 {challenge.rewardPoints} XP
+          🏆 {challenge.rewardPoints} pts • 💰 {challenge.rewardCoins} coins • ⭐ {challenge.experiencePoints} XP
         </Text>
       </View>
 
@@ -74,18 +75,26 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   );
 };
 
-const getObjectiveIcon = (type: string): string => {
+const getObjectiveIcon = (progressUnit: string): string => {
+  const unit = progressUnit.toLowerCase();
   const icons: { [key: string]: string } = {
-    EXERCISES: '🏋️',
-    REPS: '🔢',
-    DURATION: '⏱️',
-    TIME_BASED: '📅',
-    VOLUME_BASED: '💪',
-    CALORIES: '🔥',
-    PERSONAL_RECORDS: '🏆',
-    ACHIEVEMENT_BASED: '⭐',
+    exercises: '🏋️',
+    reps: '🔢',
+    minutes: '⏱️',
+    hours: '⏱️',
+    days: '📅',
+    volume: '💪',
+    calories: '🔥',
+    achievements: '⭐',
+    steps: '👣',
   };
-  return icons[type] || '🎯';
+  // Check if any key matches the progressUnit
+  for (const [key, icon] of Object.entries(icons)) {
+    if (unit.includes(key)) {
+      return icon;
+    }
+  }
+  return '🎯';
 };
 
 const getDifficultyStyle = (difficulty: string) => {
