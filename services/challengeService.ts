@@ -1,11 +1,15 @@
 import { apiGet, apiPost } from './api';
-import { ApiResponse, Challenge, UserChallenge } from '@/types';
+import { ApiResponse, Challenge, ChallengeCatalog, UserChallenge } from '@/types';
 
 /**
  * Challenge Service
  * API service layer for challenge-related endpoints to communicate with the gamification service.
  */
 const challengeService = {
+
+  getChallengeCatalog: async (): Promise<ApiResponse<ChallengeCatalog>> => {
+    return apiGet<ChallengeCatalog>('/api/challenges/catalog');
+  },
   /**
    * Get available challenges by type (DAILY or WEEKLY)
    * @param type The type of challenges to retrieve ('DAILY' or 'WEEKLY')
