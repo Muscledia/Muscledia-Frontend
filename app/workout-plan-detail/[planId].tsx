@@ -128,9 +128,9 @@ export default function WorkoutPlanDetailScreen() {
         {/* Title Section */}
         <View style={styles.titleSection}>
           <Text style={[styles.planTitle, { color: theme.text }]}>{plan.title}</Text>
-          <Text style={[styles.createdBy, { color: theme.textMuted }]}>
+          {/* <Text style={[styles.createdBy, { color: theme.textMuted }]}>
             Created by {user?.username || user?.email?.split('@')[0] || 'Unknown'}
-          </Text>
+          </Text> */}
         </View>
 
         {/* Stats Section */}

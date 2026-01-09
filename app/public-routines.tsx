@@ -156,9 +156,9 @@ export default function PublicRoutinesScreen() {
               </View>
             </View>
 
-            <Text style={[styles.authorText, { color: theme.textMuted }]}>
+            {/* <Text style={[styles.authorText, { color: theme.textMuted }]}>
               by {item.createdBy}
-            </Text>
+            </Text> */}
           </View>
         </View>
 

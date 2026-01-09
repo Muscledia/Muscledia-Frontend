@@ -299,10 +299,10 @@ export default function RoutineDetailScreen() {
 
         {/* Creator Badge */}
         <View style={styles.creatorBadge}>
-          <Bookmark size={16} color={theme.textMuted} />
+          {/* <Bookmark size={16} color={theme.textMuted} />
           <Text style={[styles.creatorText, { color: theme.textMuted }]}>
             Created by {routineFolder.createdBy || 'Hevy'}
-          </Text>
+          </Text> */}
         </View>
 
         {/* Routine Title - NEW ADDITION */}
