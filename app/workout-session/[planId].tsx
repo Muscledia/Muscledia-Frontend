@@ -110,7 +110,7 @@ export default function WorkoutSessionScreen() {
 
         const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
         setWorkoutDurationSeconds(totalSeconds);
-        
+
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
@@ -178,7 +178,7 @@ export default function WorkoutSessionScreen() {
   const startWorkout = async () => {
     try {
       setLoading(true);
-      
+
       let response;
       if (isExistingSession === 'true') {
         // Load existing session (planId is actually the session ID here)
@@ -554,13 +554,13 @@ export default function WorkoutSessionScreen() {
   };
   const finishWorkout = async () => {
     if (!workout) return;
-    
+
     // Check if workout duration is less than 1 minute (60 seconds)
     if (workoutDurationSeconds < 60) {
       setShowShortWorkoutModal(true);
       return;
     }
-    
+
     await impact('success');
     Alert.alert('Finish Workout', 'Ready to finish this workout?', [
       { text: 'Cancel', style: 'cancel' },
@@ -568,10 +568,11 @@ export default function WorkoutSessionScreen() {
           try {
             const response = await WorkoutService.completeWorkout(workout.id);
             if (response.success && response.data) {
-              // Invalidate to trigger refresh
-              queryClient.invalidateQueries({ queryKey: ['challenges', 'active'] });
-              queryClient.invalidateQueries({ queryKey: ['gamification', 'profile'] });
-              
+              // CRITICAL: Invalidate all challenge and gamification data
+              // This ensures that when we navigate back to the challenges screen, it refetches.
+              await queryClient.invalidateQueries({ queryKey: ['challenges'] });
+              await queryClient.invalidateQueries({ queryKey: ['gamification'] });
+
               // Refresh to get updated workout with metrics
               const updatedResponse = await WorkoutService.getWorkoutSession(workout.id);
               if (updatedResponse.success && updatedResponse.data) {
@@ -850,15 +851,15 @@ export default function WorkoutSessionScreen() {
                 Workout Too Short
               </Text>
             </View>
-            
+
             <Text style={[styles.shortWorkoutMessage, { color: theme.text }]}>
               You cannot finish a workout if you've been training for less than 1 minute.
             </Text>
-            
+
             <Text style={[styles.shortWorkoutSubMessage, { color: theme.textMuted }]}>
               If you want to discard this workout, press "Discard Workout" below.
             </Text>
-            
+
             <View style={styles.shortWorkoutActions}>
               <TouchableOpacity
                 style={[styles.discardButton, { backgroundColor: theme.error }]}
@@ -879,7 +880,7 @@ export default function WorkoutSessionScreen() {
                   Discard Workout
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.continueButton, { borderColor: theme.accent }]}
                 onPress={() => {
