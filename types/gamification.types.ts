@@ -74,13 +74,21 @@ export interface LeaderboardResponse {
 }
 
 // Challenge Types
+export type ChallengeType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type ChallengeStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'FAILED';
+export type DifficultyLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+
+/**
+ * Matches backend ChallengeDto
+ * Used for browsing available/recommended templates
+ */
 export interface Challenge {
   id: string;
   name: string;
   description: string;
-  type: 'DAILY' | 'WEEKLY';
+  type: ChallengeType;
   category: string | null;
-  difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+  difficultyLevel: DifficultyLevel;
   journeyTags: string[];
   journeyPhase: string;
   targetValue: number;
@@ -101,28 +109,53 @@ export interface Challenge {
   unlocks: string[];
 }
 
+/**
+ * Matches backend UserChallengeDto
+ * Used for active/completed participations
+ */
 export interface UserChallenge {
-  id: string;
-  userId: number;
-  challengeId: string;
+  challengeId: string; // Map from template ID for keys
   challengeName: string;
-  status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'FAILED';
+  description: string;
+  challengeType: ChallengeType;
+  difficultyLevel: string;
+  status: ChallengeStatus;
   currentProgress: number;
   targetValue: number;
   progressUnit: string;
   progressPercentage: number;
-  progressDisplay: string;
   timeRemaining: string;
-  statusColor: 'green' | 'yellow' | 'blue' | 'red';
-  isNearCompletion: boolean;
+  isExpiringSoon: boolean;
+  rewardPoints: number;
+  rewardCoins: number;
+  experiencePoints: number;
   pointsEarned: number;
-  startedAt: string;
-  completedAt?: string;
-  expiresAt: string;
+  isNearCompletion: boolean;
+  isMilestone: boolean;
+  isLegendary: boolean;
+  completionMessage: string;
+  exerciseFocus: string[];
+  safetyNote: string | null;
+  tips: string[];
+  unlocks: string[];
+  statusColor: string; // e.g., 'green' | 'yellow' | 'blue' | 'red'
+  progressColor: string; // Injected by backend based on percentage
 }
 
-// Legacy alias for backward compatibility (deprecated - use UserChallenge instead)
-export type ActiveChallenge = UserChallenge;
+export interface ChallengeCatalog {
+  activeChallenges: UserChallenge[];
+  availableChallenges: Record<string, Challenge[]>;
+  recommendedChallenges: Challenge[];
+  completedChallenges: UserChallenge[];
+  journeyInfo: {
+    currentPhase: string;
+    currentLevel: number;
+    primaryGoal: string;
+    activeJourneyTags: string[];
+    completedChallenges: number;
+    totalChallenges: number;
+  };
+}
 
 // Gamification Profile Types
 export interface WorkoutStreak {
