@@ -17,6 +17,9 @@ import { getThemeColors } from '@/constants/Colors';
 import { WorkoutPlanService, CreateWorkoutPlanRequest } from '@/services';
 import { useHaptics } from '@/hooks/useHaptics';
 
+type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+type WorkoutType = 'STRENGTH' | 'CARDIO' | 'FLEXIBILITY' | 'SPORTS' | 'MIXED';
+
 export default function CreateWorkoutPlanScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -26,7 +29,9 @@ export default function CreateWorkoutPlanScreen() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
+  const [estimatedDuration, setEstimatedDuration] = useState('');
+  const [difficulty, setDifficulty] = useState<Difficulty | ''>('');
+  const [workoutType, setWorkoutType] = useState<WorkoutType | ''>('');
   const [loading, setLoading] = useState(false);
 
   const handleCreatePlan = async () => {
@@ -42,8 +47,10 @@ export default function CreateWorkoutPlanScreen() {
       const request: CreateWorkoutPlanRequest = {
         title: title.trim(),
         description: description.trim() || undefined,
+        estimatedDuration: estimatedDuration ? parseInt(estimatedDuration, 10) : undefined,
+        difficulty: difficulty || undefined,
+        workoutType: workoutType || undefined,
         exercises: [],
-        isPublic,
       };
 
       const response = await WorkoutPlanService.createWorkoutPlan(request);
@@ -133,41 +140,91 @@ export default function CreateWorkoutPlanScreen() {
           />
         </View>
 
-        {/* Public Toggle */}
+        {/* Estimated Duration Input */}
         <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.toggleRow}
-            onPress={async () => {
-              await impact('light');
-              setIsPublic(!isPublic);
-            }}
-            activeOpacity={0.7}
-          >
-            <View>
-              <Text style={[styles.label, { color: theme.text }]}>Make Public</Text>
-              <Text style={[styles.helperText, { color: theme.textMuted }]}>
-                Allow others to view and use this plan
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.toggle,
-                {
-                  backgroundColor: isPublic ? theme.accent : theme.surface,
-                },
-              ]}
-            >
-              <View
+          <Text style={[styles.label, { color: theme.text }]}>Estimated Duration (minutes)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: theme.text,
+                backgroundColor: theme.surface,
+                borderColor: theme.surface,
+              },
+            ]}
+            value={estimatedDuration}
+            onChangeText={setEstimatedDuration}
+            placeholder="e.g., 60"
+            placeholderTextColor={theme.textMuted}
+            keyboardType="numeric"
+            maxLength={4}
+          />
+        </View>
+
+        {/* Difficulty Picker */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.text }]}>Difficulty</Text>
+          <View style={styles.pickerRow}>
+            {(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ELITE'] as Difficulty[]).map((level) => (
+              <TouchableOpacity
+                key={level}
                 style={[
-                  styles.toggleThumb,
+                  styles.pickerOption,
                   {
-                    backgroundColor: theme.cardText,
-                    transform: [{ translateX: isPublic ? 22 : 2 }],
+                    backgroundColor: difficulty === level ? theme.accent : theme.surface,
+                    borderColor: difficulty === level ? theme.accent : theme.border,
                   },
                 ]}
-              />
-            </View>
-          </TouchableOpacity>
+                onPress={async () => {
+                  await impact('light');
+                  setDifficulty(difficulty === level ? '' : level);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.pickerOptionText,
+                    { color: difficulty === level ? theme.cardText : theme.text },
+                  ]}
+                >
+                  {level}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Workout Type Picker */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.text }]}>Workout Type</Text>
+          <View style={styles.pickerRow}>
+            {(['STRENGTH', 'CARDIO', 'FLEXIBILITY', 'SPORTS', 'MIXED'] as WorkoutType[]).map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.pickerOption,
+                  {
+                    backgroundColor: workoutType === type ? theme.accent : theme.surface,
+                    borderColor: workoutType === type ? theme.accent : theme.border,
+                  },
+                ]}
+                onPress={async () => {
+                  await impact('light');
+                  setWorkoutType(workoutType === type ? '' : type);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.pickerOptionText,
+                    { color: workoutType === type ? theme.cardText : theme.text },
+                  ]}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={{ height: 40 }} />
@@ -245,21 +302,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     textAlignVertical: 'top',
   },
-  toggleRow: {
+  pickerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  pickerOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 100,
     alignItems: 'center',
   },
-  toggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-  },
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  pickerOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   footer: {
     padding: 16,

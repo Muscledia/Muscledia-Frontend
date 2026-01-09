@@ -15,7 +15,7 @@ const FloatingActionButton = () => {
   
   return (
     <TouchableOpacity
-      onPress={async () => { await impact('medium'); router.push('/routine-builder'); }}
+      onPress={async () => { await impact('medium'); router.push('/workout-plans/create'); }}
       activeOpacity={0.9}
       style={{
         position: 'absolute',

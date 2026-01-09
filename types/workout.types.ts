@@ -79,6 +79,9 @@ export interface CreateWorkoutPlanRequest {
   description?: string;
   exercises?: PlannedExercise[];
   estimatedDurationMinutes?: number;
+  estimatedDuration?: number; // Alternative field name for API
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ELITE';
+  workoutType?: 'STRENGTH' | 'CARDIO' | 'FLEXIBILITY' | 'SPORTS' | 'MIXED';
   isPublic?: boolean;
 }
 

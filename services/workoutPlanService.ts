@@ -56,6 +56,20 @@ export class WorkoutPlanService {
   }
 
   /**
+   * Fetch user's personal custom workout plans (not in folders)
+   * Endpoint: GET /api/v1/workout-plans/personal/custom
+   */
+  static async getPersonalCustomWorkoutPlans(): Promise<ApiResponse<WorkoutPlan[]>> {
+    try {
+      const response = await apiGet<WorkoutPlan[]>('/api/v1/workout-plans/personal/custom');
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch personal custom workout plans:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create a new personal workout plan
    * Endpoint: POST /api/v1/workout-plans/personal
    */
@@ -63,13 +77,31 @@ export class WorkoutPlanService {
     data: CreateWorkoutPlanRequest
   ): Promise<ApiResponse<WorkoutPlan>> {
     try {
-      const payload = {
+      const payload: any = {
         title: data.title,
         description: data.description || '',
-        estimatedDurationMinutes: data.estimatedDurationMinutes || 0,
-        isPublic: data.isPublic ?? false,
         exercises: data.exercises || [],
       };
+
+      // Add optional fields if provided
+      if (data.estimatedDuration !== undefined) {
+        payload.estimatedDuration = data.estimatedDuration;
+      } else if (data.estimatedDurationMinutes !== undefined) {
+        payload.estimatedDuration = data.estimatedDurationMinutes;
+      }
+
+      if (data.difficulty) {
+        payload.difficulty = data.difficulty;
+      }
+
+      if (data.workoutType) {
+        payload.workoutType = data.workoutType;
+      }
+
+      // Only include isPublic if explicitly set (default to false for personal plans)
+      if (data.isPublic !== undefined) {
+        payload.isPublic = data.isPublic;
+      }
 
       const response = await apiPost<WorkoutPlan>('/api/v1/workout-plans/personal', payload);
       return response;

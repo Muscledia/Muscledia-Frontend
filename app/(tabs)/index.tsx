@@ -43,7 +43,7 @@ import { getThemeColors } from '@/constants/Colors';
 // FIX: Import useFocusEffect
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useHaptics } from '@/hooks/useHaptics';
-import { RoutineService, WorkoutService } from '@/services';
+import { RoutineService, WorkoutService, WorkoutPlanService } from '@/services';
 import { RoutineFolder, WorkoutPlan } from '@/types';
 import { useOptimisticUpdate } from '@/hooks/useOptimisticUpdate';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
@@ -62,10 +62,13 @@ export default function HomeScreen() {
   const theme = getThemeColors(isDark);
 
   const [savedRoutines, setSavedRoutines] = useState<RoutineFolder[]>([]);
+  const [personalPlans, setPersonalPlans] = useState<WorkoutPlan[]>([]);
   const [loadingRoutines, setLoadingRoutines] = useState(true);
+  const [loadingPlans, setLoadingPlans] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedRoutines, setExpandedRoutines] = useState<Set<string>>(new Set());
+  const [expandedMyPlans, setExpandedMyPlans] = useState<boolean>(true);
 
   // Ref to track if we've loaded data initially (to prevent spinner flash on focus)
   const hasLoadedRef = useRef(false);
@@ -82,6 +85,7 @@ export default function HomeScreen() {
     useCallback(() => {
       setGreeting(getGreeting());
       fetchSavedRoutines();
+      fetchPersonalPlans();
     }, [])
   );
 
@@ -111,10 +115,25 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchPersonalPlans = async () => {
+    try {
+      setLoadingPlans(true);
+      const response = await WorkoutPlanService.getPersonalCustomWorkoutPlans();
+      if (response.success && response.data) {
+        setPersonalPlans(response.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching personal plans:', err);
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     // Force spinner on pull-to-refresh
     fetchSavedRoutines(true);
+    fetchPersonalPlans();
   };
 
   const toggleRoutineExpanded = async (routineId: string) => {
@@ -132,9 +151,9 @@ export default function HomeScreen() {
     setActiveMenu('folder');
   };
 
-  const openPlanMenu = (plan: WorkoutPlan, folder: RoutineFolder) => {
+  const openPlanMenu = (plan: WorkoutPlan, folder?: RoutineFolder) => {
     setSelectedPlan(plan);
-    setSelectedFolder(folder);
+    setSelectedFolder(folder || null);
     setActiveMenu('plan');
   };
 
@@ -165,10 +184,10 @@ export default function HomeScreen() {
       });
       
       if (response.success && response.data) {
-        router.push({
-          pathname: `/workout-session/${response.data.id}`,
-          params: { isExistingSession: 'true' }
-        });
+            router.push({
+              pathname: '/workout-session/[planId]' as any,
+              params: { planId: response.data.id, isExistingSession: 'true' }
+            });
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to start workout');
@@ -240,7 +259,34 @@ export default function HomeScreen() {
     ]);
   };
 
-  const WorkoutPlanCard = ({ workoutPlan, routine }: { workoutPlan: WorkoutPlan; routine: RoutineFolder }) => {
+  // DELETE PLAN FROM MY PLANS
+  const handleDeletePlan = async () => {
+    if (!selectedPlan) return;
+
+    Alert.alert('Delete Plan', `Delete "${selectedPlan.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const response = await WorkoutPlanService.deleteWorkoutPlan(selectedPlan.id);
+            if (response.success) {
+              setPersonalPlans(prev => prev.filter(p => p.id !== selectedPlan.id));
+              setActiveMenu(null);
+            } else {
+              Alert.alert('Error', response.message || 'Failed to delete plan');
+            }
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to delete plan');
+          }
+        },
+      },
+    ]);
+  };
+
+
+  const WorkoutPlanCard = ({ workoutPlan, routine }: { workoutPlan: WorkoutPlan; routine?: RoutineFolder }) => {
     const getExercisePreview = () => {
       if (!workoutPlan.exercises || workoutPlan.exercises.length === 0) return 'No exercises';
       return workoutPlan.exercises.slice(0, 4).map(ex => ex.title).join(', ');
@@ -252,8 +298,9 @@ export default function HomeScreen() {
           onPress={async () => {
             await impact('medium');
             router.push({
-              pathname: `/workout-plan-detail/${workoutPlan.id}`,
+              pathname: '/workout-plan-detail/[planId]' as any,
               params: {
+                planId: workoutPlan.id,
                 initialData: JSON.stringify(workoutPlan),
                 isPublic: 'false' // CRITICAL: Personal workout plan flag
               }
@@ -285,8 +332,8 @@ export default function HomeScreen() {
             e.stopPropagation();
             await impact('medium');
             router.push({
-              pathname: `/workout-session/${workoutPlan.id}`,
-              params: { initialData: JSON.stringify(workoutPlan) }
+              pathname: '/workout-session/[planId]' as any,
+              params: { planId: workoutPlan.id, initialData: JSON.stringify(workoutPlan) }
             });
           }}
           activeOpacity={0.9}
@@ -482,7 +529,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: theme.surface }]}
-              onPress={async () => { await impact('medium'); router.push('/routine-builder'); }}
+              onPress={async () => { await impact('medium'); router.push('/routine-builder' as any); }}
               activeOpacity={0.9}
             >
               <FileText size={18} color={theme.text} />
@@ -531,9 +578,48 @@ export default function HomeScreen() {
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Create a routine or explore pre-made ones</Text>
           </View>
         ) : (
-          savedRoutines.map((routine) => (
-            <RoutineFolderSection key={routine.id} routine={routine} />
-          ))
+          <>
+            {savedRoutines.map((routine) => (
+              <RoutineFolderSection key={routine.id} routine={routine} />
+            ))}
+
+            {/* My Plans Folder */}
+            {personalPlans.length > 0 && (
+              <View style={styles.routineSection}>
+                <TouchableOpacity
+                  onPress={async () => {
+                    await impact('light');
+                    setExpandedMyPlans(!expandedMyPlans);
+                  }}
+                  activeOpacity={0.7}
+                  style={styles.folderHeader}
+                >
+                  <View style={styles.folderHeaderLeft}>
+                    {expandedMyPlans ? (
+                      <ChevronDown size={20} color={theme.textMuted} />
+                    ) : (
+                      <ChevronRight size={20} color={theme.textMuted} />
+                    )}
+                    <View style={styles.folderInfo}>
+                      <Text style={[styles.folderTitle, { color: theme.text }]}>
+                        My Plans
+                      </Text>
+                      <Text style={[styles.folderSubtitle, { color: theme.textMuted }]}>
+                        ({personalPlans.length})
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                {expandedMyPlans && personalPlans.map((plan) => (
+                  <WorkoutPlanCard
+                    key={plan.id}
+                    workoutPlan={plan}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -584,12 +670,21 @@ export default function HomeScreen() {
                     <Edit2 size={20} color={theme.text} />
                     <Text style={[styles.menuOptionText, { color: theme.text }]}>Edit Plan</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.menuOption} onPress={handleRemovePlanFromFolder}>
-                    <Trash2 size={20} color={theme.error} />
-                    <Text style={[styles.menuOptionText, { color: theme.error }]}>
-                      Remove from "{selectedFolder?.title}"
-                    </Text>
-                  </TouchableOpacity>
+                  {selectedFolder ? (
+                    <TouchableOpacity style={styles.menuOption} onPress={handleRemovePlanFromFolder}>
+                      <Trash2 size={20} color={theme.error} />
+                      <Text style={[styles.menuOptionText, { color: theme.error }]}>
+                        Remove from "{selectedFolder?.title}"
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={styles.menuOption} onPress={handleDeletePlan}>
+                      <Trash2 size={20} color={theme.error} />
+                      <Text style={[styles.menuOptionText, { color: theme.error }]}>
+                        Delete Plan
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </>
               )}
             </View>
