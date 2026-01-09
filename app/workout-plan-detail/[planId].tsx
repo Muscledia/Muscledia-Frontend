@@ -121,19 +121,6 @@ export default function WorkoutPlanDetailScreen() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Routine</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={async () => { await impact('light'); }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{ marginRight: 16 }}
-          >
-            <Share2 size={22} color={theme.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => { await impact('light'); }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MoreVertical size={22} color={theme.text} />
-          </TouchableOpacity>
         </View>
       </View>
 
