@@ -295,7 +295,7 @@ export default function ProfileScreen() {
             <Text style={[styles.statValue, { color: theme.text }]}>
               {monthCountLoading ? '...' : currentMonthCount}
             </Text>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>This Month</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Active Days</Text>
           </View>
 
           {streakInfo && (
