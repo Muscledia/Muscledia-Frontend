@@ -1,150 +1,103 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn, useAnimatedStyle, withSpring, useSharedValue, withSequence } from 'react-native-reanimated';
-import { useRealtimeProgress } from '@/hooks/useRealtimeProgress';
-import { InteractiveChallengeCard, ChallengeCardState } from '@/components/challenges/InteractiveChallengeCard';
-import { Challenge } from '@/types';
-import { Colors, getThemeColors } from '@/constants/Colors';
-import { Plus, BarChart2 } from 'lucide-react-native';
-import { useColorScheme } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { UserChallenge } from '@/types/gamification.types';
+import { Trophy, Clock, Zap, AlertTriangle } from 'lucide-react-native';
+import ProgressBar from '@/components/ProgressBar';
 
-interface ActiveChallengeCardProps {
-  challenge: Challenge;
-  initialProgress: number;
-  onUpdate: (id: string, newProgress: number) => void;
-  onAbandon: (id: string) => void;
-  onViewDetails: (id: string) => void;
+interface Props {
+  userChallenge: UserChallenge;
+  theme: any;
 }
 
-export const ActiveChallengeCard: React.FC<ActiveChallengeCardProps> = ({
-  challenge,
-  initialProgress,
-  onUpdate,
-  onAbandon,
-  onViewDetails
-}) => {
-  const { progress, message, updateProgress } = useRealtimeProgress(challenge.id, initialProgress);
-  const colorScheme = useColorScheme();
-  const theme = getThemeColors(colorScheme === 'dark');
-
-  // Sync internal hook state with parent state whenever progress changes
-  useEffect(() => {
-    if (progress !== initialProgress) {
-        // Prevent infinite loop by checking if progress actually changed significantly
-        // or ensure onUpdate is stable
-        onUpdate(challenge.id, progress);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress, challenge.id]);
-
-  const handleManualUpdate = () => {
-    // Simulate adding 5 reps/units
-    updateProgress(5, challenge.targetValue);
-  };
+export const ActiveChallengeCard: React.FC<Props> = ({ userChallenge, theme }) => {
+  // Use backend signals for colors
+  const mainColor = userChallenge.statusColor === 'blue' ? theme.accent : userChallenge.statusColor;
 
   return (
-    <View>
-      <InteractiveChallengeCard
-        challenge={challenge}
-        state="active"
-        currentProgress={progress}
-        onAccept={() => {}} // Already accepted
-        onViewDetails={() => onViewDetails(challenge.id)}
-        onAbandon={() => onAbandon(challenge.id)}
-        progressRealtime={true}
-      />
-      
-      {/* Real-time Motivation Overlay */}
-      {message && (
-        <Animated.View 
-            entering={ZoomIn} 
-            exiting={FadeOut} 
-            style={styles.messageOverlay}
-        >
-            <Text style={styles.messageText}>{message}</Text>
-        </Animated.View>
-      )}
-
-      {/* Manual Controls & Stats */}
-      <View style={[styles.controlsContainer, { backgroundColor: theme.surface }]}>
-        <View style={styles.statsRow}>
-             <BarChart2 size={16} color={theme.textSecondary} />
-             <Text style={[styles.statsText, { color: theme.textSecondary }]}>
-                {Math.round((progress / challenge.targetValue) * 100)}% Complete
-             </Text>
+    <View style={[styles.card, { backgroundColor: theme.surface }]}>
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Text style={[styles.name, { color: theme.text }]}>{userChallenge.challengeName}</Text>
+          {userChallenge.isLegendary && <Zap size={16} color="#FFD700" fill="#FFD700" />}
         </View>
-        
-        <TouchableOpacity 
-            style={[styles.updateButton, { backgroundColor: theme.accent }]}
-            onPress={handleManualUpdate}
-        >
-            <Plus size={16} color={Colors.dark.background} />
-            <Text style={[styles.updateButtonText, { color: Colors.dark.background }]}>
-                +5 {challenge.progressUnit || 'Reps'}
-            </Text>
-        </TouchableOpacity>
+        <View style={[styles.badge, { backgroundColor: mainColor + '20' }]}>
+          <Text style={[styles.badgeText, { color: mainColor }]}>
+            {userChallenge.challengeType}
+          </Text>
+        </View>
       </View>
+
+      <Text style={[styles.desc, { color: theme.textSecondary }]}>{userChallenge.description}</Text>
+
+      <View style={styles.progressSection}>
+        <View style={styles.progressInfo}>
+          <Text style={[styles.progressText, { color: theme.text }]}>
+            {userChallenge.currentProgress} / {userChallenge.targetValue} {userChallenge.progressUnit}
+          </Text>
+          <Text style={[styles.percent, { color: theme.textMuted }]}>
+            {Math.round(userChallenge.progressPercentage)}%
+          </Text>
+        </View>
+        <ProgressBar
+          progress={userChallenge.progressPercentage / 100}
+          color={userChallenge.progressColor || theme.accent} // Uses backend suggestion
+          height={8}
+        />
+      </View>
+
+      <View style={styles.footer}>
+        <View style={styles.timer}>
+          <Clock size={14} color={userChallenge.isExpiringSoon ? theme.error : theme.textMuted} />
+          <Text style={[
+            styles.timerText,
+            { color: userChallenge.isExpiringSoon ? theme.error : theme.textMuted }
+          ]}>
+            {userChallenge.timeRemaining}
+          </Text>
+        </View>
+
+        <View style={styles.rewards}>
+          <View style={styles.rewardItem}>
+            <Trophy size={14} color={theme.accent} />
+            <Text style={[styles.rewardText, { color: theme.text }]}>{userChallenge.rewardPoints}</Text>
+          </View>
+          {userChallenge.rewardCoins > 0 && (
+            <View style={styles.rewardItem}>
+              <Text style={{fontSize: 12}}>🪙</Text>
+              <Text style={[styles.rewardText, { color: theme.text }]}>{userChallenge.rewardCoins}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {userChallenge.safetyNote && (
+        <View style={styles.safetyRow}>
+          <AlertTriangle size={12} color={theme.warning} />
+          <Text style={[styles.safetyText, { color: theme.textMuted }]}>{userChallenge.safetyNote}</Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  controlsContainer: {
-    marginTop: -16, // Overlap slightly or connect visually
-    marginHorizontal: 8,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    padding: 12,
-    paddingTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    zIndex: -1, // Behind the card
-  },
-  statsRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-  },
-  statsText: {
-      fontSize: 12,
-      fontWeight: '600',
-  },
-  updateButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      gap: 4,
-  },
-  updateButtonText: {
-      fontSize: 12,
-      fontWeight: 'bold',
-  },
-  messageOverlay: {
-      position: 'absolute',
-      top: 20,
-      left: 0,
-      right: 0,
-      alignItems: 'center',
-      zIndex: 10,
-  },
-  messageText: {
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      color: '#FFD700',
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      fontWeight: 'bold',
-      fontSize: 14,
-      overflow: 'hidden',
-  }
+  card: { padding: 16, borderRadius: 16, marginBottom: 12, width: '100%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  name: { fontSize: 17, fontWeight: '700' },
+  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  badgeText: { fontSize: 10, fontWeight: 'bold' },
+  desc: { fontSize: 13, marginBottom: 16, lineHeight: 18 },
+  progressSection: { marginBottom: 16 },
+  progressInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  progressText: { fontSize: 14, fontWeight: '600' },
+  percent: { fontSize: 12 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  timer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  timerText: { fontSize: 12, fontWeight: '500' },
+  rewards: { flexDirection: 'row', gap: 12 },
+  rewardItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rewardText: { fontSize: 13, fontWeight: 'bold' },
+  safetyRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(128,128,128,0.2)', paddingTop: 8 },
+  safetyText: { fontSize: 11, fontStyle: 'italic' }
 });
-
