@@ -408,7 +408,7 @@ export default function ProfileScreen() {
               <Flame size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Current Weekly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.currentStreak} days</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.currentStreak} weeks</Text>
               </View>
             </View>
             <View style={styles.streakItem}>
@@ -422,7 +422,7 @@ export default function ProfileScreen() {
               <Flame size={18} color={theme.accent} />
               <View style={styles.streakContent}>
                 <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>Longest Weekly Streak</Text>
-                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.longestStreak} days</Text>
+                <Text style={[styles.streakValue, { color: theme.text }]}>{streakInfo.weekly.longestStreak} weeks</Text>
               </View>
             </View>
             <View style={styles.streakItem}>
