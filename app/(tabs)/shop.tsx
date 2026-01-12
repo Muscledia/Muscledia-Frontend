@@ -14,6 +14,8 @@ import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
 import { BACKGROUNDS, SHOP_ITEMS } from '@/constants/GameItems';
+import { Assets } from '@/constants/Assets';
+import { Image } from 'react-native';
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
@@ -58,6 +60,21 @@ export default function ShopScreen() {
 
   const ShopItem = ({ item, categoryTitle }: { item: any; categoryTitle: string }) => {
     const isBackground = categoryTitle === 'Backgrounds' && item.url;
+
+    // Helper to determine stage for asset display
+    const stageLevel = Math.min(5, Math.floor((character.level - 1) / 10) + 1);
+    const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
+    
+    // Get item asset if available
+    let asset = null;
+    if (categoryTitle === 'Shirts') {
+        asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
+    } else if (categoryTitle === 'Pants') {
+        asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
+    } else if (categoryTitle === 'Accessories') {
+        asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
+    }
+
     const isOwned = (
       categoryTitle === 'Shirts' ? character.ownedShirts.includes(item.name) :
       categoryTitle === 'Pants' ? character.ownedPants.includes(item.name) :
@@ -84,7 +101,11 @@ export default function ShopScreen() {
           style={styles.shopItemInner}
         >
           <View style={styles.itemHeader}>
-            <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
+            {asset ? (
+               <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8 }} />
+            ) : (
+               <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
+            )}
             <Text style={[styles.itemName, { color: theme.cardText }]}>{item.name}</Text>
           </View>
           <View style={styles.itemFooter}>

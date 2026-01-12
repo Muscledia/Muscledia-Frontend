@@ -18,6 +18,3 @@ export * from './workout.types';
 
 // Gamification types (leaderboard, badges, challenges)
 export * from './gamification.types';
-
-// Journey types (if separate file exists)
-export * from './journey';

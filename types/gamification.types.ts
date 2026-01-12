@@ -89,8 +89,6 @@ export interface Challenge {
   type: ChallengeType;
   category: string | null;
   difficultyLevel: DifficultyLevel;
-  journeyTags: string[];
-  journeyPhase: string;
   targetValue: number;
   progressUnit: string;
   currentProgress: number;
@@ -147,14 +145,6 @@ export interface ChallengeCatalog {
   availableChallenges: Record<string, Challenge[]>;
   recommendedChallenges: Challenge[];
   completedChallenges: UserChallenge[];
-  journeyInfo: {
-    currentPhase: string;
-    currentLevel: number;
-    primaryGoal: string;
-    activeJourneyTags: string[];
-    completedChallenges: number;
-    totalChallenges: number;
-  };
 }
 
 // Gamification Profile Types

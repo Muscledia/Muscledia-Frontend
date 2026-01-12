@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
 import { BACKGROUNDS } from '@/constants/GameItems';
+import { Assets } from '@/constants/Assets';
 
 type CategoryType = 'BODY' | 'SHIRTS' | 'PANTS' | 'GEAR' | 'BG';
 
@@ -34,6 +35,10 @@ export default function CustomizeScreen() {
   const pants = character.ownedPants || [];
   const equipment = character.ownedEquipment || [];
   const accessories = character.ownedAccessories || [];
+
+  // Helper to determine stage for asset display
+  const stageLevel = Math.min(5, Math.floor((character.level - 1) / 10) + 1);
+  const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
 
   const CustomizationItem = ({ title, isActive, isOwned = true, onPress, children, type = 'standard' }: any) => {
     return (
@@ -104,16 +109,23 @@ export default function CustomizeScreen() {
             >
               <Text style={{ fontSize: 24 }}>🚫</Text>
             </CustomizationItem>
-            {shirts.map(name => (
-              <CustomizationItem
-                key={name}
-                title={name}
-                isActive={character.equippedShirt === name}
-                onPress={() => updateCharacter({ equippedShirt: name })}
-              >
-                <Text style={{ fontSize: 28 }}>👕</Text>
-              </CustomizationItem>
-            ))}
+            {shirts.map(name => {
+                const asset = (Assets.clothes.tops[clothingStageKey] as any)?.[name];
+                return (
+                  <CustomizationItem
+                    key={name}
+                    title={name}
+                    isActive={character.equippedShirt === name}
+                    onPress={() => updateCharacter({ equippedShirt: name })}
+                  >
+                    {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>👕</Text>
+                    )}
+                  </CustomizationItem>
+                );
+            })}
             <TouchableOpacity 
               style={[styles.shopButton, { borderColor: theme.accent }]}
               onPress={() => router.push('/shop')}
@@ -134,16 +146,23 @@ export default function CustomizeScreen() {
             >
               <Text style={{ fontSize: 24 }}>🚫</Text>
             </CustomizationItem>
-            {pants.map(name => (
-              <CustomizationItem
-                key={name}
-                title={name}
-                isActive={character.equippedPants === name}
-                onPress={() => updateCharacter({ equippedPants: name })}
-              >
-                <Text style={{ fontSize: 28 }}>👖</Text>
-              </CustomizationItem>
-            ))}
+            {pants.map(name => {
+              const asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[name];
+              return (
+                <CustomizationItem
+                  key={name}
+                  title={name}
+                  isActive={character.equippedPants === name}
+                  onPress={() => updateCharacter({ equippedPants: name })}
+                >
+                  {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>👖</Text>
+                    )}
+                </CustomizationItem>
+              );
+            })}
             <TouchableOpacity 
               style={[styles.shopButton, { borderColor: theme.accent }]}
               onPress={() => router.push('/shop')}
@@ -188,16 +207,23 @@ export default function CustomizeScreen() {
               >
                 <Text style={{ fontSize: 24 }}>🚫</Text>
               </CustomizationItem>
-              {accessories.map(name => (
-                <CustomizationItem
-                  key={name}
-                  title={name}
-                  isActive={character.equippedAccessory === name}
-                  onPress={() => updateCharacter({ equippedAccessory: name })}
-                >
-                  <Text style={{ fontSize: 28 }}>🧣</Text>
-                </CustomizationItem>
-              ))}
+              {accessories.map(name => {
+                const asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[name];
+                return (
+                  <CustomizationItem
+                    key={name}
+                    title={name}
+                    isActive={character.equippedAccessory === name}
+                    onPress={() => updateCharacter({ equippedAccessory: name })}
+                  >
+                     {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>🧣</Text>
+                    )}
+                  </CustomizationItem>
+                );
+              })}
             </View>
           </View>
         );

@@ -31,19 +31,75 @@ export const Assets = {
   },
   clothes: {
     tops: {
-      top1: require('../assets/clothes/top1_stage3.png'),
-      top2: require('../assets/clothes/top2_stage3.png'),
-      top3: require('../assets/clothes/top3_stage3.png'),
-      top4: require('../assets/clothes/top4_stage3.png'),
+      stage1: {
+        'Basic Tee': require('../assets/clothes/stage1/top1_stage1.png'),
+        'Tank Top': require('../assets/clothes/stage1/top2_stage1.png'),
+        'Muscle Shirt': require('../assets/clothes/stage1/top4_stage1.png'),
+      },
+      stage2: {
+        'Basic Tee': require('../assets/clothes/stage2/top1_stage2.png'),
+        'Tank Top': require('../assets/clothes/stage2/top2_stage2.png'),
+        'Muscle Shirt': require('../assets/clothes/stage2/top3_stage2.png'),
+      },
+      stage3: {
+        'Basic Tee': require('../assets/clothes/stage3/top1_stage3.png'),
+        'Tank Top': require('../assets/clothes/stage3/top2_stage3.png'),
+        'Muscle Shirt': require('../assets/clothes/stage3/top3_stage3.png'),
+      },
+      stage4: {
+        'Basic Tee': require('../assets/clothes/stage4/top1_stage4.png'),
+        'Tank Top': require('../assets/clothes/stage4/top2_stage4.png'),
+        'Muscle Shirt': require('../assets/clothes/stage4/top3_stage4.png'),
+      },
+      stage5: {
+        'Basic Tee': require('../assets/clothes/stage5/top1_stage5.png'),
+        'Tank Top': require('../assets/clothes/stage5/top2_stage5.png'),
+        'Muscle Shirt': require('../assets/clothes/stage5/top3_stage5.png'),
+      },
     },
     bottoms: {
-      bot1: require('../assets/clothes/bot1_stage3.png'),
-      bot2: require('../assets/clothes/bot2_stage3.png'),
-      bot3: require('../assets/clothes/bot3_stage3.png'),
+      stage1: {
+        'Shorts': require('../assets/clothes/stage1/bot1_stage1.png'),
+        'Joggers': require('../assets/clothes/stage1/bot2_stage1.png'),
+      },
+      stage2: {
+        'Shorts': require('../assets/clothes/stage2/bot1_stage2.png'),
+        'Joggers': require('../assets/clothes/stage2/bot2_stage2.png'),
+      },
+      stage3: {
+        'Shorts': require('../assets/clothes/stage3/bot1_stage3.png'),
+        'Joggers': require('../assets/clothes/stage3/bot2_stage3.png'),
+      },
+      stage4: {
+        'Shorts': require('../assets/clothes/stage4/bot1_stage4.png'),
+        'Joggers': require('../assets/clothes/stage4/bot2_stage4.png'),
+      },
+      stage5: {
+        'Shorts': require('../assets/clothes/stage5/bot1_stage5.png'),
+        'Joggers': require('../assets/clothes/stage5/bot2_stage5.png'),
+      },
     },
     accessories: {
-      acc1: require('../assets/clothes/acc1_stage3.png'),
-      // acc2: require('../assets/clothes/acc2_allstages.png'),
+      stage1: {
+        'Wristbands': require('../assets/clothes/stage1/acc1_stage1.png'),
+        'Headband': require('../assets/clothes/stage1/acc2_stage1.png'),
+      },
+      stage2: {
+        'Wristbands': require('../assets/clothes/stage2/acc1_stage2.png'),
+        'Headband': require('../assets/clothes/stage2/acc2_stage2.png'),
+      },
+      stage3: {
+        'Wristbands': require('../assets/clothes/stage3/acc1_stage3.png'),
+        'Headband': require('../assets/clothes/stage3/acc2_allstage3.png'),
+      },
+      stage4: {
+        'Wristbands': require('../assets/clothes/stage4/acc1_stage4.png'),
+        'Headband': require('../assets/clothes/stage4/acc2_stage4.png'),
+      },
+      stage5: {
+        'Wristbands': require('../assets/clothes/stage5/acc1_stage5.png'),
+        'Headband': require('../assets/clothes/stage5/acc2_stage5.png'),
+      },
     }
   },
   equipment: {

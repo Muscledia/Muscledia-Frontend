@@ -7,10 +7,8 @@ import { InteractiveChallengeCard } from '@/components/challenges/InteractiveCha
 import { ActiveChallengeCard } from '@/components/challenges/ActiveChallengeCard';
 import { CelebrationScreen } from '@/components/challenges/CelebrationScreen';
 import { ChallengeCompletionModal } from '@/components/challenges/ChallengeCompletionModal';
-import { DUMMY_JOURNEY_NODES } from '@/data/dummyJourney';
-import { JourneyMap } from '@/components/journey/JourneyMap';
 import { Challenge, UserChallenge } from '@/types/gamification.types';
-import { Trophy, Calendar, Map as MapIcon } from 'lucide-react-native';
+import { Trophy, Calendar } from 'lucide-react-native';
 import Animated, { FadeInRight, Layout } from 'react-native-reanimated';
 
 // Hooks
@@ -21,7 +19,7 @@ import { useChallengeProgress } from '@/hooks/useChallengeProgress';
 
 const { width } = Dimensions.get('window');
 
-type TabType = 'daily' | 'weekly' | 'active' | 'journey';
+type TabType = 'daily' | 'weekly' | 'active';
 
 // Unified type for list items to allow clear differentiation in the renderItem function
 type ListItem =
@@ -34,7 +32,6 @@ export default function ChallengesScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('daily');
   const [refreshing, setRefreshing] = useState(false);
 
-  const [journeyNodes] = useState(DUMMY_JOURNEY_NODES);
   const [celebrationData, setCelebrationData] = useState<{ visible: boolean; name: string; points: number } | null>(null);
 
   // Fetch Data using existing hooks
@@ -109,18 +106,6 @@ export default function ChallengesScreen() {
   const isLoading = loadingDaily || loadingWeekly || loadingActive;
 
   const renderContent = () => {
-    if (activeTab === 'journey') {
-      return (
-        <JourneyMap
-          nodes={journeyNodes}
-          activeJourneyType="general-fitness"
-          onNodePress={(node) => {
-            Alert.alert(node.title, `Current Phase: ${node.phase}\nStatus: ${node.status}`);
-          }}
-        />
-      );
-    }
-
     if (isLoading && !refreshing && filteredData.length === 0) {
       return (
         <View style={styles.loadingContainer}>
@@ -203,7 +188,7 @@ export default function ChallengesScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabScrollContent}
         >
-          {(['daily', 'weekly', 'active', 'journey'] as TabType[]).map((tab) => (
+          {(['daily', 'weekly', 'active'] as TabType[]).map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[
@@ -213,7 +198,6 @@ export default function ChallengesScreen() {
               onPress={() => setActiveTab(tab)}
             >
               <View style={styles.tabItemInner}>
-                {tab === 'journey' && <MapIcon size={14} color={activeTab === 'journey' ? theme.accent : theme.textSecondary} />}
                 <Text
                   style={[
                     styles.tabText,
