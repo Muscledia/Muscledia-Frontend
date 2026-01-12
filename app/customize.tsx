@@ -94,6 +94,26 @@ export default function CustomizeScreen() {
         </View>
       </View>
 
+      {/* Skin Color Section */}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Skin Tone</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+        {[
+          { id: 1, color: '#F5D0C5', name: 'Light' },
+          { id: 2, color: '#E0AC69', name: 'Medium' },
+          { id: 3, color: '#8D5524', name: 'Dark' }
+        ].map((tone) => (
+          <CustomizationCard
+            key={tone.id}
+            title={tone.name}
+            isActive={character.skinColor === tone.id}
+            isOwned={true}
+            onPress={() => updateCharacter({ skinColor: tone.id as 1 | 2 | 3 })}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: tone.color, borderWidth: 2, borderColor: '#fff' }} />
+          </CustomizationCard>
+        ))}
+      </ScrollView>
+
       {/* Backgrounds Section */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Backgrounds</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>

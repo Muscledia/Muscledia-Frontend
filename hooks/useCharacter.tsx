@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from './useAuth';
 import { StorageService } from '@/services/storageService';
+import { GamificationService } from '@/services/gamificationService';
 
 type Gender = 'male' | 'female';
 
@@ -144,12 +145,31 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!merged.skinColor) merged.skinColor = 1;
           if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
 
+          // Sync coins from API points
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              (merged as any).coins = profile.points;
+            }
+          } catch (error) {
+            console.log('Failed to sync gamification profile:', error);
+          }
+
           setCharacter(merged);
         } else {
           // New user (or local storage not present for this user)
           // We can initialize with defaults, but maybe check if user object has preferences?
           // For now, use defaults.
-           setCharacter(DEFAULT_CHARACTER);
+          let initialChar = { ...DEFAULT_CHARACTER };
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              initialChar.coins = profile.points;
+            }
+          } catch (error) {
+            console.log('Failed to fetch initial profile:', error);
+          }
+          setCharacter(initialChar);
         }
       } catch (error) {
         console.error('Failed to load character data:', error);

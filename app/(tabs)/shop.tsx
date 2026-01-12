@@ -135,11 +135,6 @@ export default function ShopScreen() {
         <View style={styles.balRow}>
           <Gem size={18} color={theme.accent} />
           <Text style={[styles.balText, { color: theme.accent }]}>{character.coins}</Text>
-          <TouchableOpacity onPress={async () => { addCoins(500); await impact('success'); }} style={styles.addBtn}>
-            <LinearGradient colors={[theme.accent, theme.accentSecondary]} locations={[0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.addBtnInner}>
-              <Text style={[styles.addBtnText, { color: theme.cardText }]}>+500</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
       </View>
       <Text style={[styles.welcomeText, { color: theme.text }]}>
