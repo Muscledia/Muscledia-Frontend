@@ -170,7 +170,6 @@ Muscledia-Frontend/
 │   ├── pr/                       # Personal records components
 │   ├── routines/                 # Routine components
 │   ├── ui/                       # Generic UI components
-│   └── journey/                  # Journey map components
 │
 ├── hooks/                        # Custom React hooks
 │   ├── useAuth.tsx               # Authentication state
@@ -222,7 +221,6 @@ Muscledia-Frontend/
 │   └── helpers.ts                # Helper functions
 │
 ├── data/                         # Static data
-│   └── dummyJourney.ts           # Journey map data
 │
 ├── providers/                    # React providers
 │   └── QueryProvider.tsx         # React Query setup
@@ -331,11 +329,6 @@ The character is the core gamification element that represents the user's fitnes
 - Real-time challenge cards
 - Progress visualization
 - Completion celebrations
-
-#### Journey Map
-- Visual progression system
-- Unlockable nodes
-- Milestone rewards
 
 **Implementation**: 
 - `hooks/useDailyChallenges.ts`

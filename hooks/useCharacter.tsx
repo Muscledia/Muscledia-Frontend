@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from './useAuth';
 import { StorageService } from '@/services/storageService';
+import { GamificationService } from '@/services/gamificationService';
 
 type Gender = 'male' | 'female';
 
@@ -144,12 +145,31 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!merged.skinColor) merged.skinColor = 1;
           if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
 
+          // Sync coins from API points
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              (merged as any).coins = profile.points;
+            }
+          } catch (error) {
+            console.log('Failed to sync gamification profile:', error);
+          }
+
           setCharacter(merged);
         } else {
           // New user (or local storage not present for this user)
           // We can initialize with defaults, but maybe check if user object has preferences?
           // For now, use defaults.
-           setCharacter(DEFAULT_CHARACTER);
+          let initialChar = { ...DEFAULT_CHARACTER };
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              initialChar.coins = profile.points;
+            }
+          } catch (error) {
+            console.log('Failed to fetch initial profile:', error);
+          }
+          setCharacter(initialChar);
         }
       } catch (error) {
         console.error('Failed to load character data:', error);
@@ -335,30 +355,43 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => {
-    const currentCoins = character.coins || 0;
-    if (currentCoins < price) return false;
-    const newCoins = currentCoins - price;
-    const updates: Partial<Character> = { coins: newCoins };
-    switch (category) {
-      case 'Shirts':
-        updates.ownedShirts = Array.from(new Set([...(character.ownedShirts || []), itemName]));
-        break;
-      case 'Pants':
-        updates.ownedPants = Array.from(new Set([...(character.ownedPants || []), itemName]));
-        break;
-      case 'Equipment':
-        updates.ownedEquipment = Array.from(new Set([...(character.ownedEquipment || []), itemName]));
-        break;
-      case 'Accessories':
-        updates.ownedAccessories = Array.from(new Set([...(character.ownedAccessories || []), itemName]));
-        break;
-      case 'Backgrounds':
-        if (url) updates.ownedBackgrounds = Array.from(new Set([...(character.ownedBackgrounds || []), url]));
-        if (url) updates.characterBackgroundUrl = url;
-        break;
-    }
-    updateCharacter(updates);
-    return true;
+    let success = false;
+    
+    setCharacter(prev => {
+        const currentCoins = prev.coins || 0;
+        if (currentCoins < price) {
+            return prev;
+        }
+        
+        success = true;
+        const newCoins = currentCoins - price;
+        const updates: Partial<Character> = { coins: newCoins };
+        
+        switch (category) {
+          case 'Shirts':
+            updates.ownedShirts = Array.from(new Set([...(prev.ownedShirts || []), itemName]));
+            break;
+          case 'Pants':
+            updates.ownedPants = Array.from(new Set([...(prev.ownedPants || []), itemName]));
+            break;
+          case 'Equipment':
+            updates.ownedEquipment = Array.from(new Set([...(prev.ownedEquipment || []), itemName]));
+            break;
+          case 'Accessories':
+            updates.ownedAccessories = Array.from(new Set([...(prev.ownedAccessories || []), itemName]));
+            break;
+          case 'Backgrounds':
+            if (url) {
+                updates.ownedBackgrounds = Array.from(new Set([...(prev.ownedBackgrounds || []), url]));
+                updates.characterBackgroundUrl = url;
+            }
+            break;
+        }
+        
+        return { ...prev, ...updates };
+    });
+    
+    return success;
   };
 
   return (

@@ -421,7 +421,7 @@ export default function HomeScreen() {
           <Text style={[styles.appTitle, { color: theme.text }]}>Muscledia</Text>
           <View style={styles.coinContainer}>
             <Coins size={20} color={theme.accent} />
-            <Text style={[styles.coinText, { color: theme.accent }]}>100</Text>
+            <Text style={[styles.coinText, { color: theme.accent }]}>{character.coins}</Text>
           </View>
         </View>
 
