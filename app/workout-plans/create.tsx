@@ -29,6 +29,7 @@ export default function CreateWorkoutPlanScreen() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty | ''>('');
   const [workoutType, setWorkoutType] = useState<WorkoutType | ''>('');
@@ -51,6 +52,7 @@ export default function CreateWorkoutPlanScreen() {
         difficulty: difficulty || undefined,
         workoutType: workoutType || undefined,
         exercises: [],
+        isPublic,
       };
 
       const response = await WorkoutPlanService.createWorkoutPlan(request);
@@ -139,6 +141,43 @@ export default function CreateWorkoutPlanScreen() {
             maxLength={500}
           />
         </View>
+
+        {/* Public Toggle */}
+        {/* <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.toggleRow}
+            onPress={async () => {
+              await impact('light');
+              setIsPublic(!isPublic);
+            }}
+            activeOpacity={0.7}
+          >
+            <View>
+              <Text style={[styles.label, { color: theme.text }]}>Make Public</Text>
+              <Text style={[styles.helperText, { color: theme.textMuted }]}>
+                Allow others to view and use this plan
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.toggle,
+                {
+                  backgroundColor: isPublic ? theme.accent : theme.surface,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.toggleThumb,
+                  {
+                    backgroundColor: theme.cardText,
+                    transform: [{ translateX: isPublic ? 22 : 2 }],
+                  },
+                ]}
+              />
+            </View>
+          </TouchableOpacity>
+        </View> */}
 
         {/* Estimated Duration Input */}
         <View style={styles.section}>
@@ -301,6 +340,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     borderWidth: 1,
     textAlignVertical: 'top',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggle: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    position: 'absolute',
   },
   pickerRow: {
     flexDirection: 'row',
