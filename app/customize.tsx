@@ -1,12 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Platform } from 'react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check, Lock } from 'lucide-react-native';
+import { ArrowLeft, Check, Lock, ShoppingBag } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CharacterDisplay } from '@/components/CharacterDisplay';
+import { BACKGROUNDS } from '@/constants/GameItems';
+
+type CategoryType = 'BODY' | 'SHIRTS' | 'PANTS' | 'GEAR' | 'BG';
+
+const { width, height } = Dimensions.get('window');
 
 export default function CustomizeScreen() {
   const colorScheme = useColorScheme();
@@ -14,72 +19,231 @@ export default function CustomizeScreen() {
   const theme = getThemeColors(isDark);
   const { character, updateCharacter } = useCharacter();
   const insets = useSafeAreaInsets();
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('SHIRTS');
 
-  // Backgrounds - Garage is default (free), others must be owned
-  const backgrounds = [
-    { name: 'Garage', url: 'Garage', icon: '🏚️' },
-    { name: 'Gym Floor', url: 'Gym Floor', icon: '🏟️' },
-    { name: 'Beach', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop', icon: '🏖️' },
-    { name: 'Mountains', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop', icon: '⛰️' },
-    { name: 'Space', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop', icon: '🌌' },
+  const categories: { id: CategoryType; label: string }[] = [
+    { id: 'BODY', label: 'Body' },
+    { id: 'SHIRTS', label: 'Tops' },
+    { id: 'PANTS', label: 'Bottoms' },
+    { id: 'GEAR', label: 'Gear' },
+    { id: 'BG', label: 'Scene' },
   ];
 
-  // Build owned items lists
+  // Owned items
   const shirts = character.ownedShirts || [];
   const pants = character.ownedPants || [];
   const equipment = character.ownedEquipment || [];
   const accessories = character.ownedAccessories || [];
 
-  const CustomizationCard = ({ title, isActive, isOwned = true, onPress, children }: any) => (
-    <TouchableOpacity 
-      style={styles.itemCard}
-      onPress={onPress}
-      disabled={!isOwned}
-      activeOpacity={0.9}
-    >
-      <LinearGradient
-        colors={[theme.accent, theme.accentSecondary]}
-        locations={[0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+  const CustomizationItem = ({ title, isActive, isOwned = true, onPress, children, type = 'standard' }: any) => {
+    return (
+      <TouchableOpacity 
         style={[
-          styles.itemCardInner, 
-          isActive && { borderColor: '#FFF', borderWidth: 2 },
-          !isOwned && { opacity: 0.7 } // Dim locked items slightly
+          styles.gridItem, 
+          { backgroundColor: theme.background },
+          isActive && { borderColor: theme.accent, borderWidth: 2 },
+          !isOwned && { opacity: 0.6 }
         ]}
+        onPress={onPress}
+        disabled={!isOwned}
+        activeOpacity={0.7}
       >
-        <View style={styles.cardContent}>
+        <View style={styles.itemPreview}>
           {children}
-          <Text style={[styles.itemLabel, { color: theme.cardText }]} numberOfLines={1}>{title}</Text>
         </View>
+        <Text style={[styles.itemLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+          {title}
+        </Text>
         
         {isActive && (
-          <View style={styles.checkBadge}>
-            <Check size={12} color={theme.accent} />
+          <View style={[styles.activeBadge, { backgroundColor: theme.accent }]}>
+            <Check size={10} color={theme.cardText} />
           </View>
         )}
         {!isOwned && (
-          <View style={styles.lockOverlay}>
-            <Lock size={20} color={theme.cardText} />
+          <View style={styles.lockBadge}>
+            <Lock size={12} color={theme.textMuted} />
           </View>
         )}
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
+
+  const renderContent = () => {
+    switch (activeCategory) {
+      case 'BODY':
+        return (
+          <View style={styles.gridContainer}>
+             <View style={styles.row}>
+              {[
+                { id: 1, color: '#F5D0C5', name: 'Light' },
+                { id: 2, color: '#E0AC69', name: 'Medium' },
+                { id: 3, color: '#8D5524', name: 'Dark' }
+              ].map((tone) => (
+                <CustomizationItem
+                  key={tone.id}
+                  title={tone.name}
+                  isActive={character.skinColor === tone.id}
+                  isOwned={true}
+                  onPress={() => updateCharacter({ skinColor: tone.id as 1 | 2 | 3 })}
+                >
+                  <View style={[styles.colorSwatch, { backgroundColor: tone.color }]} />
+                </CustomizationItem>
+              ))}
+             </View>
+          </View>
+        );
+      
+      case 'SHIRTS':
+        return (
+          <View style={styles.gridContainer}>
+            <CustomizationItem
+              title="None"
+              isActive={!character.equippedShirt}
+              onPress={() => updateCharacter({ equippedShirt: null })}
+            >
+              <Text style={{ fontSize: 24 }}>🚫</Text>
+            </CustomizationItem>
+            {shirts.map(name => (
+              <CustomizationItem
+                key={name}
+                title={name}
+                isActive={character.equippedShirt === name}
+                onPress={() => updateCharacter({ equippedShirt: name })}
+              >
+                <Text style={{ fontSize: 28 }}>👕</Text>
+              </CustomizationItem>
+            ))}
+            <TouchableOpacity 
+              style={[styles.shopButton, { borderColor: theme.accent }]}
+              onPress={() => router.push('/shop')}
+            >
+              <ShoppingBag size={20} color={theme.accent} />
+              <Text style={[styles.shopButtonText, { color: theme.accent }]}>Get More Tops</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'PANTS':
+        return (
+          <View style={styles.gridContainer}>
+            <CustomizationItem
+              title="None"
+              isActive={!character.equippedPants}
+              onPress={() => updateCharacter({ equippedPants: null })}
+            >
+              <Text style={{ fontSize: 24 }}>🚫</Text>
+            </CustomizationItem>
+            {pants.map(name => (
+              <CustomizationItem
+                key={name}
+                title={name}
+                isActive={character.equippedPants === name}
+                onPress={() => updateCharacter({ equippedPants: name })}
+              >
+                <Text style={{ fontSize: 28 }}>👖</Text>
+              </CustomizationItem>
+            ))}
+            <TouchableOpacity 
+              style={[styles.shopButton, { borderColor: theme.accent }]}
+              onPress={() => router.push('/shop')}
+            >
+              <ShoppingBag size={20} color={theme.accent} />
+              <Text style={[styles.shopButtonText, { color: theme.accent }]}>Get More Pants</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'GEAR':
+        return (
+          <View style={styles.gridContainer}>
+            <View style={styles.row}>
+              <CustomizationItem
+                title="Empty"
+                isActive={!character.equippedEquipment}
+                onPress={() => updateCharacter({ equippedEquipment: null })}
+              >
+                <Text style={{ fontSize: 24 }}>🚫</Text>
+              </CustomizationItem>
+              {equipment.map(name => (
+                <CustomizationItem
+                  key={name}
+                  title={name}
+                  isActive={character.equippedEquipment === name}
+                  onPress={() => updateCharacter({ equippedEquipment: name })}
+                >
+                  <Text style={{ fontSize: 28 }}>🏋️</Text>
+                </CustomizationItem>
+              ))}
+            </View>
+
+            <View style={{height: 24}}/>
+
+            <Text style={[styles.subHeader, { color: theme.text }]}>Accessories</Text>
+            <View style={styles.row}>
+              <CustomizationItem
+                title="None"
+                isActive={!character.equippedAccessory}
+                onPress={() => updateCharacter({ equippedAccessory: null })}
+              >
+                <Text style={{ fontSize: 24 }}>🚫</Text>
+              </CustomizationItem>
+              {accessories.map(name => (
+                <CustomizationItem
+                  key={name}
+                  title={name}
+                  isActive={character.equippedAccessory === name}
+                  onPress={() => updateCharacter({ equippedAccessory: name })}
+                >
+                  <Text style={{ fontSize: 28 }}>🧣</Text>
+                </CustomizationItem>
+              ))}
+            </View>
+          </View>
+        );
+
+      case 'BG':
+        return (
+          <View style={styles.gridContainer}>
+            {BACKGROUNDS.map(bg => {
+              const isOwned = character.ownedBackgrounds?.includes(bg.url) || bg.name === 'Garage';
+              const isActive = character.characterBackgroundUrl === bg.url;
+              return (
+                <CustomizationItem
+                  key={bg.name}
+                  title={bg.name}
+                  isActive={isActive}
+                  isOwned={isOwned}
+                  onPress={() => updateCharacter({ characterBackgroundUrl: bg.url })}
+                >
+                  {bg.url.startsWith('http') ? (
+                    <Image source={{ uri: bg.url }} style={styles.bgThumbnail} />
+                  ) : (
+                    <Text style={{ fontSize: 24 }}>{bg.icon}</Text>
+                  )}
+                </CustomizationItem>
+              );
+            })}
+          </View>
+        );
+    }
+  };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={{ padding: 16, paddingTop: Math.max(16, (insets?.top || 0) + 8) }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>Customize</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      
+      {/* 1. Top Section: Character Preview (Fixed 45% height) */}
+      <View style={[styles.previewArea, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+           <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={[styles.backButton, { backgroundColor: 'rgba(0,0,0,0.3)' }]}
+            >
+              <ArrowLeft size={20} color="#FFF" />
+           </TouchableOpacity>
+        </View>
 
-      {/* Character Preview */}
-      <View style={[styles.previewContainer, { borderColor: theme.border, height: 450, alignItems: 'center', justifyContent: 'center' }]}>
-        <View style={{ width: 302, height: 442, zIndex: 1 }}>
+        <View style={styles.characterWrapper}>
           <CharacterDisplay
             level={character.level}
             skinColor={character.skinColor}
@@ -88,218 +252,228 @@ export default function CustomizeScreen() {
             equippedEquipment={character.equippedEquipment}
             equippedAccessory={character.equippedAccessory}
             characterBackgroundUrl={character.characterBackgroundUrl}
-            style={{ width: '100%', height: '100%', zIndex: 1 }}
+            style={{ width: '100%', height: '100%' }}
             imageStyle={{ width: '100%', height: '100%' }}
           />
         </View>
+        
+        {/* Gradient fade to seamlessly blend into bottom sheet */}
+        <LinearGradient
+          colors={['transparent', theme.surface]}
+          style={styles.fadeOverlay}
+        />
       </View>
 
-      {/* Skin Color Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Skin Tone</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        {[
-          { id: 1, color: '#F5D0C5', name: 'Light' },
-          { id: 2, color: '#E0AC69', name: 'Medium' },
-          { id: 3, color: '#8D5524', name: 'Dark' }
-        ].map((tone) => (
-          <CustomizationCard
-            key={tone.id}
-            title={tone.name}
-            isActive={character.skinColor === tone.id}
-            isOwned={true}
-            onPress={() => updateCharacter({ skinColor: tone.id as 1 | 2 | 3 })}
-          >
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: tone.color, borderWidth: 2, borderColor: '#fff' }} />
-          </CustomizationCard>
-        ))}
-      </ScrollView>
+      {/* 2. Bottom Section: Controls (BottomSheet style) */}
+      <View style={[styles.controlsSheet, { backgroundColor: theme.surface }]}>
+        
+        {/* Category Tabs */}
+        <View style={styles.tabsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+            {categories.map(cat => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.tabPill,
+                  activeCategory === cat.id ? { backgroundColor: theme.accent } : { backgroundColor: theme.background }
+                ]}
+                onPress={() => setActiveCategory(cat.id)}
+              >
+                <Text 
+                  style={[
+                    styles.tabText,
+                    { color: activeCategory === cat.id ? theme.cardText : theme.textMuted }
+                  ]}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
-      {/* Backgrounds Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Backgrounds</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        {backgrounds.map(bg => {
-          const isOwned = character.ownedBackgrounds?.includes(bg.url) || bg.name === 'Garage';
-          const isActive = character.characterBackgroundUrl === bg.url;
-          return (
-            <CustomizationCard
-              key={bg.name}
-              title={bg.name}
-              isActive={isActive}
-              isOwned={isOwned}
-              onPress={() => updateCharacter({ characterBackgroundUrl: bg.url })}
-            >
-              {bg.url.startsWith('http') ? (
-                <Image source={{ uri: bg.url }} style={styles.cardImage} />
-              ) : (
-                <Text style={{ fontSize: 32 }}>{bg.icon}</Text>
-              )}
-            </CustomizationCard>
-          );
-        })}
-      </ScrollView>
-
-      {/* Accessories Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Accessories</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        <CustomizationCard
-          title="None"
-          isActive={!character.equippedAccessory}
-          onPress={() => updateCharacter({ equippedAccessory: null })}
+        {/* Content Area */}
+        <ScrollView 
+          style={styles.contentScroll} 
+          contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={{ fontSize: 24 }}>🚫</Text>
-        </CustomizationCard>
-        {accessories.length > 0 ? accessories.map(name => (
-          <CustomizationCard
-            key={name}
-            title={name}
-            isActive={character.equippedAccessory === name}
-            onPress={() => updateCharacter({ equippedAccessory: name })}
-          >
-            <Text style={{ fontSize: 24 }}>🧣</Text>
-          </CustomizationCard>
-        )) : (
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No accessories owned</Text>
-        )}
-      </ScrollView>
+          {renderContent()}
+        </ScrollView>
+      </View>
 
-      {/* Shirts Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Shirts</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        <CustomizationCard
-          title="None"
-          isActive={!character.equippedShirt}
-          onPress={() => updateCharacter({ equippedShirt: null })}
-        >
-          <Text style={{ fontSize: 24 }}>🚫</Text>
-        </CustomizationCard>
-        {shirts.length > 0 ? shirts.map(name => (
-          <CustomizationCard
-            key={name}
-            title={name}
-            isActive={character.equippedShirt === name}
-            onPress={() => updateCharacter({ equippedShirt: name })}
-          >
-            <Text style={{ fontSize: 24 }}>👕</Text>
-          </CustomizationCard>
-        )) : (
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No shirts owned</Text>
-        )}
-      </ScrollView>
-
-      {/* Pants Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Pants</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        <CustomizationCard
-          title="None"
-          isActive={!character.equippedPants}
-          onPress={() => updateCharacter({ equippedPants: null })}
-        >
-          <Text style={{ fontSize: 24 }}>🚫</Text>
-        </CustomizationCard>
-        {pants.length > 0 ? pants.map(name => (
-          <CustomizationCard
-            key={name}
-            title={name}
-            isActive={character.equippedPants === name}
-            onPress={() => updateCharacter({ equippedPants: name })}
-          >
-            <Text style={{ fontSize: 24 }}>👖</Text>
-          </CustomizationCard>
-        )) : (
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No pants owned</Text>
-        )}
-      </ScrollView>
-
-      {/* Equipment Section */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Equipment</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-        <CustomizationCard
-          title="None"
-          isActive={!character.equippedEquipment}
-          onPress={() => updateCharacter({ equippedEquipment: null })}
-        >
-          <Text style={{ fontSize: 24 }}>🚫</Text>
-        </CustomizationCard>
-        {equipment.length > 0 ? equipment.map(name => (
-          <CustomizationCard
-            key={name}
-            title={name}
-            isActive={character.equippedEquipment === name}
-            onPress={() => updateCharacter({ equippedEquipment: name })}
-          >
-            <Text style={{ fontSize: 24 }}>🏋️</Text>
-          </CustomizationCard>
-        )) : (
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No equipment owned</Text>
-        )}
-      </ScrollView>
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  title: { fontSize: 20, fontWeight: 'bold' },
-  previewContainer: {
+  
+  // Preview Section
+  previewArea: {
+    height: height * 0.45,
     width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    marginBottom: 24,
-    backgroundColor: '#1a1a1a', // Fallback dark bg for Garage
+    position: 'relative',
+    zIndex: 1,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginTop: 16, marginBottom: 12, paddingHorizontal: 4 },
-  horizontalScroll: { paddingRight: 20, gap: 12, paddingBottom: 16 },
-  itemCard: {
-    width: 140, // Wider like shop
-    height: 140,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  header: {
+    position: 'absolute',
+    top: 50, // Safe area handled by padding
+    left: 20,
+    zIndex: 10,
   },
-  itemCardInner: { 
-    flex: 1,
-    borderRadius: 16,
-    padding: 12,
-    justifyContent: 'space-between',
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardContent: {
+  characterWrapper: {
     flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fadeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    zIndex: 2,
+  },
+
+  // Controls Section
+  controlsSheet: {
+    flex: 1,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -24, // Overlap slightly
+    zIndex: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  
+  tabsWrapper: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  tabsContainer: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  tabPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  contentScroll: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  
+  // Grid/List Styles
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  subHeader: {
+    width: '100%',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  
+  // Item Card
+  gridItem: {
+    width: (width - 40 - 24) / 3, // Calculated width: (Screen - Padding*2 - Gap*2) / 3
+    height: 110,
+    borderRadius: 16,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  itemPreview: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  activeBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+  },
+  
+  // Content Assets
+  colorSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  bgThumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+  },
+  
+  // Shop Button
+  shopButton: {
+    width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: 12,
   },
-  cardImage: { width: 80, height: 80, borderRadius: 8 },
-  itemLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'center' },
-  checkBadge: { 
-    position: 'absolute', 
-    top: 8, 
-    right: 8, 
-    width: 24, 
-    height: 24, 
-    borderRadius: 12, 
-    backgroundColor: '#FFF',
-    justifyContent: 'center', 
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  emptyText: { fontStyle: 'italic', marginLeft: 4, marginTop: 12 }
+  shopButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  }
 });

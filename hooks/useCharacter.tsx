@@ -355,30 +355,43 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => {
-    const currentCoins = character.coins || 0;
-    if (currentCoins < price) return false;
-    const newCoins = currentCoins - price;
-    const updates: Partial<Character> = { coins: newCoins };
-    switch (category) {
-      case 'Shirts':
-        updates.ownedShirts = Array.from(new Set([...(character.ownedShirts || []), itemName]));
-        break;
-      case 'Pants':
-        updates.ownedPants = Array.from(new Set([...(character.ownedPants || []), itemName]));
-        break;
-      case 'Equipment':
-        updates.ownedEquipment = Array.from(new Set([...(character.ownedEquipment || []), itemName]));
-        break;
-      case 'Accessories':
-        updates.ownedAccessories = Array.from(new Set([...(character.ownedAccessories || []), itemName]));
-        break;
-      case 'Backgrounds':
-        if (url) updates.ownedBackgrounds = Array.from(new Set([...(character.ownedBackgrounds || []), url]));
-        if (url) updates.characterBackgroundUrl = url;
-        break;
-    }
-    updateCharacter(updates);
-    return true;
+    let success = false;
+    
+    setCharacter(prev => {
+        const currentCoins = prev.coins || 0;
+        if (currentCoins < price) {
+            return prev;
+        }
+        
+        success = true;
+        const newCoins = currentCoins - price;
+        const updates: Partial<Character> = { coins: newCoins };
+        
+        switch (category) {
+          case 'Shirts':
+            updates.ownedShirts = Array.from(new Set([...(prev.ownedShirts || []), itemName]));
+            break;
+          case 'Pants':
+            updates.ownedPants = Array.from(new Set([...(prev.ownedPants || []), itemName]));
+            break;
+          case 'Equipment':
+            updates.ownedEquipment = Array.from(new Set([...(prev.ownedEquipment || []), itemName]));
+            break;
+          case 'Accessories':
+            updates.ownedAccessories = Array.from(new Set([...(prev.ownedAccessories || []), itemName]));
+            break;
+          case 'Backgrounds':
+            if (url) {
+                updates.ownedBackgrounds = Array.from(new Set([...(prev.ownedBackgrounds || []), url]));
+                updates.characterBackgroundUrl = url;
+            }
+            break;
+        }
+        
+        return { ...prev, ...updates };
+    });
+    
+    return success;
   };
 
   return (

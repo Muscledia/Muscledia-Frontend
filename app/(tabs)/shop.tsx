@@ -13,6 +13,7 @@ import { Gem } from 'lucide-react-native';
 import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
+import { BACKGROUNDS, SHOP_ITEMS } from '@/constants/GameItems';
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
@@ -24,52 +25,25 @@ export default function ShopScreen() {
   const shopCategories = [
     {
       title: 'Shirts',
-      items: [
-        { name: 'Basic Tee', price: 50, icon: '👕' },
-        { name: 'Tank Top', price: 75, icon: '👕' },
-        { name: 'Muscle Shirt', price: 100, icon: '👕' },
-        { name: 'Pro Shirt', price: 150, icon: '👕' },
-      ]
+      items: SHOP_ITEMS.SHIRTS
     },
     {
       title: 'Pants',
-      items: [
-        { name: 'Shorts', price: 60, icon: '🩳' },
-        { name: 'Joggers', price: 80, icon: '👖' },
-        { name: 'Pro Pants', price: 120, icon: '👖' },
-        { name: 'Elite Gear', price: 200, icon: '👖' },
-      ]
+      items: SHOP_ITEMS.PANTS
     },
     {
       title: 'Equipment',
-      items: [
-        { name: 'Dumbbells', price: 300, icon: '🏋️' },
-        { name: 'Barbell', price: 500, icon: '🏋️' },
-      ]
+      items: SHOP_ITEMS.EQUIPMENT
     },
     {
       title: 'Accessories',
-      items: [
-        { name: 'Wristbands', price: 40, icon: '🥊' },
-        { name: 'Headband', price: 60, icon: '🤕' },
-      ]
+      items: SHOP_ITEMS.ACCESSORIES
     },
     {
       title: 'Backgrounds',
-      items: [
-        { name: 'Gym Floor', price: 100, icon: '🏟️', url: 'Gym Floor' },
-        { name: 'Beach', price: 150, icon: '🏖️', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop' },
-        { name: 'Mountains', price: 200, icon: '⛰️', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop' },
-        { name: 'Space', price: 300, icon: '🌌', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop' },
-      ]
+      items: BACKGROUNDS
     }
   ];
-
-  const handleSelectBackground = (url: string) => {
-    updateCharacter({ characterBackgroundUrl: url });
-    impact('success');
-    Alert.alert('Background Updated', 'Your character background has been set.');
-  };
 
   const handlePurchase = async (categoryTitle: string, item: any) => {
     const ok = purchaseItem(categoryTitle as any, item.name, item.price, item.url);
@@ -97,8 +71,7 @@ export default function ShopScreen() {
       <TouchableOpacity 
         onPress={async () => { 
           if (isOwned) { await impact('selection'); return; }
-          if (isBackground && item.url) handleSelectBackground(item.url);
-          else handlePurchase(categoryTitle, item);
+          handlePurchase(categoryTitle, item);
         }}
         activeOpacity={0.9}
         style={styles.shopItem}
