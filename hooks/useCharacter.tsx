@@ -36,12 +36,6 @@ type Character = {
   equippedPants?: string | null;
   equippedEquipment?: string[];
   equippedAccessory?: string | null;
-  // Derived stats
-  baseStrength?: number;
-  baseStamina?: number;
-  baseAgility?: number;
-  baseFocus?: number;
-  baseLuck?: number;
 };
 
 type CharacterContextType = {
@@ -81,11 +75,6 @@ const DEFAULT_CHARACTER: Character = {
   equippedPants: null,
   equippedEquipment: [],
   equippedAccessory: null,
-  baseStrength: 10,
-  baseStamina: 10,
-  baseAgility: 10,
-  baseFocus: 10,
-  baseLuck: 10,
 };
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
@@ -282,16 +271,8 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const incrementXP = (amount: number) => {
-    // Stat effects: strength increases XP gain; luck chance for double (handled probabilistically here too)
-    const strength = (character.baseStrength || 10) + character.level * 2;
-    const luck = (character.baseLuck || 10) + Math.floor(character.level / 2);
-    let finalAmount = amount * (1 + strength * 0.005); // +0.5% per strength
-    // luck: 10 luck = 0.5% chance double
-    const luckDoubleChance = (luck / 10) * 0.005; // 0.05 per 100 luck
-    if (Math.random() < luckDoubleChance) {
-      finalAmount *= 2;
-    }
-
+    const finalAmount = amount;
+    
     const newXP = character.xp + Math.round(finalAmount);
     const newTotalXP = character.totalXP + Math.round(finalAmount);
     

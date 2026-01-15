@@ -645,27 +645,6 @@ const styles = StyleSheet.create({
   equipmentStat: {
     fontSize: 12,
   },
-  attributesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  attributeCard: {
-    width: '48%',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  attributeName: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  attributeValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   skillsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

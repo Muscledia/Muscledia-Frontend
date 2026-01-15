@@ -267,8 +267,6 @@ The character is the core gamification element that represents the user's fitnes
   - Daily workout streaks
   - Weekly streaks
   - Monthly streaks
-- **Stats**: Strength, Stamina, Agility, Focus, Luck
-  - Affect XP gain, health regeneration, etc.
 
 #### Character Evolution
 - **Stages**: Character appearance changes based on level
