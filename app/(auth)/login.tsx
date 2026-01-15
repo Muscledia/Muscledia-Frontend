@@ -77,7 +77,7 @@ export default function LoginScreen() {
           <View style={styles.content}>
             {/* Logo/Title */}
             <View style={styles.header}>
-              <Text style={[styles.title, { color: Colors.primary }]}>MuscleDia</Text>
+              <Text style={[styles.title, { color: Colors.primary }]}>Muscledia</Text>
               <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                 Level up your fitness journey
               </Text>
@@ -100,7 +100,7 @@ export default function LoginScreen() {
                   onChangeText={setUsername}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  textContentType="username" // Added for better UX
+                  textContentType="username" 
                 />
               </View>
             </View>
@@ -118,7 +118,7 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  textContentType="password" // Added for better UX
+                  textContentType="password" 
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}

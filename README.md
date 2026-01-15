@@ -1,4 +1,4 @@
-# MuscldDia v1 🏋️‍♂️
+# Muscledia v1 🏋️‍♂️
 
 A gamified fitness tracking mobile app built with React Native and Expo, featuring an RPG-style character progression system that motivates users to maintain consistent workout routines.
 

@@ -43,7 +43,7 @@ export default function ShopScreen() {
     },
     {
       title: 'Backgrounds',
-      items: BACKGROUNDS
+      items: BACKGROUNDS.filter(b => b.price > 0)
     }
   ];
 
