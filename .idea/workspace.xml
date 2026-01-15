@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint.">
+      <change beforePath="$PROJECT_DIR$/.env.production" beforeDir="false" afterPath="$PROJECT_DIR$/.env.production" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/config/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/aiService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/aiService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/ai.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/ai.types.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="integration-branch" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;eric-muganga&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Muscledia/Muscledia-Frontend.git&quot;,
+    &quot;accountId&quot;: &quot;9e6ffccb-04d2-4fcf-b286-c659c85aff2a&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="34pOy5Uo1bZzJKP2jyyqzqStXEm" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;integration-branch&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ericm/Interview Prep/Technical-interview-study-plan&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\ericm\\spring-boot-Uni\\Muscledia-Frontend\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\ericm\spring-boot-Uni\Muscledia-Frontend\app\routine-detail\[id]" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-e768b9ed790e-JavaScript-WS-243.21565.180" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="" />
+      <created>1761907297902</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1761907297902</updated>
+      <workItem from="1761907302190" duration="18248000" />
+      <workItem from="1762165227457" duration="2396000" />
+      <workItem from="1763042053415" duration="1244000" />
+      <workItem from="1763376147839" duration="2251000" />
+      <workItem from="1763408895840" duration="3543000" />
+      <workItem from="1763418335427" duration="1977000" />
+      <workItem from="1763653301570" duration="756000" />
+      <workItem from="1764086923052" duration="4702000" />
+      <workItem from="1764339601531" duration="8372000" />
+      <workItem from="1764397630620" duration="344000" />
+      <workItem from="1764437499034" duration="11249000" />
+      <workItem from="1764528612585" duration="6997000" />
+      <workItem from="1764576401239" duration="1742000" />
+      <workItem from="1764619031334" duration="5871000" />
+      <workItem from="1764693674826" duration="16969000" />
+      <workItem from="1764757893235" duration="11044000" />
+      <workItem from="1764790785258" duration="9415000" />
+      <workItem from="1764869854992" duration="21885000" />
+      <workItem from="1764935548726" duration="19814000" />
+      <workItem from="1765053323084" duration="7660000" />
+      <workItem from="1765131558423" duration="11040000" />
+      <workItem from="1765191973048" duration="11812000" />
+      <workItem from="1765243374011" duration="1431000" />
+      <workItem from="1765282829255" duration="21342000" />
+      <workItem from="1765656206063" duration="4622000" />
+      <workItem from="1765663189011" duration="820000" />
+      <workItem from="1765793966677" duration="115000" />
+      <workItem from="1765882284540" duration="947000" />
+      <workItem from="1766023198968" duration="2954000" />
+      <workItem from="1766252921495" duration="4796000" />
+      <workItem from="1766368363684" duration="303000" />
+      <workItem from="1766419305230" duration="3975000" />
+      <workItem from="1766612231568" duration="711000" />
+      <workItem from="1766751455733" duration="6697000" />
+      <workItem from="1767003906544" duration="1009000" />
+    </task>
+    <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
+      <option name="closed" value="true" />
+      <created>1761950419067</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950419067</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fix(api): handle ApiResponse wrapper and improve error handling&#10;&#10;- Fix baseURL reference to use dynamic API_CONFIG.BASE_URL&#10;- Add enhanced request/response logging for debugging&#10;- Improve ApiResponse&lt;T&gt; wrapper handling&#10;- Add proper timeout and error handling">
+      <option name="closed" value="true" />
+      <created>1761950439089</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950439089</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat(auth): implement backend JWT authentication service&#10;&#10;- Replace local storage auth with Spring Boot API integration&#10;- Add proper LoginResponse and User type handling&#10;- Implement JWT token storage and management&#10;- Add username-based login (replacing email validation)&#10;- Include comprehensive error handling and debugging">
+      <option name="closed" value="true" />
+      <created>1761950455452</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950455452</updated>
+    </task>
+    <task id="LOCAL-00004" summary="fix(auth): update login form to use username instead of email&#10;&#10;- Change email field to username field with User icon&#10;- Remove email validation for username input&#10;- Add dev-only test credentials auto-fill&#10;- Improve error handling and user feedback">
+      <option name="closed" value="true" />
+      <created>1761950476978</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950476978</updated>
+    </task>
+    <task id="LOCAL-00005" summary="refactor(auth): replace local auth with backend API integration&#10;&#10;- Remove AsyncStorage-based authentication system&#10;- Integrate with backend AuthService for login/register&#10;- Add proper User and LoginResponse state management&#10;- Handle JWT tokens and user sessions&#10;- Add backend response format compatibility">
+      <option name="closed" value="true" />
+      <created>1761950496047</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950496047</updated>
+    </task>
+    <task id="LOCAL-00006" summary="deps: update dependencies for backend authentication&#10;&#10;- Update axios and related networking dependencies&#10;- Ensure compatibility with React Native and Expo&#10;- Lock dependency versions for stable authentication flow">
+      <option name="closed" value="true" />
+      <created>1761950513575</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1761950513575</updated>
+    </task>
+    <task id="LOCAL-00007" summary="feat: implement enriched routine folder API integration&quot; -m &quot;Add support for single-call routine folder endpoints that return complete workout plan details with exercises.&quot; -m &quot;Changes:&#10;- Add enriched routine folder endpoints (public/{id}, personal)&#10;- Create WorkoutPlanCard component with Hevy-style exercise previews&#10;- Create PlannedExerciseCard for workout plan exercise display&#10;- Update RoutineService to normalize enriched API responses&#10;- Add proper type definitions for PlannedExercise and WorkoutPlan&#10;- Update routine detail screen to use embedded workout plan data&#10;- Fix type compatibility between Exercise and PlannedExercise">
+      <option name="closed" value="true" />
+      <created>1764397890854</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1764397890854</updated>
+    </task>
+    <task id="LOCAL-00008" summary="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)">
+      <option name="closed" value="true" />
+      <created>1764454661643</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454661643</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat(workouts): add workout plan detail screen&#10;&#10;- Create Hevy-style workout plan detail view&#10;- Display workout stats (duration, exercises, sets)&#10;- Show exercise list with sets, reps, and rest timers&#10;- Add Start Routine button&#10;- Include share and edit options&#10;- Show username instead of user ID">
+      <option name="closed" value="true" />
+      <created>1764454681086</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454681086</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(workouts): implement workout session tracking screen&#10;&#10;- Create exercise-by-exercise workout flow&#10;- Add set logging with weight and reps inputs&#10;- Implement completion checkboxes for sets&#10;- Add rest timer modal&#10;- Include progress bar and navigation&#10;- Support warmup, normal, and failure set types">
+      <option name="closed" value="true" />
+      <created>1764454705583</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454705583</updated>
+    </task>
+    <task id="LOCAL-00011" summary="fix(services): handle multiple response formats in savePublicRoutine&#10;&#10;- Support both wrapped and direct response formats&#10;- Add fallback mechanism for 404/405 errors&#10;- Improve error handling and logging&#10;- Maintain backward compatibility">
+      <option name="closed" value="true" />
+      <created>1764454722046</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454722046</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat(workouts): add workout plan detail screen with exercise breakdown&#10;&#10;- Create Hevy-style workout plan detail view with stats&#10;- Display duration, exercise count, and total sets&#10;- Show complete exercise list with sets and rep ranges&#10;- Add Start Routine button with navigation to session&#10;- Include share and edit options in header&#10;- Display creator username instead of user ID&#10;- Add exercise cards with rest timers and notes&#10;- Support warmup sets and rep ranges display">
+      <option name="closed" value="true" />
+      <created>1764454885132</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454885132</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(routines): add public routine detail screen">
+      <option name="closed" value="true" />
+      <created>1764454906350</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454906350</updated>
+    </task>
+    <task id="LOCAL-00014" summary="chore: update IDE workspace configuration">
+      <option name="closed" value="true" />
+      <created>1764454925166</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1764454925166</updated>
+    </task>
+    <task id="LOCAL-00015" summary="chore: update IDE workspace configuration">
+      <option name="closed" value="true" />
+      <created>1764455007492</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1764455007492</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat(workout-session): add rest timers, warmup controls, and cancel button&#10;&#10;- Implement adjustable rest timer (1-5 min) with modal settings per exercise&#10;- Add warmup timer with play/pause/reset functionality&#10;- Add cancel workout button at bottom with confirmation&#10;- Fix workout duration to use local time and format with hours&#10;- Add rest timer countdown modal with +15/-15 second adjustments&#10;- Improve timer state management with separate refs for each timer type">
+      <option name="closed" value="true" />
+      <created>1764627729431</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627729431</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat(services): add personalRecords field to WorkoutSet type&#10;&#10;- Add personalRecords?: string[] field to WorkoutSet interface&#10;- Enable PR type tracking for individual sets&#10;- Support backend PR detection response structure">
+      <option name="closed" value="true" />
+      <created>1764627752310</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627752310</updated>
+    </task>
+    <task id="LOCAL-00018" summary="feat(components): add PR badges and improved timer controls&#10;&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, etc.) on set rows&#10;- Improve timer display and active state indicators">
+      <option name="closed" value="true" />
+      <created>1764627763931</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1764627763931</updated>
+    </task>
+    <task id="LOCAL-00019" summary="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators">
+      <option name="closed" value="true" />
+      <created>1764802692143</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802692143</updated>
+    </task>
+    <task id="LOCAL-00020" summary="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search">
+      <option name="closed" value="true" />
+      <created>1764802743718</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802743718</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods">
+      <option name="closed" value="true" />
+      <created>1764802777424</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802777424</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat(types): add types for PR badges and timer controls&#10;&#10;Files:&#10;- types/workout.types.ts&#10;- types/api.ts&#10;&#10;Changes:&#10;- Add PersonalRecord types and interfaces&#10;- Define timer control types&#10;- Update workout session types&#10;- Add API response types for new features">
+      <option name="closed" value="true" />
+      <created>1764802796826</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802796826</updated>
+    </task>
+    <task id="LOCAL-00023" summary="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow">
+      <option name="closed" value="true" />
+      <created>1764802825823</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1764802825823</updated>
+    </task>
+    <task id="LOCAL-00024" summary="docs: delete&#10; architecture and integration documentation&#10;feat: enhance workout session management and UI polish&#10;&#10;- Backend: Added granular exercise calculation methods to WorkoutCalculationService.&#10;- Backend: Implemented updateExerciseInWorkout and removeExerciseFromWorkout in WorkoutService to support session editing.&#10;- Backend: Fixed compilation errors in WorkoutMapper by linking to new calculation service methods.&#10;- Frontend: Refactored Edit Routine screen to match Hevy-inspired design with dark mode support.&#10;- Frontend: Fixed SafeAreaView deprecation warnings by migrating to react-native-safe-area-context.&#10;- Frontend: Implemented optimistic updates for renaming folders and removing plans to eliminate UI lag.&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow">
+      <option name="closed" value="true" />
+      <created>1764975552717</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1764975552717</updated>
+    </task>
+    <task id="LOCAL-00025" summary="docs: delete&#10; architecture and integration documentation&#10;feat: enhance workout session management and UI polish&#10;&#10;- Backend: Added granular exercise calculation methods to WorkoutCalculationService.&#10;- Backend: Implemented updateExerciseInWorkout and removeExerciseFromWorkout in WorkoutService to support session editing.&#10;- Backend: Fixed compilation errors in WorkoutMapper by linking to new calculation service methods.&#10;- Frontend: Refactored Edit Routine screen to match Hevy-inspired design with dark mode support.&#10;- Frontend: Fixed SafeAreaView deprecation warnings by migrating to react-native-safe-area-context.&#10;- Frontend: Implemented optimistic updates for renaming folders and removing plans to eliminate UI lag.&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow">
+      <option name="closed" value="true" />
+      <created>1764977845722</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1764977845722</updated>
+    </task>
+    <task id="LOCAL-00026" summary="fix: resolve setIdx error and optimize set type toggling&#10;&#10;- Fix 'Property setIdx doesn't exist' error (setIdx → setIndex)&#10;- Implement local-first set type toggling with optimistic updates&#10;- Remove unnecessary API calls for set type changes&#10;- Update getLocalSetKey to use correct parameter name&#10;- Improve set type persistence with localStorage&#10;&#10;Fixes crash when toggling set types during active workout sessions">
+      <option name="closed" value="true" />
+      <created>1765225698263</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225698264</updated>
+    </task>
+    <task id="LOCAL-00027" summary="fix: resolve setIdx error and optimize set type toggling&#10;&#10;- Fix 'Property setIdx doesn't exist' error (setIdx → setIndex)&#10;- Implement local-first set type toggling with optimistic updates&#10;- Remove unnecessary API calls for set type changes&#10;- Update getLocalSetKey to use correct parameter name&#10;- Improve set type persistence with localStorage&#10;&#10;Fixes crash when toggling set types during active workout sessions">
+      <option name="closed" value="true" />
+      <created>1765225711395</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225711395</updated>
+    </task>
+    <task id="LOCAL-00028" summary="refactor: improve workout plan detail screen state management&#10;&#10;- Add proper state initialization from route params&#10;- Enhance plan data loading and error handling&#10;- Update navigation hooks for better UX">
+      <option name="closed" value="true" />
+      <created>1765225751775</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225751775</updated>
+    </task>
+    <task id="LOCAL-00029" summary="fix: add missing variable declarations in exercise browser&#10;&#10;- Extract targetPlanId and currentWorkoutId from params&#10;- Add helper functions for difficulty and category mapping&#10;- Implement proper field mapping for session vs plan contexts&#10;- Add formatInstructions utility for array-to-string conversion&#10;&#10;Resolves TS2304 errors: Cannot find name 'targetPlanId' and 'currentWorkoutId'">
+      <option name="closed" value="true" />
+      <created>1765225761890</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225761890</updated>
+    </task>
+    <task id="LOCAL-00030" summary="feat: enhance exercise browser with filter support&#10;&#10;- Implement exercise filtering by difficulty, equipment, and muscle group&#10;- Add filter state management with param-based updates&#10;- Improve search functionality across multiple exercise fields">
+      <option name="closed" value="true" />
+      <created>1765225840948</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225840948</updated>
+    </task>
+    <task id="LOCAL-00031" summary="refactor: update workout plan editor with proper navigation&#10;&#10;- Fix navigation state handling&#10;- Update plan editing workflows">
+      <option name="closed" value="true" />
+      <created>1765225863645</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225863645</updated>
+    </task>
+    <task id="LOCAL-00032" summary="feat: add routine detail screen with workout plan management&#10;&#10;- Implement routine folder detail view&#10;- Add workout plan listing and navigation&#10;- Handle public vs personal routine folders">
+      <option name="closed" value="true" />
+      <created>1765225882188</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225882188</updated>
+    </task>
+    <task id="LOCAL-00033" summary="fix: add complete exercise metadata to workout plan requests&#10;&#10;- Include bodyPart, equipment, targetMuscle fields in PlannedExercise&#10;- Add difficulty and category enum mapping&#10;- Format instructions array to string for backend compatibility&#10;- Update set structure to match PlannedSet schema&#10;&#10;Resolves 400 validation errors when adding exercises to plans">
+      <option name="closed" value="true" />
+      <created>1765225892911</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225892911</updated>
+    </task>
+    <task id="LOCAL-00034" summary="fix: correct exercise payload structure for workout sessions&#10;&#10;- Use exerciseId/exerciseName instead of exerciseTemplateId/title&#10;- Add primaryMuscleGroup and exerciseCategory fields&#10;- Include complete exercise metadata in session requests&#10;- Fix set structure for WorkoutSet schema&#10;&#10;Resolves 400 errors when adding exercises to active workout sessions">
+      <option name="closed" value="true" />
+      <created>1765225905253</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225905253</updated>
+    </task>
+    <task id="LOCAL-00035" summary="feat: add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Update PlannedExercise with metadata fields&#10;- Update WorkoutExercise with denormalized properties&#10;- Add proper set type definitions for both contexts">
+      <option name="closed" value="true" />
+      <created>1765225914240</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1765225914240</updated>
+    </task>
+    <task id="LOCAL-00036" summary="fix(workout-plans): resolve 400 error when adding exercises&#10;&#10;- Convert instructions from string to array format (backend expects List&lt;String&gt;)&#10;- Add formatInstructionsArray helper to properly split instructions&#10;- Remove null values from payload before sending to prevent deserialization errors&#10;- Update workoutPlanService to pass ALL metadata fields (bodyPart, equipment, targetMuscle, etc.)&#10;- Ensure PlannedSet structure matches backend (no restSeconds at set level)&#10;&#10;Fixes: 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;Files: browse.tsx, workoutPlanService.ts">
+      <option name="closed" value="true" />
+      <created>1765307819062</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307819062</updated>
+    </task>
+    <task id="LOCAL-00037" summary="chore(types): add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface with all metadata fields&#10;- Add AddExerciseToWorkoutSessionRequest interface for active workouts&#10;- Update PlannedSet to remove restSeconds (exercise-level only)&#10;- Add ApiError interface for error handling&#10;- Document field differences between workout plans and sessions&#10;&#10;Files: api.ts">
+      <option name="closed" value="true" />
+      <created>1765307852183</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307852183</updated>
+    </task>
+    <task id="LOCAL-00038" summary="feat(exercises): enhance exercise browser with proper field mapping&#10;&#10;- Add removeNullValues helper to clean payloads&#10;- Implement formatInstructionsArray for proper backend compatibility&#10;- Add mapDifficulty and mapCategory helpers for enum validation&#10;- Extract targetPlanId and currentWorkoutId from route params&#10;- Add comprehensive metadata field support (bodyPart, equipment, targetMuscle)&#10;&#10;Files: ExerciseBrowser.tsx, browse.tsx">
+      <option name="closed" value="true" />
+      <created>1765307904580</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307904580</updated>
+    </task>
+    <task id="LOCAL-00039" summary="refactor(workouts): standardize exercise addition for active sessions&#10;&#10;- Implement WorkoutSet structure with session-specific fields&#10;- Add proper field mapping for exerciseId, exerciseName, primaryMuscleGroup&#10;- Include restSeconds at set level (different from workout plans)&#10;- Add completed flag initialization for new sets&#10;&#10;Files: [planId].tsx (workout-session), add-exercise.tsx (workout-session)">
+      <option name="closed" value="true" />
+      <created>1765307945937</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307945937</updated>
+    </task>
+    <task id="LOCAL-00040" summary="chore(navigation): update tab navigation and index files&#10;&#10;- Update index.tsx with proper navigation structure&#10;- Add route parameter handling for planId and sessionId&#10;&#10;Files: index.tsx">
+      <option name="closed" value="true" />
+      <created>1765307980085</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1765307980085</updated>
+    </task>
+    <task id="LOCAL-00041" summary="fix: resolve exercise addition errors and improve type safety&#10;&#10;Core Changes:&#10;- Fix 400 error when adding exercises to workout plans&#10;- Convert instructions format from string to array (List&lt;String&gt;)&#10;- Remove null values from payloads to prevent deserialization errors&#10;- Pass all metadata fields through service layer&#10;&#10;Type System:&#10;- Add comprehensive type definitions for exercise operations&#10;- Update PlannedSet structure (remove set-level restSeconds)&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Document field differences between plans and sessions&#10;&#10;Field Mapping:&#10;- Workout Plans: exerciseTemplateId, title, instructions (array)&#10;- Workout Sessions: exerciseId, exerciseName, primaryMuscleGroup&#10;- Add metadata fields: bodyPart, equipment, targetMuscle, difficulty, category&#10;&#10;Improvements:&#10;- Add formatInstructionsArray helper&#10;- Add removeNullValues helper for payload cleaning&#10;- Add mapDifficulty and mapCategory enum validators&#10;- Enhance error handling and logging&#10;&#10;Fixes:&#10;- 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;- Missing metadata fields in workout plan exercises&#10;- Type mismatches between frontend and backend&#10;&#10;Files: browse.tsx, workoutPlanService.ts, api.ts, ExerciseBrowser.tsx, &#10;       [planId].tsx (multiple), add-exercise.tsx (multiple), exercise-filters.tsx">
+      <option name="closed" value="true" />
+      <created>1765308015194</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1765308015194</updated>
+    </task>
+    <task id="LOCAL-00042" summary="chore: update .gitignore for environment files&#10;&#10;- Exclude .env.development from version control&#10;- Exclude .env.staging from version control&#10;- Exclude .env.production from version control&#10;- Prevent sensitive environment variables from being committed">
+      <option name="closed" value="true" />
+      <created>1765663163574</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663163577</updated>
+    </task>
+    <task id="LOCAL-00043" summary="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables">
+      <option name="closed" value="true" />
+      <created>1765663227221</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663227221</updated>
+    </task>
+    <task id="LOCAL-00044" summary="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
+      <option name="closed" value="true" />
+      <created>1765663415557</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663415557</updated>
+    </task>
+    <task id="LOCAL-00045" summary="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL">
+      <option name="closed" value="true" />
+      <created>1765663440686</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1765663440686</updated>
+    </task>
+    <task id="LOCAL-00046" summary="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint.">
+      <option name="closed" value="true" />
+      <created>1766426389003</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1766426389003</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators" />
+    <MESSAGE value="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search" />
+    <MESSAGE value="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods" />
+    <MESSAGE value="feat(types): add types for PR badges and timer controls&#10;&#10;Files:&#10;- types/workout.types.ts&#10;- types/api.ts&#10;&#10;Changes:&#10;- Add PersonalRecord types and interfaces&#10;- Define timer control types&#10;- Update workout session types&#10;- Add API response types for new features" />
+    <MESSAGE value="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
+    <MESSAGE value="docs: delete&#10; architecture and integration documentation&#10;feat: enhance workout session management and UI polish&#10;&#10;- Backend: Added granular exercise calculation methods to WorkoutCalculationService.&#10;- Backend: Implemented updateExerciseInWorkout and removeExerciseFromWorkout in WorkoutService to support session editing.&#10;- Backend: Fixed compilation errors in WorkoutMapper by linking to new calculation service methods.&#10;- Frontend: Refactored Edit Routine screen to match Hevy-inspired design with dark mode support.&#10;- Frontend: Fixed SafeAreaView deprecation warnings by migrating to react-native-safe-area-context.&#10;- Frontend: Implemented optimistic updates for renaming folders and removing plans to eliminate UI lag.&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
+    <MESSAGE value="fix: resolve setIdx error and optimize set type toggling&#10;&#10;- Fix 'Property setIdx doesn't exist' error (setIdx → setIndex)&#10;- Implement local-first set type toggling with optimistic updates&#10;- Remove unnecessary API calls for set type changes&#10;- Update getLocalSetKey to use correct parameter name&#10;- Improve set type persistence with localStorage&#10;&#10;Fixes crash when toggling set types during active workout sessions" />
+    <MESSAGE value="refactor: improve workout plan detail screen state management&#10;&#10;- Add proper state initialization from route params&#10;- Enhance plan data loading and error handling&#10;- Update navigation hooks for better UX" />
+    <MESSAGE value="fix: add missing variable declarations in exercise browser&#10;&#10;- Extract targetPlanId and currentWorkoutId from params&#10;- Add helper functions for difficulty and category mapping&#10;- Implement proper field mapping for session vs plan contexts&#10;- Add formatInstructions utility for array-to-string conversion&#10;&#10;Resolves TS2304 errors: Cannot find name 'targetPlanId' and 'currentWorkoutId'" />
+    <MESSAGE value="feat: enhance exercise browser with filter support&#10;&#10;- Implement exercise filtering by difficulty, equipment, and muscle group&#10;- Add filter state management with param-based updates&#10;- Improve search functionality across multiple exercise fields" />
+    <MESSAGE value="refactor: update workout plan editor with proper navigation&#10;&#10;- Fix navigation state handling&#10;- Update plan editing workflows" />
+    <MESSAGE value="feat: add routine detail screen with workout plan management&#10;&#10;- Implement routine folder detail view&#10;- Add workout plan listing and navigation&#10;- Handle public vs personal routine folders" />
+    <MESSAGE value="fix: add complete exercise metadata to workout plan requests&#10;&#10;- Include bodyPart, equipment, targetMuscle fields in PlannedExercise&#10;- Add difficulty and category enum mapping&#10;- Format instructions array to string for backend compatibility&#10;- Update set structure to match PlannedSet schema&#10;&#10;Resolves 400 validation errors when adding exercises to plans" />
+    <MESSAGE value="fix: correct exercise payload structure for workout sessions&#10;&#10;- Use exerciseId/exerciseName instead of exerciseTemplateId/title&#10;- Add primaryMuscleGroup and exerciseCategory fields&#10;- Include complete exercise metadata in session requests&#10;- Fix set structure for WorkoutSet schema&#10;&#10;Resolves 400 errors when adding exercises to active workout sessions" />
+    <MESSAGE value="feat: add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Update PlannedExercise with metadata fields&#10;- Update WorkoutExercise with denormalized properties&#10;- Add proper set type definitions for both contexts" />
+    <MESSAGE value="fix(workout-plans): resolve 400 error when adding exercises&#10;&#10;- Convert instructions from string to array format (backend expects List&lt;String&gt;)&#10;- Add formatInstructionsArray helper to properly split instructions&#10;- Remove null values from payload before sending to prevent deserialization errors&#10;- Update workoutPlanService to pass ALL metadata fields (bodyPart, equipment, targetMuscle, etc.)&#10;- Ensure PlannedSet structure matches backend (no restSeconds at set level)&#10;&#10;Fixes: 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;Files: browse.tsx, workoutPlanService.ts" />
+    <MESSAGE value="chore(types): add comprehensive type definitions for exercise operations&#10;&#10;- Add AddExerciseToWorkoutPlanRequest interface with all metadata fields&#10;- Add AddExerciseToWorkoutSessionRequest interface for active workouts&#10;- Update PlannedSet to remove restSeconds (exercise-level only)&#10;- Add ApiError interface for error handling&#10;- Document field differences between workout plans and sessions&#10;&#10;Files: api.ts" />
+    <MESSAGE value="feat(exercises): enhance exercise browser with proper field mapping&#10;&#10;- Add removeNullValues helper to clean payloads&#10;- Implement formatInstructionsArray for proper backend compatibility&#10;- Add mapDifficulty and mapCategory helpers for enum validation&#10;- Extract targetPlanId and currentWorkoutId from route params&#10;- Add comprehensive metadata field support (bodyPart, equipment, targetMuscle)&#10;&#10;Files: ExerciseBrowser.tsx, browse.tsx" />
+    <MESSAGE value="refactor(workouts): standardize exercise addition for active sessions&#10;&#10;- Implement WorkoutSet structure with session-specific fields&#10;- Add proper field mapping for exerciseId, exerciseName, primaryMuscleGroup&#10;- Include restSeconds at set level (different from workout plans)&#10;- Add completed flag initialization for new sets&#10;&#10;Files: [planId].tsx (workout-session), add-exercise.tsx (workout-session)" />
+    <MESSAGE value="chore(navigation): update tab navigation and index files&#10;&#10;- Update index.tsx with proper navigation structure&#10;- Add route parameter handling for planId and sessionId&#10;&#10;Files: index.tsx" />
+    <MESSAGE value="fix: resolve exercise addition errors and improve type safety&#10;&#10;Core Changes:&#10;- Fix 400 error when adding exercises to workout plans&#10;- Convert instructions format from string to array (List&lt;String&gt;)&#10;- Remove null values from payloads to prevent deserialization errors&#10;- Pass all metadata fields through service layer&#10;&#10;Type System:&#10;- Add comprehensive type definitions for exercise operations&#10;- Update PlannedSet structure (remove set-level restSeconds)&#10;- Add AddExerciseToWorkoutPlanRequest interface&#10;- Add AddExerciseToWorkoutSessionRequest interface&#10;- Document field differences between plans and sessions&#10;&#10;Field Mapping:&#10;- Workout Plans: exerciseTemplateId, title, instructions (array)&#10;- Workout Sessions: exerciseId, exerciseName, primaryMuscleGroup&#10;- Add metadata fields: bodyPart, equipment, targetMuscle, difficulty, category&#10;&#10;Improvements:&#10;- Add formatInstructionsArray helper&#10;- Add removeNullValues helper for payload cleaning&#10;- Add mapDifficulty and mapCategory enum validators&#10;- Enhance error handling and logging&#10;&#10;Fixes:&#10;- 400 BAD_REQUEST &quot;Failed to read HTTP message&quot;&#10;- Missing metadata fields in workout plan exercises&#10;- Type mismatches between frontend and backend&#10;&#10;Files: browse.tsx, workoutPlanService.ts, api.ts, ExerciseBrowser.tsx, &#10;       [planId].tsx (multiple), add-exercise.tsx (multiple), exercise-filters.tsx" />
+    <MESSAGE value="chore: update .gitignore for environment files&#10;&#10;- Exclude .env.development from version control&#10;- Exclude .env.staging from version control&#10;- Exclude .env.production from version control&#10;- Prevent sensitive environment variables from being committed" />
+    <MESSAGE value="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables" />
+    <MESSAGE value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
+    <MESSAGE value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
+  </component>
+</project>

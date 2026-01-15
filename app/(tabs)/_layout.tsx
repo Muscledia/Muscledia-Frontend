@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Dumbbell, ShoppingBag, User, Plus } from 'lucide-react-native';
+import { House, Dumbbell, ShoppingBag, User, Plus, Target, Award } from 'lucide-react-native';
 import { useColorScheme, TouchableOpacity, View, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Colors, getThemeColors } from '@/constants/Colors';
@@ -15,7 +15,7 @@ const FloatingActionButton = () => {
   
   return (
     <TouchableOpacity
-      onPress={async () => { await impact('medium'); router.push('/routine-builder'); }}
+      onPress={async () => { await impact('medium'); router.push('/workout-plans/create'); }}
       activeOpacity={0.9}
       style={{
         position: 'absolute',
@@ -28,9 +28,9 @@ const FloatingActionButton = () => {
     >
       <LinearGradient
         colors={[theme.accent, theme.accentSecondary]}
-        locations={[0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        locations={[0, 1]}
+        start={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 0 }}
         style={{
           width: 56,
           height: 56,
@@ -97,7 +97,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <House size={size} color={color} />,
           headerTitle: 'Muscledia',
                      headerLeft: () => (
             <TouchableOpacity 
@@ -111,11 +111,11 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen
-        name="quests"
+        name="challenges"
         options={{
-          title: 'Quests',
-          tabBarIcon: ({ color, size }) => <Dumbbell size={size} color={color} />,
-          headerTitle: 'Daily Quests',
+          title: 'Challenges',
+          tabBarIcon: ({ color, size }) => <Target size={size} color={color} />,
+          headerShown: false,
         }}
       />
       
@@ -133,9 +133,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="achievements"
         options={{
-          title: 'Arena',
-          tabBarIcon: ({ color, size }) => <Dumbbell size={size} color={color} />,
-          headerTitle: 'Arena',
+          title: 'Badges',
+          tabBarIcon: ({ color, size }) => <Award size={size} color={color} />,
+          headerTitle: 'Badges',
         }}
       />
 

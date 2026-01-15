@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './useAuth';
+import { StorageService } from '@/services/storageService';
+import { GamificationService } from '@/services/gamificationService';
 
 type Gender = 'male' | 'female';
 
@@ -12,7 +13,6 @@ type Character = {
   totalXP: number;
   streak: number;
   lastWorkout: string | null;
-  questsCompleted: number;
   gender: Gender;
   height?: number;
   weight?: number;
@@ -27,16 +27,19 @@ type Character = {
   // Customization
   characterBackgroundUrl?: string | null;
   avatarUrl?: string | null;
+  skinColor: 1 | 2 | 3;
   // Economy & Inventory
   coins: number;
   ownedShirts: string[];
   ownedPants: string[];
   ownedEquipment: string[];
+  ownedAccessories: string[];
   ownedBackgrounds: string[]; // store URLs
   // Equipped
   equippedShirt?: string | null;
   equippedPants?: string | null;
-  equippedEquipment?: string | null;
+  equippedEquipment?: string[];
+  equippedAccessory?: string | null;
   // Derived stats
   baseStrength?: number;
   baseStamina?: number;
@@ -49,7 +52,6 @@ type CharacterContextType = {
   character: Character;
   updateCharacter: (updatedCharacter: Partial<Character>) => void;
   incrementXP: (amount: number) => void;
-  completeQuest: (questId: string, xpReward: number) => void;
   resetCharacter: () => void;
   // Health helpers
   applyHealthRegen: () => void;
@@ -59,7 +61,7 @@ type CharacterContextType = {
   registerRoutineStart: (routineId: string) => void;
   // Economy helpers
   addCoins: (amount: number) => void;
-  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Backgrounds', itemName: string, price: number, url?: string) => boolean;
+  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => boolean;
 };
 
 const DEFAULT_CHARACTER: Character = {
@@ -70,23 +72,25 @@ const DEFAULT_CHARACTER: Character = {
   totalXP: 0,
   streak: 0,
   lastWorkout: null,
-  questsCompleted: 0,
   gender: 'male',
   maxHealth: 50,
   currentHealth: 50,
   lastHealthUpdate: null,
   routinesDate: null,
   routinesDoneToday: [],
-  characterBackgroundUrl: null,
+  characterBackgroundUrl: 'Garage',
   avatarUrl: null,
+  skinColor: 1,
   coins: 0,
   ownedShirts: [],
   ownedPants: [],
   ownedEquipment: [],
-  ownedBackgrounds: [],
+  ownedAccessories: [],
+  ownedBackgrounds: ['Garage'],
   equippedShirt: null,
   equippedPants: null,
-  equippedEquipment: null,
+  equippedEquipment: [],
+  equippedAccessory: null,
   baseStrength: 10,
   baseStamina: 10,
   baseAgility: 10,
@@ -97,20 +101,26 @@ const DEFAULT_CHARACTER: Character = {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [character, setCharacter] = useState<Character>(DEFAULT_CHARACTER);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load character data on initial render
+  // Load character data on initial render or user change
   useEffect(() => {
     const loadCharacter = async () => {
+      if (!user?.username) {
+        setIsInitialized(false);
+        setCharacter(DEFAULT_CHARACTER);
+        return;
+      }
+
       try {
-        const storedCharacter = await AsyncStorage.getItem('character');
+        const storedCharacter = await StorageService.getUserData(user.username);
         if (storedCharacter) {
-          const parsed = JSON.parse(storedCharacter);
           // Merge with defaults to ensure newly added fields exist
           const merged: Character = {
             ...DEFAULT_CHARACTER,
-            ...parsed,
+            ...storedCharacter,
           };
           // Normalize XP to next level
           if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
@@ -129,9 +139,67 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!Array.isArray((merged as any).ownedShirts)) (merged as any).ownedShirts = [];
           if (!Array.isArray((merged as any).ownedPants)) (merged as any).ownedPants = [];
           if (!Array.isArray((merged as any).ownedEquipment)) (merged as any).ownedEquipment = [];
-          if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = [];
+          if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
+          if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
+          if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
+          
+          // Migrate equippedEquipment to array
+          if (typeof (merged as any).equippedEquipment === 'string') {
+            (merged as any).equippedEquipment = [(merged as any).equippedEquipment];
+          } else if (!Array.isArray((merged as any).equippedEquipment)) {
+             (merged as any).equippedEquipment = [];
+          }
+
+          if (!merged.skinColor) merged.skinColor = 1;
+          if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
+
+          // Sync coins and XP from API
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              (merged as any).coins = profile.fitnessCoins;
+              (merged as any).totalXP = profile.points;
+              (merged as any).level = profile.level;
+              
+              // Calculate relative XP for the bar based on the quadratic curve
+              const currentLevel = profile.level;
+              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
+              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
+              
+              const xpRequiredForLevel = nextLevelBaseXP - levelBaseXP;
+              const xpProgressInLevel = Math.max(0, profile.points - levelBaseXP);
+              
+              (merged as any).xp = xpProgressInLevel;
+              (merged as any).xpToNextLevel = xpRequiredForLevel;
+            }
+          } catch (error) {
+            console.log('Failed to sync gamification profile:', error);
+          }
 
           setCharacter(merged);
+        } else {
+          // New user (or local storage not present for this user)
+          // We can initialize with defaults, but maybe check if user object has preferences?
+          // For now, use defaults.
+          let initialChar = { ...DEFAULT_CHARACTER };
+          try {
+            const profile = await GamificationService.getProfile();
+            if (profile) {
+              initialChar.coins = profile.fitnessCoins;
+              initialChar.totalXP = profile.points;
+              initialChar.level = profile.level;
+              
+              const currentLevel = profile.level;
+              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
+              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
+              
+              initialChar.xp = Math.max(0, profile.points - levelBaseXP);
+              initialChar.xpToNextLevel = nextLevelBaseXP - levelBaseXP;
+            }
+          } catch (error) {
+            console.log('Failed to fetch initial profile:', error);
+          }
+          setCharacter(initialChar);
         }
       } catch (error) {
         console.error('Failed to load character data:', error);
@@ -141,45 +209,16 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
 
     loadCharacter();
-  }, []);
+  }, [user]);
 
   // Health regeneration logic (called on init and whenever character loads)
   const applyHealthRegen = () => {
-    const now = new Date();
-    const nowIso = now.toISOString();
-
-    // If no last update recorded, set it and return
-    if (!character.lastHealthUpdate) {
-      updateCharacter({ lastHealthUpdate: nowIso });
-      return;
-    }
-
-    // Calculate minutes passed
-    const last = new Date(character.lastHealthUpdate);
-    const minutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
-
-    if (minutes <= 0 || character.currentHealth >= character.maxHealth) {
-      // Still update timestamp if missing
-      if (!character.lastHealthUpdate) updateCharacter({ lastHealthUpdate: nowIso });
-      return;
-    }
-
-    // Regeneration rate: 1 health per 30 minutes
-    const regenUnits = Math.floor(minutes / 30);
-    if (regenUnits > 0) {
-      const newHealth = Math.min(character.maxHealth, character.currentHealth + regenUnits);
-      updateCharacter({ currentHealth: newHealth, lastHealthUpdate: nowIso });
-    } else {
-      // No whole unit passed, still update timestamp to avoid extremely fast loops
-      updateCharacter({ lastHealthUpdate: nowIso });
-    }
+    // Logic disabled
   };
 
   // Ensure regen runs after init
   useEffect(() => {
-    if (!isInitialized) return;
-    applyHealthRegen();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Regen disabled
   }, [isInitialized]);
 
   // Update streak based on last workout date
@@ -219,21 +258,25 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Save character data whenever it changes
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || !user?.username) return;
 
     const saveCharacter = async () => {
       try {
-        await AsyncStorage.setItem('character', JSON.stringify(character));
+        await StorageService.saveUserData(user.username, character);
       } catch (error) {
         console.error('Failed to save character data:', error);
       }
     };
 
     saveCharacter();
-  }, [character, isInitialized]);
+  }, [character, isInitialized, user]);
 
   const calculateXPToNextLevel = (level: number) => {
-    return Math.floor(100 * Math.pow(1.2, level - 1));
+    // Quadratic progression: Base XP ~ 40 * level^2
+    // Delta = 40*(l+1)^2 - 40*l^2 = 80*l + 40
+    // Special handling for Level 1 to start at 0
+    if (level === 1) return 160; // 0 to 160
+    return 80 * level + 40;
   };
 
   const checkLevelUp = (xp: number, currentLevel: number, currentXpToNextLevel: number) => {
@@ -285,38 +328,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   };
 
-  const completeQuest = (questId: string, xpReward: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    const lastWorkout = character.lastWorkout;
-    
-    let newStreak = character.streak;
-    
-    if (lastWorkout !== today) {
-      if (!lastWorkout) {
-        newStreak = 1;
-      } else {
-        const lastWorkoutDate = new Date(lastWorkout);
-        const currentDate = new Date(today);
-        
-        const timeDiff = currentDate.getTime() - lastWorkoutDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-        
-        if (daysDiff === 1) {
-          newStreak += 1;
-        } else if (daysDiff > 1) {
-          newStreak = 1;
-        }
-      }
-    }
-    
-    incrementXP(xpReward);
-    updateCharacter({
-      questsCompleted: character.questsCompleted + 1,
-      lastWorkout: today,
-      streak: newStreak,
-    });
-  };
-
   // Health helpers
   const consumeHealth = (amount: number) => {
     if (character.currentHealth <= 0) return false;
@@ -339,25 +350,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     // no-op: feature disabled
   };
 
-  const equipItem = (category: 'Shirts'|'Pants'|'Equipment', name: string) => {
-    const updates: Partial<Character> = {};
-    if (category === 'Shirts') updates.equippedShirt = name;
-    if (category === 'Pants') updates.equippedPants = name;
-    if (category === 'Equipment') updates.equippedEquipment = name;
-    // Apply simple stat modifiers for demo purposes
-    let bs = character.baseStrength || 10;
-    let bst = character.baseStamina || 10;
-    let bag = character.baseAgility || 10;
-    let bf = character.baseFocus || 10;
-    let bl = character.baseLuck || 10;
-    // naive mapping
-    if (category === 'Equipment') { bs += 5; }
-    if (category === 'Shirts') { bag += 3; }
-    if (category === 'Pants') { bst += 3; }
-    updates.baseStrength = bs; updates.baseStamina = bst; updates.baseAgility = bag; updates.baseFocus = bf; updates.baseLuck = bl;
-    updateCharacter(updates);
-  };
-
   const resetCharacter = () => {
     setCharacter(DEFAULT_CHARACTER);
   };
@@ -367,28 +359,44 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateCharacter({ coins: Math.max(0, (character.coins || 0) + amount) });
   };
 
-  const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Backgrounds', itemName: string, price: number, url?: string) => {
-    const currentCoins = character.coins || 0;
-    if (currentCoins < price) return false;
-    const newCoins = currentCoins - price;
-    const updates: Partial<Character> = { coins: newCoins };
-    switch (category) {
-      case 'Shirts':
-        updates.ownedShirts = Array.from(new Set([...(character.ownedShirts || []), itemName]));
-        break;
-      case 'Pants':
-        updates.ownedPants = Array.from(new Set([...(character.ownedPants || []), itemName]));
-        break;
-      case 'Equipment':
-        updates.ownedEquipment = Array.from(new Set([...(character.ownedEquipment || []), itemName]));
-        break;
-      case 'Backgrounds':
-        if (url) updates.ownedBackgrounds = Array.from(new Set([...(character.ownedBackgrounds || []), url]));
-        if (url) updates.characterBackgroundUrl = url;
-        break;
-    }
-    updateCharacter(updates);
-    return true;
+  const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => {
+    let success = false;
+    
+    setCharacter(prev => {
+        const currentCoins = prev.coins || 0;
+        if (currentCoins < price) {
+            return prev;
+        }
+        
+        success = true;
+        const newCoins = currentCoins - price;
+        const updates: Partial<Character> = { coins: newCoins };
+        
+        switch (category) {
+          case 'Shirts':
+            updates.ownedShirts = Array.from(new Set([...(prev.ownedShirts || []), itemName]));
+            break;
+          case 'Pants':
+            updates.ownedPants = Array.from(new Set([...(prev.ownedPants || []), itemName]));
+            break;
+          case 'Equipment':
+            updates.ownedEquipment = Array.from(new Set([...(prev.ownedEquipment || []), itemName]));
+            break;
+          case 'Accessories':
+            updates.ownedAccessories = Array.from(new Set([...(prev.ownedAccessories || []), itemName]));
+            break;
+          case 'Backgrounds':
+            if (url) {
+                updates.ownedBackgrounds = Array.from(new Set([...(prev.ownedBackgrounds || []), url]));
+                updates.characterBackgroundUrl = url;
+            }
+            break;
+        }
+        
+        return { ...prev, ...updates };
+    });
+    
+    return success;
   };
 
   return (
@@ -397,7 +405,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         character,
         updateCharacter,
         incrementXP,
-        completeQuest,
         resetCharacter,
         applyHealthRegen,
         consumeHealth,

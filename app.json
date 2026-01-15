@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "Muscledia",
+    "slug": "Muscledia",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/appIcon.png",
     "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -14,7 +14,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/appIcon.png"
     },
     "plugins": [
       "expo-router",

@@ -9,13 +9,20 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { RaidProvider } from '@/hooks/useRaid';
 import { LeaguesProvider } from '@/hooks/useLeagues';
 import { NotificationsProvider } from '@/hooks/useNotifications';
+import { Colors } from '@/constants/Colors';
+
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { QueryProvider } from '@/providers/QueryProvider';
 
 export default function RootLayout() {
   useFrameworkReady();
 
   return (
-    <AuthProvider>
-      <WorkoutsProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryProvider>
+        <AuthProvider>
+          <WorkoutsProvider>
         <RoutineProvider>
           <CharacterProvider>
             <RaidProvider>
@@ -24,15 +31,65 @@ export default function RootLayout() {
                   <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen 
+                    name="public-routines" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Discover Routines',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
+                  <Stack.Screen 
+                    name="routine-detail/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Routine Details',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
+                  <Stack.Screen 
+                    name="workout-plan-detail/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      headerTitle: 'Workout Plan',
+                      headerBackTitle: 'Back',
+                      headerStyle: {
+                        backgroundColor: Colors.dark.background,
+                      },
+                      headerTintColor: Colors.primary,
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                        color: Colors.dark.text,
+                      },
+                    }} 
+                  />
                   <Stack.Screen name="+not-found" />
                   </Stack>
-                  <StatusBar style="auto" />
+                  <StatusBar style="light" />
                 </NotificationsProvider>
               </LeaguesProvider>
             </RaidProvider>
           </CharacterProvider>
         </RoutineProvider>
-      </WorkoutsProvider>
-    </AuthProvider>
+        </WorkoutsProvider>
+      </AuthProvider>
+      </QueryProvider>
+    </GestureHandlerRootView>
   );
 }

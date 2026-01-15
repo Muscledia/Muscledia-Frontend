@@ -1,11 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image, Dimensions, Platform } from 'react-native';
 import { getThemeColors } from '@/constants/Colors';
 import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Check, Lock, ShoppingBag } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CharacterDisplay } from '@/components/CharacterDisplay';
+import { BACKGROUNDS } from '@/constants/GameItems';
+import { Assets } from '@/constants/Assets';
+
+type CategoryType = 'BODY' | 'SHIRTS' | 'PANTS' | 'GEAR' | 'BG';
+
+const { width, height } = Dimensions.get('window');
 
 export default function CustomizeScreen() {
   const colorScheme = useColorScheme();
@@ -13,96 +20,508 @@ export default function CustomizeScreen() {
   const theme = getThemeColors(isDark);
   const { character, updateCharacter } = useCharacter();
   const insets = useSafeAreaInsets();
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('SHIRTS');
 
-  // For now we only let user pick backgrounds they've set (or sample presets)
-  const backgrounds = [
-    { name: 'Gym Floor', url: 'https://images.unsplash.com/photo-1517963879433-6ad2b3bf0f84?q=80&w=1200&auto=format&fit=crop' },
-    { name: 'Beach', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop' },
-    { name: 'Mountains', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop' },
-    { name: 'Space', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop' },
+  const categories: { id: CategoryType; label: string }[] = [
+    { id: 'BODY', label: 'Body' },
+    { id: 'SHIRTS', label: 'Tops' },
+    { id: 'PANTS', label: 'Bottoms' },
+    { id: 'GEAR', label: 'Gear' },
+    { id: 'BG', label: 'Scene' },
   ];
 
-  // Build owned items lists
+  // Owned items
   const shirts = character.ownedShirts || [];
   const pants = character.ownedPants || [];
   const equipment = character.ownedEquipment || [];
+  const accessories = character.ownedAccessories || [];
+
+  // Helper to determine stage for asset display
+  // Thresholds: 30, 50, 80, 120, 180
+  const stageLevel = character.level < 30 ? 1 :
+                     character.level < 50 ? 2 :
+                     character.level < 80 ? 3 :
+                     character.level < 120 ? 4 : 5;
+  const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
+
+  const CustomizationItem = ({ title, isActive, isOwned = true, onPress, children, type = 'standard' }: any) => {
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.gridItem, 
+          { backgroundColor: theme.background },
+          isActive && { borderColor: theme.accent, borderWidth: 2 },
+          !isOwned && { opacity: 0.6 }
+        ]}
+        onPress={onPress}
+        disabled={!isOwned}
+        activeOpacity={0.7}
+      >
+        <View style={styles.itemPreview}>
+          {children}
+        </View>
+        <Text style={[styles.itemLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+          {title}
+        </Text>
+        
+        {isActive && (
+          <View style={[styles.activeBadge, { backgroundColor: theme.accent }]}>
+            <Check size={10} color={theme.cardText} />
+          </View>
+        )}
+        {!isOwned && (
+          <View style={styles.lockBadge}>
+            <Lock size={12} color={theme.textMuted} />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderContent = () => {
+    switch (activeCategory) {
+      case 'BODY':
+        return (
+          <View style={styles.gridContainer}>
+             <View style={styles.row}>
+              {[
+                { id: 1, color: '#F5D0C5', name: 'Light' },
+                { id: 2, color: '#E0AC69', name: 'Medium' },
+                { id: 3, color: '#8D5524', name: 'Dark' }
+              ].map((tone) => (
+                <CustomizationItem
+                  key={tone.id}
+                  title={tone.name}
+                  isActive={character.skinColor === tone.id}
+                  isOwned={true}
+                  onPress={() => updateCharacter({ skinColor: tone.id as 1 | 2 | 3 })}
+                >
+                  <View style={[styles.colorSwatch, { backgroundColor: tone.color }]} />
+                </CustomizationItem>
+              ))}
+             </View>
+          </View>
+        );
+      
+      case 'SHIRTS':
+        return (
+          <View style={styles.gridContainer}>
+            <CustomizationItem
+              title="None"
+              isActive={!character.equippedShirt}
+              onPress={() => updateCharacter({ equippedShirt: null })}
+            >
+              <Text style={{ fontSize: 24 }}>🚫</Text>
+            </CustomizationItem>
+            {shirts.map(name => {
+                const asset = (Assets.icons as any)?.[name] || (Assets.clothes.tops[clothingStageKey] as any)?.[name];
+                return (
+                  <CustomizationItem
+                    key={name}
+                    title={name}
+                    isActive={character.equippedShirt === name}
+                    onPress={() => updateCharacter({ equippedShirt: name })}
+                  >
+                    {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>👕</Text>
+                    )}
+                  </CustomizationItem>
+                );
+            })}
+            <TouchableOpacity 
+              style={[styles.shopButton, { borderColor: theme.accent }]}
+              onPress={() => router.push('/shop')}
+            >
+              <ShoppingBag size={20} color={theme.accent} />
+              <Text style={[styles.shopButtonText, { color: theme.accent }]}>Get More Tops</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'PANTS':
+        return (
+          <View style={styles.gridContainer}>
+            <CustomizationItem
+              title="None"
+              isActive={!character.equippedPants}
+              onPress={() => updateCharacter({ equippedPants: null })}
+            >
+              <Text style={{ fontSize: 24 }}>🚫</Text>
+            </CustomizationItem>
+            {pants.map(name => {
+              const asset = (Assets.icons as any)?.[name] || (Assets.clothes.bottoms[clothingStageKey] as any)?.[name];
+              return (
+                <CustomizationItem
+                  key={name}
+                  title={name}
+                  isActive={character.equippedPants === name}
+                  onPress={() => updateCharacter({ equippedPants: name })}
+                >
+                  {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>👖</Text>
+                    )}
+                </CustomizationItem>
+              );
+            })}
+            <TouchableOpacity 
+              style={[styles.shopButton, { borderColor: theme.accent }]}
+              onPress={() => router.push('/shop')}
+            >
+              <ShoppingBag size={20} color={theme.accent} />
+              <Text style={[styles.shopButtonText, { color: theme.accent }]}>Get More Pants</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'GEAR':
+        return (
+          <View style={styles.gridContainer}>
+            <View style={styles.row}>
+              <CustomizationItem
+                title="Empty"
+                isActive={!character.equippedEquipment || character.equippedEquipment.length === 0}
+                onPress={() => updateCharacter({ equippedEquipment: [] })}
+              >
+                <Text style={{ fontSize: 24 }}>🚫</Text>
+              </CustomizationItem>
+              {equipment.map(name => {
+                const asset = (Assets.icons as any)?.[name];
+                const isEquipped = (character.equippedEquipment || []).includes(name);
+                
+                return (
+                <CustomizationItem
+                  key={name}
+                  title={name}
+                  isActive={isEquipped}
+                  onPress={() => {
+                    const current = character.equippedEquipment || [];
+                    const newEquip = isEquipped 
+                      ? current.filter(i => i !== name)
+                      : [...current, name];
+                    updateCharacter({ equippedEquipment: newEquip });
+                  }}
+                >
+                  {asset ? (
+                    <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                  ) : (
+                    <Text style={{ fontSize: 28 }}>🏋️</Text>
+                  )}
+                </CustomizationItem>
+              )})}
+            </View>
+
+            <View style={{height: 24}}/>
+
+            <Text style={[styles.subHeader, { color: theme.text }]}>Accessories</Text>
+            <View style={styles.row}>
+              <CustomizationItem
+                title="None"
+                isActive={!character.equippedAccessory}
+                onPress={() => updateCharacter({ equippedAccessory: null })}
+              >
+                <Text style={{ fontSize: 24 }}>🚫</Text>
+              </CustomizationItem>
+              {accessories.map(name => {
+                const asset = (Assets.icons as any)?.[name] || (Assets.clothes.accessories[clothingStageKey] as any)?.[name];
+                return (
+                  <CustomizationItem
+                    key={name}
+                    title={name}
+                    isActive={character.equippedAccessory === name}
+                    onPress={() => updateCharacter({ equippedAccessory: name })}
+                  >
+                     {asset ? (
+                       <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                    ) : (
+                       <Text style={{ fontSize: 28 }}>🧣</Text>
+                    )}
+                  </CustomizationItem>
+                );
+              })}
+            </View>
+          </View>
+        );
+
+      case 'BG':
+        return (
+          <View style={styles.gridContainer}>
+            {BACKGROUNDS.map(bg => {
+              const isOwned = character.ownedBackgrounds?.includes(bg.url) || bg.name === 'Garage';
+              const isActive = character.characterBackgroundUrl === bg.url;
+              const asset = (Assets.icons as any)?.[bg.name];
+              
+              return (
+                <CustomizationItem
+                  key={bg.name}
+                  title={bg.name}
+                  isActive={isActive}
+                  isOwned={isOwned}
+                  onPress={() => updateCharacter({ characterBackgroundUrl: bg.url })}
+                >
+                  {asset ? (
+                    <Image source={asset} style={styles.bgThumbnail} />
+                  ) : bg.url.startsWith('http') ? (
+                    <Image source={{ uri: bg.url }} style={styles.bgThumbnail} />
+                  ) : (
+                    <Text style={{ fontSize: 24 }}>{bg.icon}</Text>
+                  )}
+                </CustomizationItem>
+              );
+            })}
+          </View>
+        );
+    }
+  };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={{ padding: 16, paddingTop: Math.max(16, (insets?.top || 0) + 8) }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>Customize</Text>
-        <View style={{ width: 24 }} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      
+      {/* 1. Top Section: Character Preview (Fixed 45% height) */}
+      <View style={[styles.previewArea, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+           <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={[styles.backButton, { backgroundColor: 'rgba(0,0,0,0.3)' }]}
+            >
+              <ArrowLeft size={20} color="#FFF" />
+           </TouchableOpacity>
+        </View>
+
+        <View style={styles.characterWrapper}>
+          <CharacterDisplay
+            level={character.level}
+            skinColor={character.skinColor}
+            equippedShirt={character.equippedShirt}
+            equippedPants={character.equippedPants}
+            equippedEquipment={character.equippedEquipment}
+            equippedAccessory={character.equippedAccessory}
+            characterBackgroundUrl={character.characterBackgroundUrl}
+            style={{ width: '100%', height: '100%' }}
+            imageStyle={{ width: '100%', height: '100%' }}
+          />
+        </View>
+        
+        {/* Gradient fade to seamlessly blend into bottom sheet */}
+        <LinearGradient
+          colors={['transparent', theme.surface]}
+          style={styles.fadeOverlay}
+        />
       </View>
 
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Backgrounds</Text>
-      <View style={styles.grid}>
-        {backgrounds.map(bg => (
-          <TouchableOpacity key={bg.name} style={styles.card} activeOpacity={0.9} onPress={() => updateCharacter({ characterBackgroundUrl: bg.url })}>
-            <Image source={{ uri: bg.url }} style={styles.bgThumb} />
-            <LinearGradient colors={[theme.accent, theme.accentSecondary]} locations={[0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardFooter}>
-              <Text style={[styles.cardText, { color: theme.cardText }]}>{bg.name}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        ))}
+      {/* 2. Bottom Section: Controls (BottomSheet style) */}
+      <View style={[styles.controlsSheet, { backgroundColor: theme.surface }]}>
+        
+        {/* Category Tabs */}
+        <View style={styles.tabsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+            {categories.map(cat => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.tabPill,
+                  activeCategory === cat.id ? { backgroundColor: theme.accent } : { backgroundColor: theme.background }
+                ]}
+                onPress={() => setActiveCategory(cat.id)}
+              >
+                <Text 
+                  style={[
+                    styles.tabText,
+                    { color: activeCategory === cat.id ? theme.cardText : theme.textMuted }
+                  ]}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Content Area */}
+        <ScrollView 
+          style={styles.contentScroll} 
+          contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderContent()}
+        </ScrollView>
       </View>
 
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Shirts</Text>
-      {shirts.length === 0 ? (
-        <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>No shirts owned yet.</Text>
-      ) : (
-        <View style={styles.tagRow}>
-          {shirts.map(name => (
-            <TouchableOpacity key={name} style={styles.tag} onPress={() => updateCharacter({ equippedShirt: name })}>
-              <Text style={{ color: theme.text }}>{name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Pants</Text>
-      {pants.length === 0 ? (
-        <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>No pants owned yet.</Text>
-      ) : (
-        <View style={styles.tagRow}>
-          {pants.map(name => (
-            <TouchableOpacity key={name} style={styles.tag} onPress={() => updateCharacter({ equippedPants: name })}>
-              <Text style={{ color: theme.text }}>{name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Equipment</Text>
-      {equipment.length === 0 ? (
-        <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>No equipment owned yet.</Text>
-      ) : (
-        <View style={styles.tagRow}>
-          {equipment.map(name => (
-            <TouchableOpacity key={name} style={styles.tag} onPress={() => updateCharacter({ equippedEquipment: name, baseStrength: (character.baseStrength||10)+5 })}>
-              <Text style={{ color: theme.text }}>{name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  title: { fontSize: 18, fontWeight: 'bold' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', marginTop: 8, marginBottom: 8 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  card: { width: '48%', borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
-  bgThumb: { width: '100%', height: 100 },
-  cardFooter: { padding: 10 },
-  cardText: { fontWeight: '700', textAlign: 'center' },
-  placeholder: { borderRadius: 12, padding: 16 },
-  placeholderText: { textAlign: 'center' },
+  
+  // Preview Section
+  previewArea: {
+    height: height * 0.45,
+    width: '100%',
+    position: 'relative',
+    zIndex: 1,
+  },
+  header: {
+    position: 'absolute',
+    top: 50, // Safe area handled by padding
+    left: 20,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  characterWrapper: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fadeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    zIndex: 2,
+  },
+
+  // Controls Section
+  controlsSheet: {
+    flex: 1,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -24, // Overlap slightly
+    zIndex: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  
+  tabsWrapper: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  tabsContainer: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  tabPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  contentScroll: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  
+  // Grid/List Styles
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  subHeader: {
+    width: '100%',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  
+  // Item Card
+  gridItem: {
+    width: (width - 40 - 24) / 3, // Calculated width: (Screen - Padding*2 - Gap*2) / 3
+    height: 110,
+    borderRadius: 16,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  itemPreview: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  activeBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+  },
+  
+  // Content Assets
+  colorSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  bgThumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+  },
+  
+  // Shop Button
+  shopButton: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: 12,
+  },
+  shopButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  }
 });
-
-

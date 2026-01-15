@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SetType } from '@/types/workout.types';
 
 export type WorkoutSet = {
   id: string;
   reps: number;
   weight: number;
   completed: boolean;
+  setType: SetType;
 };
 
 export type WorkoutExercise = {

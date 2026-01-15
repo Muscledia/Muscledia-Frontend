@@ -13,6 +13,9 @@ import { Gem } from 'lucide-react-native';
 import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
+import { BACKGROUNDS, SHOP_ITEMS } from '@/constants/GameItems';
+import { Assets } from '@/constants/Assets';
+import { Image } from 'react-native';
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
@@ -24,47 +27,25 @@ export default function ShopScreen() {
   const shopCategories = [
     {
       title: 'Shirts',
-      items: [
-        { name: 'Basic Tee', price: 50, icon: '👕' },
-        { name: 'Tank Top', price: 75, icon: '👕' },
-        { name: 'Muscle Shirt', price: 100, icon: '👕' },
-        { name: 'Pro Shirt', price: 150, icon: '👕' },
-      ]
+      items: SHOP_ITEMS.SHIRTS
     },
     {
       title: 'Pants',
-      items: [
-        { name: 'Shorts', price: 60, icon: '🩳' },
-        { name: 'Joggers', price: 80, icon: '👖' },
-        { name: 'Pro Pants', price: 120, icon: '👖' },
-        { name: 'Elite Gear', price: 200, icon: '👖' },
-      ]
+      items: SHOP_ITEMS.PANTS
     },
     {
       title: 'Equipment',
-      items: [
-        { name: 'Dumbbells', price: 300, icon: '🏋️' },
-        { name: 'Barbell', price: 500, icon: '🏋️' },
-        { name: 'Bench', price: 400, icon: '🪑' },
-        { name: 'Rack', price: 800, icon: '🏗️' },
-      ]
+      items: SHOP_ITEMS.EQUIPMENT
+    },
+    {
+      title: 'Accessories',
+      items: SHOP_ITEMS.ACCESSORIES
     },
     {
       title: 'Backgrounds',
-      items: [
-        { name: 'Gym Floor', price: 100, icon: '🏟️', url: 'https://images.unsplash.com/photo-1517963879433-6ad2b3bf0f84?q=80&w=1200&auto=format&fit=crop' },
-        { name: 'Beach', price: 150, icon: '🏖️', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop' },
-        { name: 'Mountains', price: 200, icon: '⛰️', url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop' },
-        { name: 'Space', price: 300, icon: '🌌', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop' },
-      ]
+      items: BACKGROUNDS
     }
   ];
-
-  const handleSelectBackground = (url: string) => {
-    updateCharacter({ characterBackgroundUrl: url });
-    impact('success');
-    Alert.alert('Background Updated', 'Your character background has been set.');
-  };
 
   const handlePurchase = async (categoryTitle: string, item: any) => {
     const ok = purchaseItem(categoryTitle as any, item.name, item.price, item.url);
@@ -79,10 +60,35 @@ export default function ShopScreen() {
 
   const ShopItem = ({ item, categoryTitle }: { item: any; categoryTitle: string }) => {
     const isBackground = categoryTitle === 'Backgrounds' && item.url;
+
+    // Helper to determine stage for asset display
+    // Thresholds: 30, 50, 80, 120, 180
+    const stageLevel = character.level < 30 ? 1 :
+                       character.level < 50 ? 2 :
+                       character.level < 80 ? 3 :
+                       character.level < 120 ? 4 : 5;
+    const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
+    
+    // Get item asset if available
+    let asset = (Assets.icons as any)?.[item.name];
+    
+    if (!asset) {
+      if (categoryTitle === 'Shirts') {
+          asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Pants') {
+          asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Accessories') {
+          asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Equipment') {
+         // Fallback if needed
+      }
+    }
+
     const isOwned = (
       categoryTitle === 'Shirts' ? character.ownedShirts.includes(item.name) :
       categoryTitle === 'Pants' ? character.ownedPants.includes(item.name) :
       categoryTitle === 'Equipment' ? character.ownedEquipment.includes(item.name) :
+      categoryTitle === 'Accessories' ? character.ownedAccessories.includes(item.name) :
       categoryTitle === 'Backgrounds' ? character.ownedBackgrounds.includes(item.url || '') :
       false
     );
@@ -91,8 +97,7 @@ export default function ShopScreen() {
       <TouchableOpacity 
         onPress={async () => { 
           if (isOwned) { await impact('selection'); return; }
-          if (isBackground && item.url) handleSelectBackground(item.url);
-          else handlePurchase(categoryTitle, item);
+          handlePurchase(categoryTitle, item);
         }}
         activeOpacity={0.9}
         style={styles.shopItem}
@@ -105,7 +110,11 @@ export default function ShopScreen() {
           style={styles.shopItemInner}
         >
           <View style={styles.itemHeader}>
-            <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
+            {asset ? (
+               <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8 }} />
+            ) : (
+               <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
+            )}
             <Text style={[styles.itemName, { color: theme.cardText }]}>{item.name}</Text>
           </View>
           <View style={styles.itemFooter}>
@@ -129,11 +138,6 @@ export default function ShopScreen() {
         <View style={styles.balRow}>
           <Gem size={18} color={theme.accent} />
           <Text style={[styles.balText, { color: theme.accent }]}>{character.coins}</Text>
-          <TouchableOpacity onPress={async () => { addCoins(500); await impact('success'); }} style={styles.addBtn}>
-            <LinearGradient colors={[theme.accent, theme.accentSecondary]} locations={[0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.addBtnInner}>
-              <Text style={[styles.addBtnText, { color: theme.cardText }]}>+500</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
       </View>
       <Text style={[styles.welcomeText, { color: theme.text }]}>

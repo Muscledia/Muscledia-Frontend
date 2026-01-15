@@ -15,11 +15,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,18 +33,25 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (isLoading) return;
 
+    // Basic validation
+    if (!username.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter both username and password.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await login(email.trim(), password);
-      
+      // Pass username instead of email
+      const result = await login(username.trim(), password);
+
       if (result.success) {
-        // Navigation will be handled by the root layout based on auth state
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Login Failed', result.error || 'Please try again.');
+        Alert.alert('Login Failed', result.error || 'Please check your credentials and try again.');
       }
-    } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Login Error', error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -59,11 +66,11 @@ export default function LoginScreen() {
       colors={isDark ? [theme.background, theme.surface] : [theme.surface, theme.background]}
       style={styles.container}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
@@ -79,21 +86,21 @@ export default function LoginScreen() {
             {/* Login Form */}
             <View style={[styles.form, { backgroundColor: theme.surface }]}>
               <Text style={[styles.formTitle, { color: theme.text }]}>Welcome Back!</Text>
-            
+
             {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: theme.text }]}>Email</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Username</Text>
               <View style={[styles.inputWrapper, { backgroundColor: theme.surfaceLight, borderColor: theme.border }]}>
-                <Mail size={20} color={theme.textMuted} style={styles.inputIcon} />
+                <User size={20} color={theme.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
-                  placeholder="Enter your email"
+                  placeholder="Enter your username"
                   placeholderTextColor={theme.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
+                  value={username}
+                  onChangeText={setUsername}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  textContentType="username" // Added for better UX
                 />
               </View>
             </View>
@@ -111,6 +118,7 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  textContentType="password" // Added for better UX
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -254,4 +262,4 @@ const styles = StyleSheet.create({
     color: '#6D28D9',
     fontWeight: '600',
   },
-}); 
+});
