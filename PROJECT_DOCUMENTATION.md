@@ -27,7 +27,7 @@
 - **Gamification**: Users earn XP, level up, unlock badges, and participate in challenges
 - **Character System**: Visual avatar that evolves based on fitness progress
 - **Workout Tracking**: Comprehensive exercise logging with sets, reps, and weights
-- **Social Features**: Leaderboards, leagues, and public routine sharing
+- **Social Features**: Leaderboards and public routine sharing
 - **AI Integration**: Personalized workout recommendations using AI
 
 ### Target Platform
@@ -154,7 +154,6 @@ Muscledia-Frontend/
 │   ├── public-routines.tsx       # Browse public routines
 │   ├── ai-recommendation/        # AI workout recommendations
 │   ├── leaderboard.tsx           # Leaderboards
-│   ├── leagues.tsx               # League system
 │   └── personal-records.tsx      # Personal records tracking
 │
 ├── components/                   # Reusable UI components
@@ -178,7 +177,6 @@ Muscledia-Frontend/
 │   ├── useRoutines.tsx           # Routine management
 │   ├── useChallenges.tsx         # Challenge system
 │   ├── useLeaderboard.tsx        # Leaderboard data
-│   ├── useLeagues.tsx            # League system
 │   ├── useNotifications.tsx      # Push notifications
 │   ├── useHaptics.ts             # Haptic feedback
 │   └── ...
@@ -356,16 +354,9 @@ The character is the core gamification element that represents the user's fitnes
 - Real-time updates
 - User ranking display
 
-#### Leagues
-- Division-based competition
-- Promotion/relegation system
-- League-specific rewards
-
 **Implementation**: 
 - `services/badgeService.ts`
 - `services/leaderboardService.ts`
-- `hooks/useLeagues.tsx`
-
 ### 6. Routine System
 - **Routine Folders**: Organize multiple workout plans
 - **Public Routines**: Browse and save community routines
@@ -493,7 +484,6 @@ The app uses React Context API for global state management:
 4. **WorkoutsProvider**: Workout history and sessions
 5. **RoutineProvider**: Routine management
 6. **RaidProvider**: Raid/challenge system
-7. **LeaguesProvider**: League system
 8. **NotificationsProvider**: Notification management
 
 ### React Query
@@ -646,9 +636,6 @@ Active user challenges with progress tracking
 
 #### useLeaderboard
 Leaderboard data with multiple types
-
-#### useLeagues
-League system state
 
 #### useHaptics
 Haptic feedback wrapper:
