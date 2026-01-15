@@ -303,18 +303,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   };
 
-  // Health helpers
-  const consumeHealth = (amount: number) => {
-    if (character.currentHealth <= 0) return false;
-    // Stamina effect: more stamina increases cap and reduces consumption
-    const stamina = (character.baseStamina || 10) + character.level * 3;
-    const reducedCost = Math.max(1, Math.round(amount * (1 - Math.min(0.5, stamina * 0.005)))); // up to 50% reduction
-    const maxBonus = Math.min(50, Math.floor(stamina * 0.5));
-    const effectiveMax = (character.maxHealth || 50) + maxBonus;
-    const remaining = Math.max(0, Math.min(effectiveMax, character.currentHealth - reducedCost));
-    updateCharacter({ currentHealth: remaining });
-    return remaining > 0;
-  };
 
   // Daily routine helpers (disabled)
   const canStartRoutineToday = (_routineId: string) => {
