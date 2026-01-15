@@ -20,21 +20,31 @@ const JourneyPhaseIndicator = ({ level }: { level: number }) => {
   let color = '#4CAF50';
   let progress = 0;
 
-  if (level <= 10) {
+  if (level < 30) {
     phase = 'Foundation';
     Icon = Flag;
     color = '#4CAF50';
-    progress = level / 10;
-  } else if (level <= 30) {
+    progress = level / 30;
+  } else if (level < 50) {
     phase = 'Building';
     Icon = Shield;
     color = '#FFD700';
-    progress = (level - 10) / 20;
+    progress = (level - 30) / 20;
+  } else if (level < 80) {
+    phase = 'Advanced';
+    Icon = Shield; // Reuse or new icon
+    color = '#FFA000';
+    progress = (level - 50) / 30;
+  } else if (level < 120) {
+    phase = 'Elite';
+    Icon = Crown;
+    color = '#FF5722';
+    progress = (level - 80) / 40;
   } else {
     phase = 'Mastery';
     Icon = Crown;
     color = '#F44336';
-    progress = Math.min(1, (level - 30) / 70); // Cap at 100
+    progress = Math.min(1, (level - 120) / 60); // Cap at 180 roughly
   }
 
   return (

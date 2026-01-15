@@ -455,19 +455,6 @@ export default function HomeScreen() {
           <View style={styles.barsContainer}>
             <View style={styles.barRow}>
               <Text style={[styles.barLeftLabel, { color: theme.text }]}>
-                {character.currentHealth}/{character.maxHealth}
-              </Text>
-              <View style={{ flex: 1 }}>
-                <ProgressBar
-                  progress={Math.max(0, Math.min(1, character.currentHealth / character.maxHealth || 0))}
-                  color={theme.health}
-                  height={10}
-                />
-              </View>
-              <Text style={[styles.barRightLabel, { color: theme.textSecondary }]}>Health</Text>
-            </View>
-            <View style={styles.barRow}>
-              <Text style={[styles.barLeftLabel, { color: theme.text }]}>
                 {character.xp}/{character.xpToNextLevel}
               </Text>
               <View style={{ flex: 1 }}>

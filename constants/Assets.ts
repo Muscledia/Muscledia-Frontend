@@ -1,6 +1,7 @@
 export const Assets = {
   backgrounds: {
     gym: require('../assets/backgrounds/background_gym.png'),
+    garage: require('../assets/backgrounds/background_garage.png'),
   },
   characters: {
     stage1: {
@@ -103,8 +104,27 @@ export const Assets = {
     }
   },
   equipment: {
-    dumbbell: require('../assets/equipment/dumbell_gym.png'),
-    barbell: require('../assets/equipment/barbell_gym.png'),
+    dumbbell: {
+      gym: require('../assets/equipment/dumbell_gym.png'),
+      garage: require('../assets/equipment/dumbell_garage.png'),
+    },
+    barbell: {
+      gym: require('../assets/equipment/barbell_gym.png'),
+      garage: require('../assets/equipment/barbell_garage.png'),
+    },
   },
+  icons: {
+    'Basic Tee': require('../assets/icons/top1 icon.png'),
+    'Tank Top': require('../assets/icons/top2 icon.png'),
+    'Muscle Shirt': require('../assets/icons/top3 icon.png'),
+    'Shorts': require('../assets/icons/bot1 icon.png'),
+    'Joggers': require('../assets/icons/bot2 icon.png'),
+    'Wristbands': require('../assets/icons/acc1 icon.png'),
+    'Headband': require('../assets/icons/acc2 icon.png'),
+    'Dumbbells': require('../assets/icons/dumbell icon.png'),
+    'Barbell': require('../assets/icons/barbell icon.png'),
+    'Garage': require('../assets/icons/bg garage icon.png'),
+    'Gym Floor': require('../assets/icons/bg gym icon.png'),
+  }
 };
 

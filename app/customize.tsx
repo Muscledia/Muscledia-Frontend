@@ -37,7 +37,11 @@ export default function CustomizeScreen() {
   const accessories = character.ownedAccessories || [];
 
   // Helper to determine stage for asset display
-  const stageLevel = Math.min(5, Math.floor((character.level - 1) / 10) + 1);
+  // Thresholds: 30, 50, 80, 120, 180
+  const stageLevel = character.level < 30 ? 1 :
+                     character.level < 50 ? 2 :
+                     character.level < 80 ? 3 :
+                     character.level < 120 ? 4 : 5;
   const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
 
   const CustomizationItem = ({ title, isActive, isOwned = true, onPress, children, type = 'standard' }: any) => {
@@ -110,7 +114,7 @@ export default function CustomizeScreen() {
               <Text style={{ fontSize: 24 }}>🚫</Text>
             </CustomizationItem>
             {shirts.map(name => {
-                const asset = (Assets.clothes.tops[clothingStageKey] as any)?.[name];
+                const asset = (Assets.icons as any)?.[name] || (Assets.clothes.tops[clothingStageKey] as any)?.[name];
                 return (
                   <CustomizationItem
                     key={name}
@@ -147,7 +151,7 @@ export default function CustomizeScreen() {
               <Text style={{ fontSize: 24 }}>🚫</Text>
             </CustomizationItem>
             {pants.map(name => {
-              const asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[name];
+              const asset = (Assets.icons as any)?.[name] || (Assets.clothes.bottoms[clothingStageKey] as any)?.[name];
               return (
                 <CustomizationItem
                   key={name}
@@ -179,21 +183,35 @@ export default function CustomizeScreen() {
             <View style={styles.row}>
               <CustomizationItem
                 title="Empty"
-                isActive={!character.equippedEquipment}
-                onPress={() => updateCharacter({ equippedEquipment: null })}
+                isActive={!character.equippedEquipment || character.equippedEquipment.length === 0}
+                onPress={() => updateCharacter({ equippedEquipment: [] })}
               >
                 <Text style={{ fontSize: 24 }}>🚫</Text>
               </CustomizationItem>
-              {equipment.map(name => (
+              {equipment.map(name => {
+                const asset = (Assets.icons as any)?.[name];
+                const isEquipped = (character.equippedEquipment || []).includes(name);
+                
+                return (
                 <CustomizationItem
                   key={name}
                   title={name}
-                  isActive={character.equippedEquipment === name}
-                  onPress={() => updateCharacter({ equippedEquipment: name })}
+                  isActive={isEquipped}
+                  onPress={() => {
+                    const current = character.equippedEquipment || [];
+                    const newEquip = isEquipped 
+                      ? current.filter(i => i !== name)
+                      : [...current, name];
+                    updateCharacter({ equippedEquipment: newEquip });
+                  }}
                 >
-                  <Text style={{ fontSize: 28 }}>🏋️</Text>
+                  {asset ? (
+                    <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain' }} />
+                  ) : (
+                    <Text style={{ fontSize: 28 }}>🏋️</Text>
+                  )}
                 </CustomizationItem>
-              ))}
+              )})}
             </View>
 
             <View style={{height: 24}}/>
@@ -208,7 +226,7 @@ export default function CustomizeScreen() {
                 <Text style={{ fontSize: 24 }}>🚫</Text>
               </CustomizationItem>
               {accessories.map(name => {
-                const asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[name];
+                const asset = (Assets.icons as any)?.[name] || (Assets.clothes.accessories[clothingStageKey] as any)?.[name];
                 return (
                   <CustomizationItem
                     key={name}
@@ -234,6 +252,8 @@ export default function CustomizeScreen() {
             {BACKGROUNDS.map(bg => {
               const isOwned = character.ownedBackgrounds?.includes(bg.url) || bg.name === 'Garage';
               const isActive = character.characterBackgroundUrl === bg.url;
+              const asset = (Assets.icons as any)?.[bg.name];
+              
               return (
                 <CustomizationItem
                   key={bg.name}
@@ -242,7 +262,9 @@ export default function CustomizeScreen() {
                   isOwned={isOwned}
                   onPress={() => updateCharacter({ characterBackgroundUrl: bg.url })}
                 >
-                  {bg.url.startsWith('http') ? (
+                  {asset ? (
+                    <Image source={asset} style={styles.bgThumbnail} />
+                  ) : bg.url.startsWith('http') ? (
                     <Image source={{ uri: bg.url }} style={styles.bgThumbnail} />
                   ) : (
                     <Text style={{ fontSize: 24 }}>{bg.icon}</Text>

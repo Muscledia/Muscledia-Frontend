@@ -62,17 +62,26 @@ export default function ShopScreen() {
     const isBackground = categoryTitle === 'Backgrounds' && item.url;
 
     // Helper to determine stage for asset display
-    const stageLevel = Math.min(5, Math.floor((character.level - 1) / 10) + 1);
+    // Thresholds: 30, 50, 80, 120, 180
+    const stageLevel = character.level < 30 ? 1 :
+                       character.level < 50 ? 2 :
+                       character.level < 80 ? 3 :
+                       character.level < 120 ? 4 : 5;
     const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
     
     // Get item asset if available
-    let asset = null;
-    if (categoryTitle === 'Shirts') {
-        asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
-    } else if (categoryTitle === 'Pants') {
-        asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
-    } else if (categoryTitle === 'Accessories') {
-        asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
+    let asset = (Assets.icons as any)?.[item.name];
+    
+    if (!asset) {
+      if (categoryTitle === 'Shirts') {
+          asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Pants') {
+          asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Accessories') {
+          asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
+      } else if (categoryTitle === 'Equipment') {
+         // Fallback if needed
+      }
     }
 
     const isOwned = (

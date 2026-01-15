@@ -7,7 +7,7 @@ type CharacterDisplayProps = {
   level?: number;
   equippedShirt?: string | null;
   equippedPants?: string | null;
-  equippedEquipment?: string | null;
+  equippedEquipment?: string[] | null;
   equippedAccessory?: string | null;
   characterBackgroundUrl?: string | null; // This might be a URL or a key
   style?: StyleProp<ViewStyle>;
@@ -25,9 +25,16 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   style,
   imageStyle,
 }) => {
-  // Determine stage based on level (1-5)
-  // Stage 1: 1-9, Stage 2: 10-19, etc.
-  const stageLevel = Math.min(5, Math.floor((level - 1) / 10) + 1);
+  // Determine stage based on level thresholds: 30, 50, 80, 120, 180
+  const getStageLevel = (lvl: number) => {
+    if (lvl < 30) return 1;
+    if (lvl < 50) return 2;
+    if (lvl < 80) return 3;
+    if (lvl < 120) return 4;
+    return 5; // Cap at 5 for now (120+)
+  };
+  
+  const stageLevel = getStageLevel(level);
   const stageKey = `stage${stageLevel}` as keyof typeof Assets.characters;
   const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
   
@@ -41,11 +48,22 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   const pantsAsset = equippedPants ? (Assets.clothes.bottoms[clothingStageKey] as any)?.[equippedPants] : null;
   const accessoryAsset = equippedAccessory ? (Assets.clothes.accessories[clothingStageKey] as any)?.[equippedAccessory] : null;
   
-  // Equipment mapping remains simple
-  // Note: Equipment names in database are likely capitalized e.g. "Dumbbells", mapping to "dumbbell" key
-  const equipmentAsset = equippedEquipment 
-    ? (Assets.equipment as any)?.[equippedEquipment.toLowerCase().replace(/s$/, '')] // rudimentary singularization for "Dumbbells" -> "dumbbell"
-    : null;
+  // Equipment mapping
+  const equippedItems = Array.isArray(equippedEquipment) 
+    ? equippedEquipment 
+    : (typeof equippedEquipment === 'string' ? [equippedEquipment] : []);
+
+  const equipmentAssets = equippedItems.map(item => {
+    // rudimentary singularization for "Dumbbells" -> "dumbbell"
+    const key = item.toLowerCase().replace(/s$/, '');
+    const equipmentSet = (Assets.equipment as any)?.[key];
+    
+    // Choose variant based on background
+    if (characterBackgroundUrl === 'Garage') {
+      return equipmentSet?.garage || equipmentSet?.gym || equipmentSet;
+    }
+    return equipmentSet?.gym || equipmentSet; 
+  }).filter(Boolean);
 
   // Background handling
   // If characterBackgroundUrl starts with http, it's remote (from existing logic)
@@ -53,17 +71,15 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   const isRemoteBg = characterBackgroundUrl?.startsWith('http');
   const localBg = 
     !isRemoteBg && characterBackgroundUrl === 'Gym Floor' ? Assets.backgrounds.gym :
-    !isRemoteBg && characterBackgroundUrl === 'Garage' ? null : 
+    !isRemoteBg && characterBackgroundUrl === 'Garage' ? Assets.backgrounds.garage : 
     null;
 
   return (
     <View style={[styles.container, style]}>
       {/* Background Layer */}
-      {characterBackgroundUrl === 'Garage' ? (
-        <View style={[styles.layer, styles.background, { backgroundColor: '#2A2A2A' }, imageStyle]} />
-      ) : characterBackgroundUrl && (
+      {characterBackgroundUrl && (
         <Image
-          source={isRemoteBg ? { uri: characterBackgroundUrl } : (localBg || Assets.backgrounds.gym)}
+          source={isRemoteBg ? { uri: characterBackgroundUrl } : (localBg || Assets.backgrounds.garage)}
           style={[styles.layer, styles.background, imageStyle]}
           resizeMode={isRemoteBg ? 'cover' : 'contain'}
           resizeMethod="scale"
@@ -72,15 +88,16 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
       )}
 
       {/* Equipment Layer (behind body) */}
-      {equipmentAsset && (
+      {equipmentAssets.map((asset, index) => (
         <Image
-          source={equipmentAsset}
+          key={`equip-${index}`}
+          source={asset}
           style={[styles.layer, styles.equipment, imageStyle]}
           resizeMode="contain"
           resizeMethod="scale"
           fadeDuration={0}
         />
-      )}
+      ))}
 
       {/* Body Layer */}
       <Image

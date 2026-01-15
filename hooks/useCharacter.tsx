@@ -38,7 +38,7 @@ type Character = {
   // Equipped
   equippedShirt?: string | null;
   equippedPants?: string | null;
-  equippedEquipment?: string | null;
+  equippedEquipment?: string[];
   equippedAccessory?: string | null;
   // Derived stats
   baseStrength?: number;
@@ -89,7 +89,7 @@ const DEFAULT_CHARACTER: Character = {
   ownedBackgrounds: ['Garage'],
   equippedShirt: null,
   equippedPants: null,
-  equippedEquipment: null,
+  equippedEquipment: [],
   equippedAccessory: null,
   baseStrength: 10,
   baseStamina: 10,
@@ -142,14 +142,35 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
           if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
           if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
+          
+          // Migrate equippedEquipment to array
+          if (typeof (merged as any).equippedEquipment === 'string') {
+            (merged as any).equippedEquipment = [(merged as any).equippedEquipment];
+          } else if (!Array.isArray((merged as any).equippedEquipment)) {
+             (merged as any).equippedEquipment = [];
+          }
+
           if (!merged.skinColor) merged.skinColor = 1;
           if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
 
-          // Sync coins from API points
+          // Sync coins and XP from API
           try {
             const profile = await GamificationService.getProfile();
             if (profile) {
-              (merged as any).coins = profile.points;
+              (merged as any).coins = profile.fitnessCoins;
+              (merged as any).totalXP = profile.points;
+              (merged as any).level = profile.level;
+              
+              // Calculate relative XP for the bar based on the quadratic curve
+              const currentLevel = profile.level;
+              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
+              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
+              
+              const xpRequiredForLevel = nextLevelBaseXP - levelBaseXP;
+              const xpProgressInLevel = Math.max(0, profile.points - levelBaseXP);
+              
+              (merged as any).xp = xpProgressInLevel;
+              (merged as any).xpToNextLevel = xpRequiredForLevel;
             }
           } catch (error) {
             console.log('Failed to sync gamification profile:', error);
@@ -164,7 +185,16 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           try {
             const profile = await GamificationService.getProfile();
             if (profile) {
-              initialChar.coins = profile.points;
+              initialChar.coins = profile.fitnessCoins;
+              initialChar.totalXP = profile.points;
+              initialChar.level = profile.level;
+              
+              const currentLevel = profile.level;
+              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
+              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
+              
+              initialChar.xp = Math.max(0, profile.points - levelBaseXP);
+              initialChar.xpToNextLevel = nextLevelBaseXP - levelBaseXP;
             }
           } catch (error) {
             console.log('Failed to fetch initial profile:', error);
@@ -183,41 +213,12 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Health regeneration logic (called on init and whenever character loads)
   const applyHealthRegen = () => {
-    const now = new Date();
-    const nowIso = now.toISOString();
-
-    // If no last update recorded, set it and return
-    if (!character.lastHealthUpdate) {
-      updateCharacter({ lastHealthUpdate: nowIso });
-      return;
-    }
-
-    // Calculate minutes passed
-    const last = new Date(character.lastHealthUpdate);
-    const minutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
-
-    if (minutes <= 0 || character.currentHealth >= character.maxHealth) {
-      // Still update timestamp if missing
-      if (!character.lastHealthUpdate) updateCharacter({ lastHealthUpdate: nowIso });
-      return;
-    }
-
-    // Regeneration rate: 1 health per 30 minutes
-    const regenUnits = Math.floor(minutes / 30);
-    if (regenUnits > 0) {
-      const newHealth = Math.min(character.maxHealth, character.currentHealth + regenUnits);
-      updateCharacter({ currentHealth: newHealth, lastHealthUpdate: nowIso });
-    } else {
-      // No whole unit passed, still update timestamp to avoid extremely fast loops
-      updateCharacter({ lastHealthUpdate: nowIso });
-    }
+    // Logic disabled
   };
 
   // Ensure regen runs after init
   useEffect(() => {
-    if (!isInitialized) return;
-    applyHealthRegen();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Regen disabled
   }, [isInitialized]);
 
   // Update streak based on last workout date
@@ -271,7 +272,11 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [character, isInitialized, user]);
 
   const calculateXPToNextLevel = (level: number) => {
-    return Math.floor(100 * Math.pow(1.2, level - 1));
+    // Quadratic progression: Base XP ~ 40 * level^2
+    // Delta = 40*(l+1)^2 - 40*l^2 = 80*l + 40
+    // Special handling for Level 1 to start at 0
+    if (level === 1) return 160; // 0 to 160
+    return 80 * level + 40;
   };
 
   const checkLevelUp = (xp: number, currentLevel: number, currentXpToNextLevel: number) => {

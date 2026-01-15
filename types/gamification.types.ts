@@ -158,6 +158,7 @@ export interface GamificationProfile {
   id: string;
   userId: number;
   points: number;
+  fitnessCoins: number;
   username: string;
   level: number;
   lastLevelUpDate: string;
