@@ -17,10 +17,6 @@ type Character = {
   height?: number;
   weight?: number;
   goal?: string;
-  // Health system
-  maxHealth: number;
-  currentHealth: number;
-  lastHealthUpdate: string | null; // ISO timestamp for regen calculations
   // Daily routine limits
   routinesDate: string | null; // YYYY-MM-DD
   routinesDoneToday: string[]; // unique routine ids
@@ -53,9 +49,6 @@ type CharacterContextType = {
   updateCharacter: (updatedCharacter: Partial<Character>) => void;
   incrementXP: (amount: number) => void;
   resetCharacter: () => void;
-  // Health helpers
-  applyHealthRegen: () => void;
-  consumeHealth: (amount: number) => boolean;
   // Daily routine helpers
   canStartRoutineToday: (routineId: string) => boolean;
   registerRoutineStart: (routineId: string) => void;
@@ -73,9 +66,6 @@ const DEFAULT_CHARACTER: Character = {
   streak: 0,
   lastWorkout: null,
   gender: 'male',
-  maxHealth: 50,
-  currentHealth: 50,
-  lastHealthUpdate: null,
   routinesDate: null,
   routinesDoneToday: [],
   characterBackgroundUrl: 'Garage',
@@ -126,12 +116,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
             merged.xpToNextLevel = calculateXPToNextLevel(merged.level || DEFAULT_CHARACTER.level);
           }
-          // Normalize health bounds
-          if (merged.maxHealth <= 0) merged.maxHealth = DEFAULT_CHARACTER.maxHealth;
-          if (merged.currentHealth == null || merged.currentHealth < 0) merged.currentHealth = 0;
-          if (merged.currentHealth > merged.maxHealth) merged.currentHealth = merged.maxHealth;
           // Ensure dates exist
-          if (merged.lastHealthUpdate === undefined) merged.lastHealthUpdate = null;
           if (merged.routinesDate === undefined) merged.routinesDate = null;
           if (!Array.isArray(merged.routinesDoneToday)) merged.routinesDoneToday = [];
           if (merged.avatarUrl === undefined) merged.avatarUrl = null;
@@ -210,16 +195,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     loadCharacter();
   }, [user]);
-
-  // Health regeneration logic (called on init and whenever character loads)
-  const applyHealthRegen = () => {
-    // Logic disabled
-  };
-
-  // Ensure regen runs after init
-  useEffect(() => {
-    // Regen disabled
-  }, [isInitialized]);
 
   // Update streak based on last workout date
   useEffect(() => {
@@ -406,8 +381,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         updateCharacter,
         incrementXP,
         resetCharacter,
-        applyHealthRegen,
-        consumeHealth,
         canStartRoutineToday,
         registerRoutineStart,
         addCoins,
