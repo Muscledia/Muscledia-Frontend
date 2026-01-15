@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Muscledia",
-    "slug": "Muscledia",
+    "slug": "muscledia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/appIcon.png",
@@ -9,7 +9,11 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.seasharkorganization.muscledia",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": {
       "bundler": "metro",
@@ -20,10 +24,25 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      ["expo-notifications", {"mode": "production"}]
+      [
+        "expo-notifications",
+        {
+          "mode": "production"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e571e8ae-ec4d-4a27-87ac-06020e660540"
+      }
+    },
+    "owner": "seashark-organization",
+    "android": {
+      "package": "com.seasharkorganization.muscledia"
     }
   }
 }
