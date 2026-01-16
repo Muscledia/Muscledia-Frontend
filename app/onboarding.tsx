@@ -9,10 +9,9 @@ import { useHaptics } from '@/hooks/useHaptics';
 const { width } = Dimensions.get('window');
 
 const slides = [
-  { title: 'Welcome to Muscledia', subtitle: 'Gamify your workouts with XP, health, and quests.' },
+  { title: 'Welcome to Muscledia', subtitle: 'Gamify your workouts with XP and quests.' },
   { title: 'Build Custom Routines', subtitle: 'Pick exercises, add sets, and track completion.' },
-  { title: 'Weekly Muscle Champions', subtitle: 'Complete sets to earn big XP rewards.' },
-  { title: 'Leagues & Shop', subtitle: 'Climb divisions and customize your character.' },
+  { title: 'Shop', subtitle: 'Customize your character.' },
 ];
 
 export default function OnboardingScreen() {

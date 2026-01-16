@@ -645,27 +645,6 @@ const styles = StyleSheet.create({
   equipmentStat: {
     fontSize: 12,
   },
-  attributesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  attributeCard: {
-    width: '48%',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  attributeName: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  attributeValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   skillsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -717,32 +696,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  leaguesCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-  },
-  leagueTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  leagueSub: {
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 10,
-  },
-  leagueRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  leaguePoints: { fontSize: 18, fontWeight: '700' },
-  leagueNext: { fontSize: 12 },
-  progressBarShell: { height: 8, borderRadius: 6, overflow: 'hidden', marginTop: 10 },
-  progressBarFill: { height: '100%', borderRadius: 6 },
-  claimButton: { marginTop: 12 },
-  claimGradient: { paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
-  claimText: { fontWeight: '700' },
   // Calendar styles
   calendarContainer: {
     borderRadius: 16,

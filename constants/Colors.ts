@@ -17,11 +17,10 @@ export const Colors = {
     accentSecondary: '#FFA500', // Orange-gold secondary
     success: '#4CAF50',       // Success green
     warning: '#FFD700',       // Golden warning (matches theme)
-    error: '#F44336',         // Red for health/error
+    error: '#F44336',         // Red for error
     info: '#2196F3',          // Blue info
     
     // Gaming-specific colors
-    health: '#F44336',        // Red health bar
     xp: '#FFD700',            // Golden XP bar
     cardBackground: '#FFD700', // Golden card backgrounds
     cardText: '#1A1A1A',      // Dark text on golden cards
@@ -45,7 +44,6 @@ export const Colors = {
     info: '#2196F3',
     
     // Gaming-specific colors for light mode
-    health: '#F44336',
     xp: '#FFD700',
     cardBackground: '#FFD700',
     cardText: '#1A1A1A',

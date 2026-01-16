@@ -17,10 +17,6 @@ type Character = {
   height?: number;
   weight?: number;
   goal?: string;
-  // Health system
-  maxHealth: number;
-  currentHealth: number;
-  lastHealthUpdate: string | null; // ISO timestamp for regen calculations
   // Daily routine limits
   routinesDate: string | null; // YYYY-MM-DD
   routinesDoneToday: string[]; // unique routine ids
@@ -40,12 +36,6 @@ type Character = {
   equippedPants?: string | null;
   equippedEquipment?: string[];
   equippedAccessory?: string | null;
-  // Derived stats
-  baseStrength?: number;
-  baseStamina?: number;
-  baseAgility?: number;
-  baseFocus?: number;
-  baseLuck?: number;
 };
 
 type CharacterContextType = {
@@ -53,9 +43,6 @@ type CharacterContextType = {
   updateCharacter: (updatedCharacter: Partial<Character>) => void;
   incrementXP: (amount: number) => void;
   resetCharacter: () => void;
-  // Health helpers
-  applyHealthRegen: () => void;
-  consumeHealth: (amount: number) => boolean;
   // Daily routine helpers
   canStartRoutineToday: (routineId: string) => boolean;
   registerRoutineStart: (routineId: string) => void;
@@ -73,9 +60,6 @@ const DEFAULT_CHARACTER: Character = {
   streak: 0,
   lastWorkout: null,
   gender: 'male',
-  maxHealth: 50,
-  currentHealth: 50,
-  lastHealthUpdate: null,
   routinesDate: null,
   routinesDoneToday: [],
   characterBackgroundUrl: 'Garage',
@@ -91,11 +75,6 @@ const DEFAULT_CHARACTER: Character = {
   equippedPants: null,
   equippedEquipment: [],
   equippedAccessory: null,
-  baseStrength: 10,
-  baseStamina: 10,
-  baseAgility: 10,
-  baseFocus: 10,
-  baseLuck: 10,
 };
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
@@ -126,12 +105,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
           if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
             merged.xpToNextLevel = calculateXPToNextLevel(merged.level || DEFAULT_CHARACTER.level);
           }
-          // Normalize health bounds
-          if (merged.maxHealth <= 0) merged.maxHealth = DEFAULT_CHARACTER.maxHealth;
-          if (merged.currentHealth == null || merged.currentHealth < 0) merged.currentHealth = 0;
-          if (merged.currentHealth > merged.maxHealth) merged.currentHealth = merged.maxHealth;
           // Ensure dates exist
-          if (merged.lastHealthUpdate === undefined) merged.lastHealthUpdate = null;
           if (merged.routinesDate === undefined) merged.routinesDate = null;
           if (!Array.isArray(merged.routinesDoneToday)) merged.routinesDoneToday = [];
           if (merged.avatarUrl === undefined) merged.avatarUrl = null;
@@ -210,16 +184,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     loadCharacter();
   }, [user]);
-
-  // Health regeneration logic (called on init and whenever character loads)
-  const applyHealthRegen = () => {
-    // Logic disabled
-  };
-
-  // Ensure regen runs after init
-  useEffect(() => {
-    // Regen disabled
-  }, [isInitialized]);
 
   // Update streak based on last workout date
   useEffect(() => {
@@ -307,16 +271,8 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const incrementXP = (amount: number) => {
-    // Stat effects: strength increases XP gain; luck chance for double (handled probabilistically here too)
-    const strength = (character.baseStrength || 10) + character.level * 2;
-    const luck = (character.baseLuck || 10) + Math.floor(character.level / 2);
-    let finalAmount = amount * (1 + strength * 0.005); // +0.5% per strength
-    // luck: 10 luck = 0.5% chance double
-    const luckDoubleChance = (luck / 10) * 0.005; // 0.05 per 100 luck
-    if (Math.random() < luckDoubleChance) {
-      finalAmount *= 2;
-    }
-
+    const finalAmount = amount;
+    
     const newXP = character.xp + Math.round(finalAmount);
     const newTotalXP = character.totalXP + Math.round(finalAmount);
     
@@ -328,18 +284,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   };
 
-  // Health helpers
-  const consumeHealth = (amount: number) => {
-    if (character.currentHealth <= 0) return false;
-    // Stamina effect: more stamina increases cap and reduces consumption
-    const stamina = (character.baseStamina || 10) + character.level * 3;
-    const reducedCost = Math.max(1, Math.round(amount * (1 - Math.min(0.5, stamina * 0.005)))); // up to 50% reduction
-    const maxBonus = Math.min(50, Math.floor(stamina * 0.5));
-    const effectiveMax = (character.maxHealth || 50) + maxBonus;
-    const remaining = Math.max(0, Math.min(effectiveMax, character.currentHealth - reducedCost));
-    updateCharacter({ currentHealth: remaining });
-    return remaining > 0;
-  };
 
   // Daily routine helpers (disabled)
   const canStartRoutineToday = (_routineId: string) => {
@@ -406,8 +350,6 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         updateCharacter,
         incrementXP,
         resetCharacter,
-        applyHealthRegen,
-        consumeHealth,
         canStartRoutineToday,
         registerRoutineStart,
         addCoins,

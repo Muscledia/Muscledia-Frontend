@@ -7,7 +7,6 @@ import { WorkoutsProvider } from '@/hooks/useWorkouts';
 import { RoutineProvider } from '@/hooks/useRoutines';
 import { AuthProvider } from '@/hooks/useAuth';
 import { RaidProvider } from '@/hooks/useRaid';
-import { LeaguesProvider } from '@/hooks/useLeagues';
 import { NotificationsProvider } from '@/hooks/useNotifications';
 import { Colors } from '@/constants/Colors';
 
@@ -26,7 +25,6 @@ export default function RootLayout() {
         <RoutineProvider>
           <CharacterProvider>
             <RaidProvider>
-              <LeaguesProvider>
                 <NotificationsProvider>
                   <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -83,7 +81,6 @@ export default function RootLayout() {
                   </Stack>
                   <StatusBar style="light" />
                 </NotificationsProvider>
-              </LeaguesProvider>
             </RaidProvider>
           </CharacterProvider>
         </RoutineProvider>
