@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for your API server -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">89.168.117.65</domain>
+    </domain-config>
+    <!-- Also allow cleartext for localhost and common development IPs -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.1.64</domain>
+    </domain-config>
+</network-security-config>
