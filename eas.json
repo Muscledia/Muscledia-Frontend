@@ -1,21 +1,28 @@
 {
-  "cli": {
-    "version": ">= 16.28.0",
-    "appVersionSource": "remote"
-  },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
     "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://89.168.117.65:8080"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "preview4": {
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://89.168.117.65:8080"
+      }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }
