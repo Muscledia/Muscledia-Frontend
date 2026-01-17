@@ -19,7 +19,7 @@ export const useRealtimeProgress = (challengeId: string, initialProgress: number
     
     // Simulating random updates for demo purposes
     // Only if progress is non-zero (active)
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | undefined;
     
     if (initialProgress > 0 && initialProgress < 100) { // Assuming 100 is target for % or just checking if active
         // This logic would be handled by the server pushing updates
