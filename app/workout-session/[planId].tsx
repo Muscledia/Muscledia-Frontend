@@ -37,6 +37,7 @@ import { WorkoutService, WorkoutSession, WorkoutExercise, WorkoutSet, SetType } 
 import { useHaptics } from '@/hooks/useHaptics';
 import WorkoutAnalytics from '@/components/WorkoutAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCharacter } from '@/hooks/useCharacter';
 
 interface LocalSetData {
   weightKg: string;
@@ -552,6 +553,8 @@ export default function WorkoutSessionScreen() {
         }},
     ]);
   };
+  const { character, refreshCharacter } = useCharacter();
+
   const finishWorkout = async () => {
     if (!workout) return;
 
@@ -572,6 +575,9 @@ export default function WorkoutSessionScreen() {
               // This ensures that when we navigate back to the challenges screen, it refetches.
               await queryClient.invalidateQueries({ queryKey: ['challenges'] });
               await queryClient.invalidateQueries({ queryKey: ['gamification'] });
+              
+              // Force refresh character data to update XP/Level immediately
+              await refreshCharacter();
 
               // Refresh to get updated workout with metrics
               const updatedResponse = await WorkoutService.getWorkoutSession(workout.id);

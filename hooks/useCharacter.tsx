@@ -41,6 +41,7 @@ type Character = {
 type CharacterContextType = {
   character: Character;
   updateCharacter: (updatedCharacter: Partial<Character>) => void;
+  refreshCharacter: () => Promise<void>;
   incrementXP: (amount: number) => void;
   resetCharacter: () => void;
   // Daily routine helpers
@@ -85,103 +86,119 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load character data on initial render or user change
-  useEffect(() => {
-    const loadCharacter = async () => {
-      if (!user?.username) {
-        setIsInitialized(false);
-        setCharacter(DEFAULT_CHARACTER);
-        return;
-      }
+  const loadCharacter = async () => {
+    if (!user?.username) {
+      setIsInitialized(false);
+      setCharacter(DEFAULT_CHARACTER);
+      return;
+    }
 
-      try {
-        const storedCharacter = await StorageService.getUserData(user.username);
-        if (storedCharacter) {
-          // Merge with defaults to ensure newly added fields exist
-          const merged: Character = {
-            ...DEFAULT_CHARACTER,
-            ...storedCharacter,
-          };
-          // Normalize XP to next level
-          if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
-            merged.xpToNextLevel = calculateXPToNextLevel(merged.level || DEFAULT_CHARACTER.level);
-          }
-          // Ensure dates exist
-          if (merged.routinesDate === undefined) merged.routinesDate = null;
-          if (!Array.isArray(merged.routinesDoneToday)) merged.routinesDoneToday = [];
-          if (merged.avatarUrl === undefined) merged.avatarUrl = null;
-          if (typeof (merged as any).coins !== 'number') (merged as any).coins = 0;
-          if (!Array.isArray((merged as any).ownedShirts)) (merged as any).ownedShirts = [];
-          if (!Array.isArray((merged as any).ownedPants)) (merged as any).ownedPants = [];
-          if (!Array.isArray((merged as any).ownedEquipment)) (merged as any).ownedEquipment = [];
-          if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
-          if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
-          if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
-          
-          // Migrate equippedEquipment to array
-          if (typeof (merged as any).equippedEquipment === 'string') {
-            (merged as any).equippedEquipment = [(merged as any).equippedEquipment];
-          } else if (!Array.isArray((merged as any).equippedEquipment)) {
-             (merged as any).equippedEquipment = [];
-          }
-
-          if (!merged.skinColor) merged.skinColor = 1;
-          if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
-
-          // Sync coins and XP from API
-          try {
-            const profile = await GamificationService.getProfile();
-            if (profile) {
-              (merged as any).coins = profile.fitnessCoins;
-              (merged as any).totalXP = profile.points;
-              (merged as any).level = profile.level;
-              
-              // Calculate relative XP for the bar based on the quadratic curve
-              const currentLevel = profile.level;
-              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
-              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
-              
-              const xpRequiredForLevel = nextLevelBaseXP - levelBaseXP;
-              const xpProgressInLevel = Math.max(0, profile.points - levelBaseXP);
-              
-              (merged as any).xp = xpProgressInLevel;
-              (merged as any).xpToNextLevel = xpRequiredForLevel;
-            }
-          } catch (error) {
-            console.log('Failed to sync gamification profile:', error);
-          }
-
-          setCharacter(merged);
-        } else {
-          // New user (or local storage not present for this user)
-          // We can initialize with defaults, but maybe check if user object has preferences?
-          // For now, use defaults.
-          let initialChar = { ...DEFAULT_CHARACTER };
-          try {
-            const profile = await GamificationService.getProfile();
-            if (profile) {
-              initialChar.coins = profile.fitnessCoins;
-              initialChar.totalXP = profile.points;
-              initialChar.level = profile.level;
-              
-              const currentLevel = profile.level;
-              const levelBaseXP = currentLevel === 1 ? 0 : 40 * currentLevel * currentLevel;
-              const nextLevelBaseXP = 40 * (currentLevel + 1) * (currentLevel + 1);
-              
-              initialChar.xp = Math.max(0, profile.points - levelBaseXP);
-              initialChar.xpToNextLevel = nextLevelBaseXP - levelBaseXP;
-            }
-          } catch (error) {
-            console.log('Failed to fetch initial profile:', error);
-          }
-          setCharacter(initialChar);
+    try {
+      const storedCharacter = await StorageService.getUserData(user.username);
+      if (storedCharacter) {
+        // Merge with defaults to ensure newly added fields exist
+        const merged: Character = {
+          ...DEFAULT_CHARACTER,
+          ...storedCharacter,
+        };
+        // Normalize XP to next level
+        if (!merged.xpToNextLevel || merged.xpToNextLevel <= 0) {
+          merged.xpToNextLevel = calculateXPToNextLevel(merged.level || DEFAULT_CHARACTER.level);
         }
-      } catch (error) {
-        console.error('Failed to load character data:', error);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
+        // Ensure dates exist
+        if (merged.routinesDate === undefined) merged.routinesDate = null;
+        if (!Array.isArray(merged.routinesDoneToday)) merged.routinesDoneToday = [];
+        if (merged.avatarUrl === undefined) merged.avatarUrl = null;
+        if (typeof (merged as any).coins !== 'number') (merged as any).coins = 0;
+        if (!Array.isArray((merged as any).ownedShirts)) (merged as any).ownedShirts = [];
+        if (!Array.isArray((merged as any).ownedPants)) (merged as any).ownedPants = [];
+        if (!Array.isArray((merged as any).ownedEquipment)) (merged as any).ownedEquipment = [];
+        if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
+        if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
+        if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
+        
+        // Migrate equippedEquipment to array
+        if (typeof (merged as any).equippedEquipment === 'string') {
+          (merged as any).equippedEquipment = [(merged as any).equippedEquipment];
+        } else if (!Array.isArray((merged as any).equippedEquipment)) {
+           (merged as any).equippedEquipment = [];
+        }
 
+        if (!merged.skinColor) merged.skinColor = 1;
+        if (!merged.characterBackgroundUrl) merged.characterBackgroundUrl = 'Garage';
+
+        // Sync coins and XP from API
+        try {
+          const profile = await GamificationService.getProfile(true); // Force refresh
+          if (profile) {
+            (merged as any).coins = profile.fitnessCoins;
+            (merged as any).totalXP = profile.points;
+            (merged as any).level = profile.level;
+            
+            // Calculate relative XP for the bar based on the quadratic curve
+            // Backend Formula: level = floor(sqrt(totalPoints / 100)) + 1
+            // Inverse: Min Points for Level L = 100 * (L-1)^2
+            // NOTE: If the backend returns a level that doesn't match points (due to lag or logic diff),
+            // we should trust the points and recalculate the correct level to ensure bar accuracy.
+            
+            const points = profile.points;
+            const calculatedLevel = Math.floor(Math.sqrt(points / 100)) + 1;
+            
+            // Use calculated level if it's higher than backend level (prevent regression if backend is behind)
+            // Or just use calculated level to be safe and consistent with formula.
+            const currentLevel = Math.max(profile.level, calculatedLevel);
+            
+            const levelBaseXP = 100 * (currentLevel - 1) * (currentLevel - 1);
+            const nextLevelBaseXP = 100 * currentLevel * currentLevel;
+            
+            const xpRequiredForLevel = nextLevelBaseXP - levelBaseXP;
+            const xpProgressInLevel = Math.max(0, points - levelBaseXP);
+            
+            (merged as any).level = currentLevel;
+            (merged as any).xp = xpProgressInLevel;
+            (merged as any).xpToNextLevel = xpRequiredForLevel;
+          }
+        } catch (error) {
+          console.log('Failed to sync gamification profile:', error);
+        }
+
+        setCharacter(merged);
+      } else {
+        // New user (or local storage not present for this user)
+        // We can initialize with defaults but also maybe we can check if user object has preferences? idk
+        // or now, use defaults. 
+        let initialChar = { ...DEFAULT_CHARACTER };
+        try {
+          const profile = await GamificationService.getProfile(true); // Force refresh
+          if (profile) {
+            initialChar.coins = profile.fitnessCoins;
+            initialChar.totalXP = profile.points;
+            initialChar.level = profile.level;
+            
+            const points = profile.points;
+            const calculatedLevel = Math.floor(Math.sqrt(points / 100)) + 1;
+            const currentLevel = Math.max(profile.level, calculatedLevel);
+            
+            const levelBaseXP = 100 * (currentLevel - 1) * (currentLevel - 1);
+            const nextLevelBaseXP = 100 * currentLevel * currentLevel;
+            
+            initialChar.level = currentLevel;
+            initialChar.xp = Math.max(0, points - levelBaseXP);
+            initialChar.xpToNextLevel = nextLevelBaseXP - levelBaseXP;
+          }
+        } catch (error) {
+          console.log('Failed to fetch initial profile:', error);
+        }
+        setCharacter(initialChar);
+      }
+    } catch (error) {
+      console.error('Failed to load character data:', error);
+    } finally {
+      setIsInitialized(true);
+    }
+  };
+
+  useEffect(() => {
     loadCharacter();
   }, [user]);
 
@@ -236,11 +253,11 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [character, isInitialized, user]);
 
   const calculateXPToNextLevel = (level: number) => {
-    // Quadratic progression: Base XP ~ 40 * level^2
-    // Delta = 40*(l+1)^2 - 40*l^2 = 80*l + 40
-    // Special handling for Level 1 to start at 0
-    if (level === 1) return 160; // 0 to 160
-    return 80 * level + 40;
+    // Formula: level = floor(sqrt(totalPoints / 100)) + 1
+    // Inverse: Min Points for Level L = 100 * (L-1)^2
+    // Next Level (L+1) Start = 100 * L^2
+    // Delta = 100*L^2 - 100*(L-1)^2 = 100*L^2 - 100*(L^2 - 2L + 1) = 200*L - 100
+    return 200 * level - 100;
   };
 
   const checkLevelUp = (xp: number, currentLevel: number, currentXpToNextLevel: number) => {
@@ -348,6 +365,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
       value={{
         character,
         updateCharacter,
+        refreshCharacter: loadCharacter,
         incrementXP,
         resetCharacter,
         canStartRoutineToday,
