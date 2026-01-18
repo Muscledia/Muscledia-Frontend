@@ -5,31 +5,25 @@ const getApiBaseUrl = (): string => {
   const envApiUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envApiUrl) {
     console.log('Using API URL from environment:', envApiUrl);
-    // FIX: Ensure port is included
-    if (envApiUrl.includes('89.168.117.65') && !envApiUrl.includes(':')) {
-      const fixedUrl = 'http://89.168.117.65:8080';
-      console.log('Fixed URL to include port:', fixedUrl);
-      return fixedUrl;
-    }
     return envApiUrl;
   }
 
   // Development URLs
   if (__DEV__) {
-    // When testing on physical iOS device with remote server
     if (Platform.OS === 'ios') {
       // Use production server for remote testing on iOS device
-      return 'http://89.168.117.65:8080';
+      return 'https://api.muscledia.fitness';
     }
     if (Platform.OS === 'android') {
+      // Android emulator localhost
       return 'http://10.0.2.2:8080';
     }
-    // Web/other
+    // Web/other - your local machine
     return 'http://192.168.1.64:8080';
   }
 
   // Production
-  return 'http://89.168.117.65:8080';
+  return 'https://api.muscledia.fitness';
 };
 
 // API Configuration
@@ -108,6 +102,3 @@ export const getDebugInfo = () => {
 
 // Log config on initialization
 console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
-if (!API_CONFIG.BASE_URL.includes(':8080') && API_CONFIG.BASE_URL.includes('89.168.117.65')) {
-  console.error('❌ CRITICAL: BASE_URL missing port 8080!');
-}
