@@ -18,7 +18,7 @@ export const SHOP_ITEMS = {
     { name: 'Tank Top', price: 50, icon: '👕', unlockLevel: 1 },
     { name: 'Compression Shirt', price: 75, icon: '👕', unlockLevel: 1 },
     { name: 'Dragon Shirt', price: 120, icon: '👕', unlockLevel: 1 },
-    { name: 'Cyborg Upgrade', price: 100, icon: '👕', unlockLevel: 30 },
+    { name: 'Cyborg Upgrade', price: 100, icon: '👕', unlockLevel: 50 },
   ],
   PANTS: [
     { name: 'Shorts', price: 60, icon: '🩳', unlockLevel: 1 },

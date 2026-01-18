@@ -51,6 +51,9 @@
     "owner": "seashark-organization",
     "android": {
       "package": "com.seasharkorganization.muscledia",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/appIcon.png",
+        "backgroundColor": "#ffffff"},
       "navigationBar": {
         "visible": "immersive"
       }
