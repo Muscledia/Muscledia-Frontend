@@ -35,6 +35,7 @@ import {
   Sparkles,
   Trophy,
   Dumbbell,
+  FileText,
 } from 'lucide-react-native';
 import { getGreeting } from '@/utils/helpers';
 import { useRoutines } from '@/hooks/useRoutines';
