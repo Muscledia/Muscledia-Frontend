@@ -3,6 +3,7 @@ import axiosRetry from 'axios-retry';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, buildURL } from '@/config/api';
 import { ApiResponse, ApiError } from '@/types';
+import { router } from 'expo-router';
 
 /**
  * API Client Service
@@ -13,6 +14,7 @@ import { ApiResponse, ApiError } from '@/types';
  * - JWT token management
  * - Standardized error handling
  * - Support for both wrapped and unwrapped API responses
+ * - Automatic logout and redirect on 401 errors
  */
 
 // Global API client instance
@@ -36,6 +38,11 @@ const createApiClient = (): AxiosInstance => {
     retries: API_CONFIG.REQUEST.RETRY_ATTEMPTS,
     retryDelay: axiosRetry.exponentialDelay,
     retryCondition: (error) => {
+      // Don't retry on 401 (authentication errors)
+      if (error.response?.status === 401) {
+        return false;
+      }
+
       // Retry on network errors or 5xx status codes
       return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         ((error.response?.status ?? 0) >= 500 && (error.response?.status ?? 0) < 600);
@@ -107,12 +114,20 @@ const setupInterceptors = (client: AxiosInstance): void => {
 
       // Handle 401 Unauthorized - Token expired or invalid
       if (error.response?.status === 401) {
+        console.log('API: 401 Unauthorized - Token expired or invalid');
+
         try {
+          // Clear all authentication data
           await clearAuthToken();
-          console.log('Token expired/invalid - cleared from storage');
-          // You can emit an event here to trigger navigation to login screen
+          await AsyncStorage.removeItem('muscledia_current_user');
+
+          console.log('API: Auth data cleared, redirecting to login...');
+
+          // Redirect to login screen
+          router.replace('/(auth)/login');
+
         } catch (clearError) {
-          console.error('Failed to clear auth token:', clearError);
+          console.error('API: Failed to clear auth data:', clearError);
         }
       }
 
