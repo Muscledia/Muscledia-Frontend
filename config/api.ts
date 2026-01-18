@@ -62,6 +62,8 @@ export const API_CONFIG = {
       GET_LEADERBOARD_POINTS: '/api/gamification/leaderboards/points',
       GET_LEADERBOARD_LEVELS: '/api/gamification/leaderboards/levels',
       GET_LEADERBOARD_WEEKLY_STREAK: '/api/gamification/leaderboards/weekly-streak',
+      GET_COIN_BALANCE: '/api/gamification/coins/balance',
+      SPEND_COINS: '/api/gamification/coins/spend',
     },
   },
 

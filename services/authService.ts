@@ -149,14 +149,23 @@ export class AuthService {
   }
 
   /**
-   * Logout user
+   * Logout user and clear all authentication data
    */
   static async logout(): Promise<void> {
     try {
+      console.log('AuthService: Clearing authentication data...');
+
+      // Clear auth token
       await clearAuthToken();
-      console.log('User logged out successfully');
+
+      // Clear any stored user data
+      await AsyncStorage.removeItem(API_CONFIG.STORAGE.ACCESS_TOKEN);
+      await AsyncStorage.removeItem('muscledia_current_user');
+
+      console.log('AuthService: Logout completed successfully');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('AuthService: Logout error:', error);
+      throw error;
     }
   }
 

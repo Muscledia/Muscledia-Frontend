@@ -20,7 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
 import { ArrowLeft, Settings, Bell, HelpCircle, LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Flame, TrendingUp, Activity, Trophy } from 'lucide-react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
- 
+
 import { useNotifications } from '@/hooks/useNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CalendarService, CalendarData } from '@/services/CalendarService';
@@ -103,13 +103,13 @@ export default function ProfileScreen() {
       const month = date.getMonth();
       const startOfMonthDate = new Date(year, month, 1);
       const endOfMonthDate = new Date(year, month + 1, 0);
-      
+
       // Format dates as ISO-8601 with time
       const startDateISO = `${startOfMonthDate.getFullYear()}-${String(startOfMonthDate.getMonth() + 1).padStart(2, '0')}-${String(startOfMonthDate.getDate()).padStart(2, '0')}T00:00:00Z`;
       const endDateISO = `${endOfMonthDate.getFullYear()}-${String(endOfMonthDate.getMonth() + 1).padStart(2, '0')}-${String(endOfMonthDate.getDate()).padStart(2, '0')}T23:59:59Z`;
 
       const response = await CalendarService.getCalendarRange(startDateISO, endDateISO);
-      
+
       if (response.success && response.data) {
         setCalendarData(response.data);
       } else {
@@ -129,7 +129,7 @@ export default function ProfileScreen() {
     try {
       setMonthCountLoading(true);
       const response = await CalendarService.getCurrentMonthCount();
-      
+
       if (response.success && response.data !== undefined) {
         setCurrentMonthCount(response.data);
       } else {
@@ -148,7 +148,7 @@ export default function ProfileScreen() {
     try {
       setStreakLoading(true);
       const response = await GamificationService.getStreaks();
-      
+
       if (response.success && response.data) {
         setStreakInfo(response.data);
       } else {
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
     try {
       setSelectedDateLoading(true);
       const response = await CalendarService.getDateWorkoutCount(selectedDate);
-      
+
       if (response.success && response.data !== undefined) {
         setSelectedDateWorkoutCount(response.data);
       } else {
@@ -230,9 +230,38 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      // Provide haptic feedback
+      await impact('warning');
+
+      // Confirm logout
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: async () => {
+              await logout();
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('ProfileScreen: Logout failed:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.contentContainer}
     >
@@ -247,12 +276,12 @@ export default function ProfileScreen() {
 
       {/* User Profile Section */}
       <View style={[styles.profileHeader, { backgroundColor: theme.surface }]}>
-        <CharacterAvatar 
-          level={profile?.level || 1} 
-          size="large" 
-          initials={profile?.username?.substring(0, 2) || user?.username?.substring(0, 2) || 'MD'} 
-          gender="male" 
-          streak={0} 
+        <CharacterAvatar
+          level={profile?.level || 1}
+          size="large"
+          initials={profile?.username?.substring(0, 2) || user?.username?.substring(0, 2) || 'MD'}
+          gender="male"
+          streak={0}
         />
         <View style={styles.profileDetails}>
           <Text style={[styles.usernameText, { color: theme.text }]}>
@@ -274,8 +303,8 @@ export default function ProfileScreen() {
       {/* Stats Section */}
       <View style={[styles.statsContainer, { backgroundColor: theme.surface }]}>
         <View style={styles.statsRow}>
-          <TouchableOpacity 
-            style={styles.statCard} 
+          <TouchableOpacity
+            style={styles.statCard}
             activeOpacity={0.7}
             onPress={() => {
               impact('selection');
@@ -314,7 +343,7 @@ export default function ProfileScreen() {
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Workout History</Text>
       <View style={[styles.calendarContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.calendarHeader}>
-          <TouchableOpacity onPress={() => changeMonth(-1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}> 
+          <TouchableOpacity onPress={() => changeMonth(-1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}>
             <ChevronLeft size={18} color={theme.text} />
           </TouchableOpacity>
           <View style={styles.calendarTitleRow}>
@@ -323,7 +352,7 @@ export default function ProfileScreen() {
               {currentMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => changeMonth(1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}> 
+          <TouchableOpacity onPress={() => changeMonth(1)} style={[styles.calendarNavBtn, { borderColor: theme.border }]}>
             <ChevronRight size={18} color={theme.text} />
           </TouchableOpacity>
         </View>
@@ -480,47 +509,11 @@ export default function ProfileScreen() {
           <Switch value={notifEnabled} onValueChange={toggleNotifications} trackColor={{ true: theme.accent }} />
         </View>
 
-        {/* Test Notification */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={async () => {
-            const ok = isGranted ?? await requestPermission();
-            if (!ok) return;
-            await impact('success');
-            await scheduleInSeconds(3, 'Muscledia', 'This is a test notification.');
-          }}
-          style={styles.settingRow}
-        >
-          <View style={styles.settingLeft}>
-            <Bell size={20} color={theme.text} />
-            <Text style={[styles.settingsText, { color: theme.text }]}>Send Test Notification</Text>
-          </View>
-          <Text style={{ color: theme.textSecondary }}>{'›'}</Text>
-        </TouchableOpacity>
-
-        {/* Support */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={async () => {
-            await impact('selection');
-            const email = 'support@muscledia.app';
-            const subject = encodeURIComponent('Support Request');
-            const body = encodeURIComponent('Describe your issue here...');
-            Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
-          }}
-          style={styles.settingRow}
-        >
-          <View style={styles.settingLeft}>
-            <HelpCircle size={20} color={theme.text} />
-            <Text style={[styles.settingsText, { color: theme.text }]}>Support</Text>
-          </View>
-          <Text style={{ color: theme.textSecondary }}>{'›'}</Text>
-        </TouchableOpacity>
 
         {/* Logout */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingRow}
-          onPress={logout}
+          onPress={handleLogout}
         >
           <View style={styles.settingLeft}>
             <LogOut size={20} color={theme.error} />
@@ -528,18 +521,6 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Reset Onboarding */}
-        <TouchableOpacity 
-          style={styles.settingRow}
-          onPress={async () => {
-            await AsyncStorage.removeItem('onboarding_complete');
-            Alert.alert('Onboarding reset', 'Close and reopen the app to see onboarding again.');
-          }}
-        >
-          <View style={styles.settingLeft}>
-            <Text style={[styles.settingsText, { color: theme.text }]}>Reset Onboarding</Text>
-          </View>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -852,4 +833,4 @@ const styles = StyleSheet.create({
   pointsText: {
     fontSize: 14,
   },
-}); 
+});

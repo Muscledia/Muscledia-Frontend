@@ -3,6 +3,7 @@ import { createContext, useState, useContext, useEffect, ReactNode } from 'react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, LoginResponse } from '@/types';
 import { AuthService } from '@/services';
+import { router } from 'expo-router';
 
 
 type AuthContextType = {
@@ -159,16 +160,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      console.log('useAuth: Logging out user...');
+      console.log('useAuth: Initiating logout...');
+
+      // Clear authentication data through service
       await AuthService.logout();
+
+      // Clear local state
       setUser(null);
       setLoginData(null);
-      console.log('useAuth: Logout successful');
+
+      console.log('useAuth: Logout successful, redirecting to login...');
+
+      // Redirect to login screen
+      router.replace('/(auth)/login');
+
     } catch (error) {
       console.error('useAuth: Logout error:', error);
-      // Still clear user state even if logout fails
+
+      // Even if logout fails, clear local state and redirect
       setUser(null);
       setLoginData(null);
+      router.replace('/(auth)/login');
     }
   };
 

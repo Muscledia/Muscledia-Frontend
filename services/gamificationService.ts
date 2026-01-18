@@ -1,4 +1,4 @@
-import { apiGet } from './api';
+import { apiGet, apiPost } from './api';
 import { API_CONFIG, buildURL } from '@/config/api';
 import { GamificationProfile, GamificationProfileResponse, ApiResponse } from '@/types';
 
@@ -16,6 +16,20 @@ export interface StreakInfo {
   };
   lastWorkoutDate: string;
 }
+export interface CoinBalanceResponse {
+  currentBalance: number;
+  lifetimeEarned: number;
+}
+
+export interface CoinTransactionResponse {
+  success: boolean;
+  transactionType: 'SPEND' | 'EARN';
+  amount: number;
+  itemId: string;
+  newBalance: number;
+  timestamp: string;
+}
+
 
 type CacheEntry<T> = {
   value: T;
@@ -65,7 +79,7 @@ export class GamificationService {
    */
   static async getStreaks(): Promise<ApiResponse<StreakInfo>> {
     const url = buildURL('/api/gamification/streaks');
-    
+
     try {
       const response = await apiGet<StreakInfo>(url, {
         timeout: API_CONFIG.REQUEST.TIMEOUT,
@@ -73,6 +87,51 @@ export class GamificationService {
       return response;
     } catch (error) {
       console.error('Failed to fetch streaks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get coin balance from /api/gamification/coins/balance
+   */
+  static async getCoinBalance(): Promise<ApiResponse<CoinBalanceResponse>> {
+    const url = buildURL('/api/gamification/coins/balance');
+
+    try {
+      const response = await apiGet<CoinBalanceResponse>(url, {
+        timeout: API_CONFIG.REQUEST.TIMEOUT,
+      });
+
+      // Clear profile cache since balance changed
+      this.clearCache();
+
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch coin balance:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Spend coins for a purchase
+   */
+  static async spendCoins(amount: number, itemId: string): Promise<ApiResponse<CoinTransactionResponse>> {
+    const url = buildURL('/api/gamification/coins/spend');
+
+    try {
+      const response = await apiPost<CoinTransactionResponse>(url, {
+        amount,
+        itemId,
+      }, {
+        timeout: API_CONFIG.REQUEST.TIMEOUT,
+      });
+
+      // Clear profile cache since balance changed
+      this.clearCache();
+
+      return response;
+    } catch (error) {
+      console.error('Failed to spend coins:', error);
       throw error;
     }
   }

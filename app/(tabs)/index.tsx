@@ -181,7 +181,7 @@ export default function HomeScreen() {
         workoutType: "STRENGTH",
         location: "Gym",
       });
-      
+
       if (response.success && response.data) {
             router.push({
               pathname: '/workout-session/[planId]' as any,
@@ -513,6 +513,14 @@ export default function HomeScreen() {
               <Text style={[styles.actionButtonText, { color: theme.text }]}>Quick Workout</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.surface }]}
+              onPress={async () => { await impact('medium'); router.push('/workout-plans/create' as any); }}
+              activeOpacity={0.9}
+            >
+              <FileText size={18} color={theme.text} />
+              <Text style={[styles.actionButtonText, { color: theme.text }]}>New Routine</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.actionRow}>
@@ -527,9 +535,9 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: theme.surface }]}
-              onPress={async () => { 
-                await impact('medium'); 
-                router.push('/ai-recommendation'); 
+              onPress={async () => {
+                await impact('medium');
+                router.push('/ai-recommendation');
               }}
               activeOpacity={0.9}
             >
