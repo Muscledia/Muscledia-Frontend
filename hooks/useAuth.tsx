@@ -5,7 +5,6 @@ import { User, LoginResponse } from '@/types';
 import { AuthService } from '@/services';
 import { router } from 'expo-router';
 
-
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -15,21 +14,12 @@ type AuthContextType = {
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   refreshAuth: () => Promise<void>;
-  // ADDED: Access to login response data
   loginData: LoginResponse | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_STORAGE_KEY = 'muscledia_users';
 const CURRENT_USER_KEY = 'muscledia_current_user';
-
-// Simple email validation
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,65 +32,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkAuthStatus = async () => {
     try {
-      console.log('Checking authentication status...');
+      console.log('useAuth: Checking authentication status...');
       const isAuth = await AuthService.isAuthenticated();
 
       if (isAuth) {
-        console.log('User has valid token');
-        // Note: We don't have user data here since we only stored the token
-        // You might want to fetch user profile from an endpoint or decode the JWT
+        console.log('useAuth: User has valid token');
+
+        // Load stored user data if available
+        await loadStoredUserData();
+
       } else {
-        console.log('User is not authenticated');
+        console.log('useAuth: User is not authenticated, redirecting to login...');
+
+        // Clear state
         setUser(null);
         setLoginData(null);
+
+        // Redirect to login
+        router.replace('/(auth)/login');
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('useAuth: Auth check failed:', error);
+
+      // Clear state on error
       setUser(null);
       setLoginData(null);
+
+      // Redirect to login
+      router.replace('/(auth)/login');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadCurrentUser = async () => {
+  const loadStoredUserData = async () => {
     try {
       const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
       if (currentUserData) {
         const userData = JSON.parse(currentUserData);
         setUser(userData);
+        console.log('useAuth: Loaded stored user data for:', userData.username);
+      } else {
+        console.log('useAuth: No stored user data found');
       }
     } catch (error) {
-      console.error('Failed to load current user:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('useAuth: Failed to load stored user data:', error);
     }
   };
 
-  const saveUser = async (userData: User) => {
+  const saveUserData = async (userData: User) => {
     try {
       await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
-      setUser(userData);
+      console.log('useAuth: User data saved to storage');
     } catch (error) {
-      console.error('Failed to save user:', error);
-    }
-  };
-
-  const getUsersFromStorage = async (): Promise<any[]> => {
-    try {
-      const usersData = await AsyncStorage.getItem(USERS_STORAGE_KEY);
-      return usersData ? JSON.parse(usersData) : [];
-    } catch (error) {
-      console.error('Failed to get users:', error);
-      return [];
-    }
-  };
-
-  const saveUsersToStorage = async (users: any[]) => {
-    try {
-      await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-    } catch (error) {
-      console.error('Failed to save users:', error);
+      console.error('useAuth: Failed to save user data:', error);
     }
   };
 
@@ -108,28 +93,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('useAuth: Attempting login for username:', username);
 
-      // Use your backend AuthService with actual response handling
+      // Authenticate through service
       const loginResponse: LoginResponse = await AuthService.login(username, password);
-
       console.log('useAuth: Login response received:', loginResponse);
 
-      // Store the login response data
+      // Store login response data
       setLoginData(loginResponse);
 
-      // Convert LoginResponse to User object using the actual backend format
+      // Convert to User object
       const userObj: User = AuthService.loginResponseToUser(loginResponse);
-
       setUser(userObj);
 
-      console.log('useAuth: Login successful for user:', loginResponse.username);
-      console.log('useAuth: User object created:', userObj);
+      // Save user data to AsyncStorage
+      await saveUserData(userObj);
 
+      console.log('useAuth: Login successful for user:', loginResponse.username);
       return { success: true };
 
     } catch (error: any) {
       console.error('useAuth: Login failed:', error);
+
+      // Clear state on failure
       setUser(null);
       setLoginData(null);
+
       return {
         success: false,
         error: error.message || 'Login failed. Please try again.'
@@ -141,12 +128,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('useAuth: Attempting registration for username:', userData.username);
 
-      // Use your backend AuthService
+      // Register through service
       const registeredUser: User = await AuthService.register(userData);
 
       setUser(registeredUser);
-      console.log('useAuth: Registration successful for user:', registeredUser.username);
 
+      // Save user data to AsyncStorage
+      await saveUserData(registeredUser);
+
+      console.log('useAuth: Registration successful for user:', registeredUser.username);
       return { success: true };
 
     } catch (error: any) {
@@ -189,12 +179,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       console.log('useAuth: Updating user profile...');
-      // Here you would call an API endpoint to update user profile
-      // const updatedUser = await AuthService.updateProfile(updates);
 
-      // For now, just update local state
+      // Update local state
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
+
+      // Save to AsyncStorage
+      await saveUserData(updatedUser);
+
       console.log('useAuth: Profile updated successfully');
     } catch (error) {
       console.error('useAuth: Profile update error:', error);
@@ -214,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     logout,
     updateProfile,
     refreshAuth,
-    loginData, // Expose login data for access to token, roles, etc.
+    loginData,
   };
 
   return (
