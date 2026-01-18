@@ -1,4 +1,6 @@
-import React from 'react';
+// screens/ShopScreen.tsx
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +9,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Gem } from 'lucide-react-native';
@@ -21,8 +24,9 @@ export default function ShopScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
-  const { updateCharacter, character, addCoins, purchaseItem } = useCharacter();
+  const { updateCharacter, character, purchaseItem, syncCoinsFromBackend } = useCharacter();
   const { impact } = useHaptics();
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const shopCategories = [
     {
@@ -48,59 +52,83 @@ export default function ShopScreen() {
   ];
 
   const handlePurchase = async (categoryTitle: string, item: any) => {
-    const ok = purchaseItem(categoryTitle as any, item.name, item.price, item.url);
-    if (ok) {
-      await impact('success');
-      Alert.alert('Purchased', `${item.name} acquired!`);
-    } else {
-      await impact('warning');
-      Alert.alert('Not enough coins', 'Earn more coins to buy this item.');
+    if (isPurchasing) return;
+
+    setIsPurchasing(true);
+
+    try {
+      const success = await purchaseItem(
+        categoryTitle as any,
+        item.name,
+        item.price,
+        item.url
+      );
+
+      if (success) {
+        await impact('success');
+        Alert.alert('Purchase Successful', `${item.name} has been added to your inventory!`);
+      } else {
+        await impact('warning');
+        Alert.alert('Insufficient Coins', 'You need more coins to purchase this item. Complete workouts to earn coins!');
+      }
+    } catch (error: any) {
+      await impact('error');
+      console.error('Purchase error:', error);
+      Alert.alert('Purchase Failed', 'Something went wrong. Please try again.');
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
   const ShopItem = ({ item, categoryTitle }: { item: any; categoryTitle: string }) => {
     const isBackground = categoryTitle === 'Backgrounds' && item.url;
 
-    // Helper to determine stage for asset display
-    // Thresholds: 30, 50, 80, 120, 180
     const stageLevel = character.level < 30 ? 1 :
-                       character.level < 50 ? 2 :
-                       character.level < 80 ? 3 :
-                       character.level < 120 ? 4 : 5;
+      character.level < 50 ? 2 :
+        character.level < 80 ? 3 :
+          character.level < 120 ? 4 : 5;
     const clothingStageKey = `stage${stageLevel}` as keyof typeof Assets.clothes.tops;
-    
-    // Get item asset if available
+
     let asset = (Assets.icons as any)?.[item.name];
-    
+
     if (!asset) {
       if (categoryTitle === 'Shirts') {
-          asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
+        asset = (Assets.clothes.tops[clothingStageKey] as any)?.[item.name];
       } else if (categoryTitle === 'Pants') {
-          asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
+        asset = (Assets.clothes.bottoms[clothingStageKey] as any)?.[item.name];
       } else if (categoryTitle === 'Accessories') {
-          asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
+        asset = (Assets.clothes.accessories[clothingStageKey] as any)?.[item.name];
       } else if (categoryTitle === 'Equipment') {
-         // Fallback if needed
+        // Fallback if needed
       }
     }
 
     const isOwned = (
       categoryTitle === 'Shirts' ? character.ownedShirts.includes(item.name) :
-      categoryTitle === 'Pants' ? character.ownedPants.includes(item.name) :
-      categoryTitle === 'Equipment' ? character.ownedEquipment.includes(item.name) :
-      categoryTitle === 'Accessories' ? character.ownedAccessories.includes(item.name) :
-      categoryTitle === 'Backgrounds' ? character.ownedBackgrounds.includes(item.url || '') :
-      false
+        categoryTitle === 'Pants' ? character.ownedPants.includes(item.name) :
+          categoryTitle === 'Equipment' ? character.ownedEquipment.includes(item.name) :
+            categoryTitle === 'Accessories' ? character.ownedAccessories.includes(item.name) :
+              categoryTitle === 'Backgrounds' ? character.ownedBackgrounds.includes(item.url || '') :
+                false
     );
 
+    const canAfford = character.coins >= item.price;
+
     return (
-      <TouchableOpacity 
-        onPress={async () => { 
-          if (isOwned) { await impact('selection'); return; }
+      <TouchableOpacity
+        onPress={async () => {
+          if (isOwned || isPurchasing) {
+            await impact('selection');
+            return;
+          }
           handlePurchase(categoryTitle, item);
         }}
         activeOpacity={0.9}
-        style={styles.shopItem}
+        disabled={isOwned || isPurchasing}
+        style={[
+          styles.shopItem,
+          (!canAfford && !isOwned) && styles.shopItemDisabled,
+        ]}
       >
         <LinearGradient
           colors={[theme.accent, theme.accentSecondary]}
@@ -111,17 +139,26 @@ export default function ShopScreen() {
         >
           <View style={styles.itemHeader}>
             {asset ? (
-               <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8 }} />
+              <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8 }} />
             ) : (
-               <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
+              <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
             )}
             <Text style={[styles.itemName, { color: theme.cardText }]}>{item.name}</Text>
           </View>
           <View style={styles.itemFooter}>
             <View style={styles.priceContainer}>
               <Gem size={16} color={theme.cardText} />
-              <Text style={[styles.itemPrice, { color: theme.cardText }]}>{isOwned ? 'Owned' : item.price}</Text>
+              <Text style={[
+                styles.itemPrice,
+                { color: theme.cardText },
+                (!canAfford && !isOwned) && styles.itemPriceDisabled,
+              ]}>
+                {isOwned ? 'Owned' : item.price}
+              </Text>
             </View>
+            {isPurchasing && (
+              <ActivityIndicator size="small" color={theme.cardText} style={{ marginTop: 4 }} />
+            )}
           </View>
         </LinearGradient>
       </TouchableOpacity>
@@ -129,7 +166,7 @@ export default function ShopScreen() {
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.contentContainer}
     >
@@ -165,9 +202,6 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 20, fontWeight: '800' },
   balRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   balText: { fontWeight: '800' },
-  addBtn: { marginLeft: 8 },
-  addBtnInner: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  addBtnText: { fontWeight: '700', fontSize: 12 },
   welcomeText: { fontSize: 16, textAlign: 'center', marginBottom: 24, lineHeight: 24 },
   categorySection: { marginBottom: 32 },
   categoryTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
@@ -183,6 +217,9 @@ const styles = StyleSheet.create({
     elevation: 8,
     overflow: 'hidden',
   },
+  shopItemDisabled: {
+    opacity: 0.6,
+  },
   shopItemInner: {
     padding: 16,
     borderRadius: 16,
@@ -193,4 +230,7 @@ const styles = StyleSheet.create({
   itemFooter: { alignItems: 'center' },
   priceContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   itemPrice: { fontSize: 14, fontWeight: 'bold' },
-}); 
+  itemPriceDisabled: {
+    textDecorationLine: 'line-through',
+  },
+});

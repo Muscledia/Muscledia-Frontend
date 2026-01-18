@@ -49,7 +49,8 @@ type CharacterContextType = {
   registerRoutineStart: (routineId: string) => void;
   // Economy helpers
   addCoins: (amount: number) => void;
-  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => boolean;
+  purchaseItem: (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => Promise<boolean>;
+  syncCoinsFromBackend: () => Promise<void>; // NEW
 };
 
 const DEFAULT_CHARACTER: Character = {
@@ -116,7 +117,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         if (!Array.isArray((merged as any).ownedAccessories)) (merged as any).ownedAccessories = [];
         if (!Array.isArray((merged as any).ownedBackgrounds)) (merged as any).ownedBackgrounds = ['Garage'];
         if (!(merged as any).ownedBackgrounds.includes('Garage')) (merged as any).ownedBackgrounds.push('Garage');
-        
+
         // Migrate equippedEquipment to array
         if (typeof (merged as any).equippedEquipment === 'string') {
           (merged as any).equippedEquipment = [(merged as any).equippedEquipment];
@@ -134,26 +135,26 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
             (merged as any).coins = profile.fitnessCoins;
             (merged as any).totalXP = profile.points;
             (merged as any).level = profile.level;
-            
+
             // Calculate relative XP for the bar based on the quadratic curve
             // Backend Formula: level = floor(sqrt(totalPoints / 100)) + 1
             // Inverse: Min Points for Level L = 100 * (L-1)^2
             // NOTE: If the backend returns a level that doesn't match points (due to lag or logic diff),
             // we should trust the points and recalculate the correct level to ensure bar accuracy.
-            
+
             const points = profile.points;
             const calculatedLevel = Math.floor(Math.sqrt(points / 100)) + 1;
-            
+
             // Use calculated level if it's higher than backend level (prevent regression if backend is behind)
             // Or just use calculated level to be safe and consistent with formula.
             const currentLevel = Math.max(profile.level, calculatedLevel);
-            
+
             const levelBaseXP = 100 * (currentLevel - 1) * (currentLevel - 1);
             const nextLevelBaseXP = 100 * currentLevel * currentLevel;
-            
+
             const xpRequiredForLevel = nextLevelBaseXP - levelBaseXP;
             const xpProgressInLevel = Math.max(0, points - levelBaseXP);
-            
+
             (merged as any).level = currentLevel;
             (merged as any).xp = xpProgressInLevel;
             (merged as any).xpToNextLevel = xpRequiredForLevel;
@@ -166,7 +167,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
       } else {
         // New user (or local storage not present for this user)
         // We can initialize with defaults but also maybe we can check if user object has preferences? idk
-        // or now, use defaults. 
+        // or now, use defaults.
         let initialChar = { ...DEFAULT_CHARACTER };
         try {
           const profile = await GamificationService.getProfile(true); // Force refresh
@@ -174,14 +175,14 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
             initialChar.coins = profile.fitnessCoins;
             initialChar.totalXP = profile.points;
             initialChar.level = profile.level;
-            
+
             const points = profile.points;
             const calculatedLevel = Math.floor(Math.sqrt(points / 100)) + 1;
             const currentLevel = Math.max(profile.level, calculatedLevel);
-            
+
             const levelBaseXP = 100 * (currentLevel - 1) * (currentLevel - 1);
             const nextLevelBaseXP = 100 * currentLevel * currentLevel;
-            
+
             initialChar.level = currentLevel;
             initialChar.xp = Math.max(0, points - levelBaseXP);
             initialChar.xpToNextLevel = nextLevelBaseXP - levelBaseXP;
@@ -216,17 +217,17 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       const lastWorkoutDate = new Date(lastWorkout);
       const currentDate = new Date(today);
-      
+
       const timeDiff = currentDate.getTime() - lastWorkoutDate.getTime();
       const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
 
       if (daysDiff === 1) {
-        updateCharacter({ 
+        updateCharacter({
           streak: character.streak + 1,
           lastWorkout: today
         });
       } else if (daysDiff > 1) {
-        updateCharacter({ 
+        updateCharacter({
           streak: 0,
           lastWorkout: today
         });
@@ -265,14 +266,14 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
       const newLevel = currentLevel + 1;
       const remainingXP = xp - currentXpToNextLevel;
       const newXpToNextLevel = calculateXPToNextLevel(newLevel);
-      
+
       return {
         level: newLevel,
         xp: remainingXP,
         xpToNextLevel: newXpToNextLevel,
       };
     }
-    
+
     return {
       level: currentLevel,
       xp: xp,
@@ -289,12 +290,12 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const incrementXP = (amount: number) => {
     const finalAmount = amount;
-    
+
     const newXP = character.xp + Math.round(finalAmount);
     const newTotalXP = character.totalXP + Math.round(finalAmount);
-    
+
     const levelData = checkLevelUp(newXP, character.level, character.xpToNextLevel);
-    
+
     updateCharacter({
       ...levelData,
       totalXP: newTotalXP,
@@ -320,19 +321,31 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateCharacter({ coins: Math.max(0, (character.coins || 0) + amount) });
   };
 
-  const purchaseItem = (category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds', itemName: string, price: number, url?: string) => {
-    let success = false;
-    
-    setCharacter(prev => {
-        const currentCoins = prev.coins || 0;
-        if (currentCoins < price) {
-            return prev;
-        }
-        
-        success = true;
-        const newCoins = currentCoins - price;
-        const updates: Partial<Character> = { coins: newCoins };
-        
+  // Update purchaseItem to be async and call backend
+  const purchaseItem = async (
+    category: 'Shirts'|'Pants'|'Equipment'|'Accessories'|'Backgrounds',
+    itemName: string,
+    price: number,
+    url?: string
+  ): Promise<boolean> => {
+    try {
+      // Generate unique item ID
+      const itemId = `${category.toLowerCase()}_${itemName.toLowerCase().replace(/\s+/g, '_')}`;
+
+      // Call backend to spend coins
+      const response = await GamificationService.spendCoins(price, itemId);
+
+      if (!response.success || !response.data) {
+        console.log('Failed to spend coins:', response.message);
+        return false;
+      }
+
+      // Backend succeeded, update local state
+      setCharacter(prev => {
+        const updates: Partial<Character> = {
+          coins: response.data!.newBalance
+        };
+
         switch (category) {
           case 'Shirts':
             updates.ownedShirts = Array.from(new Set([...(prev.ownedShirts || []), itemName]));
@@ -348,16 +361,44 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
             break;
           case 'Backgrounds':
             if (url) {
-                updates.ownedBackgrounds = Array.from(new Set([...(prev.ownedBackgrounds || []), url]));
-                updates.characterBackgroundUrl = url;
+              updates.ownedBackgrounds = Array.from(new Set([...(prev.ownedBackgrounds || []), url]));
+              updates.characterBackgroundUrl = url;
             }
             break;
         }
-        
+
         return { ...prev, ...updates };
-    });
-    
-    return success;
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Purchase failed:', error);
+
+      // Check if error is insufficient coins
+      if (error.message?.includes('Insufficient coins')) {
+        return false;
+      }
+
+      // For other errors, try to sync coins from backend
+      await syncCoinsFromBackend();
+      throw error;
+    }
+  };
+
+// Add new method to sync coins from backend
+  const syncCoinsFromBackend = async () => {
+    try {
+      const balanceResponse = await GamificationService.getCoinBalance();
+
+      if (balanceResponse.success && balanceResponse.data) {
+        setCharacter(prev => ({
+          ...prev,
+          coins: balanceResponse.data!.currentBalance,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to sync coins:', error);
+    }
   };
 
   return (
@@ -372,6 +413,7 @@ export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children 
         registerRoutineStart,
         addCoins,
         purchaseItem,
+        syncCoinsFromBackend, // NEW
       }}
     >
       {children}
