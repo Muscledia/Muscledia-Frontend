@@ -23,6 +23,7 @@ export default function RootLayout() {
     if (Platform.OS === 'android') {
       NavigationBar.setVisibilityAsync('hidden');
       NavigationBar.setBehaviorAsync('overlay-swipe');
+      NavigationBar.setBackgroundColorAsync(Colors.dark.background);
     }
   }, []);
 
