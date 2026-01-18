@@ -50,7 +50,10 @@
     },
     "owner": "seashark-organization",
     "android": {
-      "package": "com.seasharkorganization.muscledia"
+      "package": "com.seasharkorganization.muscledia",
+      "navigationBar": {
+        "visible": "immersive"
+      }
     }
   }
 }

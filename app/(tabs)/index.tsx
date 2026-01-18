@@ -24,7 +24,6 @@ import {
   Pen,
   ChevronDown,
   ChevronRight,
-  FileText,
   Search,
   MoreVertical,
   Copy,
@@ -514,14 +513,6 @@ export default function HomeScreen() {
               <Text style={[styles.actionButtonText, { color: theme.text }]}>Quick Workout</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: theme.surface }]}
-              onPress={async () => { await impact('medium'); router.push('/routine-builder' as any); }}
-              activeOpacity={0.9}
-            >
-              <FileText size={18} color={theme.text} />
-              <Text style={[styles.actionButtonText, { color: theme.text }]}>New Routine</Text>
-            </TouchableOpacity>
           </View>
 
           <View style={styles.actionRow}>
