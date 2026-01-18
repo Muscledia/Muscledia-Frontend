@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { CharacterProvider } from '@/hooks/useCharacter';
 import { WorkoutsProvider } from '@/hooks/useWorkouts';
@@ -16,6 +18,13 @@ import { QueryProvider } from '@/providers/QueryProvider';
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+    }
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

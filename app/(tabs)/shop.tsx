@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Colors, getThemeColors } from '@/constants/Colors';
-import { Gem } from 'lucide-react-native';
+import { Gem, Lock } from 'lucide-react-native';
 import { useCharacter } from '@/hooks/useCharacter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -114,9 +114,16 @@ export default function ShopScreen() {
 
     const canAfford = character.coins >= item.price;
 
+    const isLocked = item.unlockLevel && character.level < item.unlockLevel;
+
     return (
       <TouchableOpacity
         onPress={async () => {
+          if (isLocked) {
+              await impact('warning');
+              Alert.alert('Locked', `Unlock this item at Level ${item.unlockLevel}`);
+              return;
+          }
           if (isOwned || isPurchasing) {
             await impact('selection');
             return;
@@ -131,7 +138,7 @@ export default function ShopScreen() {
         ]}
       >
         <LinearGradient
-          colors={[theme.accent, theme.accentSecondary]}
+          colors={isLocked ? ['#ccc', '#bbb'] : [theme.accent, theme.accentSecondary]}
           locations={[0.55, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -139,7 +146,7 @@ export default function ShopScreen() {
         >
           <View style={styles.itemHeader}>
             {asset ? (
-              <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8 }} />
+              <Image source={asset} style={{ width: 60, height: 60, resizeMode: 'contain', marginBottom: 8, opacity: isLocked ? 0.5 : 1 }} />
             ) : (
               <Text style={[styles.itemIcon, { color: theme.cardText }]}>{item.icon}</Text>
             )}
@@ -147,14 +154,23 @@ export default function ShopScreen() {
           </View>
           <View style={styles.itemFooter}>
             <View style={styles.priceContainer}>
-              <Gem size={16} color={theme.cardText} />
-              <Text style={[
+              {isLocked ? (
+                  <>
+                    <Lock size={16} color={theme.cardText} />
+                    <Text style={[styles.itemPrice, { color: theme.cardText }]}>Lvl {item.unlockLevel}</Text>
+                  </>
+              ) : (
+                  <>
+                    <Gem size={16} color={theme.cardText} />
+                    <Text style={[
                 styles.itemPrice,
                 { color: theme.cardText },
                 (!canAfford && !isOwned) && styles.itemPriceDisabled,
               ]}>
                 {isOwned ? 'Owned' : item.price}
               </Text>
+                  </>
+              )}
             </View>
             {isPurchasing && (
               <ActivityIndicator size="small" color={theme.cardText} style={{ marginTop: 4 }} />

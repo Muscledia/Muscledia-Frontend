@@ -70,7 +70,7 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   // If it matches a key in Assets.backgrounds, use local
   const isRemoteBg = characterBackgroundUrl?.startsWith('http');
   const localBg = 
-    !isRemoteBg && characterBackgroundUrl === 'Gym Floor' ? Assets.backgrounds.gym :
+    !isRemoteBg && characterBackgroundUrl === 'Gym' ? Assets.backgrounds.gym :
     !isRemoteBg && characterBackgroundUrl === 'Garage' ? Assets.backgrounds.garage : 
     null;
 

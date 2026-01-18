@@ -24,7 +24,6 @@ import {
   Pen,
   ChevronDown,
   ChevronRight,
-  FileText,
   Search,
   MoreVertical,
   Copy,
