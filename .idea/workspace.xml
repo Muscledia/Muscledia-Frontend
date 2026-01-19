@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint.">
-      <change beforePath="$PROJECT_DIR$/.env.production" beforeDir="false" afterPath="$PROJECT_DIR$/.env.production" afterDir="false" />
+    <list default="true" id="4b53dc80-ee1a-4ddd-994b-0f39af13e88f" name="Changes" comment="core(url update):Removed IP-specific logic - No longer needed with domain&#10;Changed to HTTPS - All production URLs now use secure protocol&#10;No port number - HTTPS uses standard port 443&#10;Cleaner code - Removed unnecessary port validation checks">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/config/api.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/aiService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/aiService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types/ai.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/ai.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +62,7 @@
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;integration-branch&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/ericm/Interview Prep/Technical-interview-study-plan&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -133,62 +130,11 @@
       <workItem from="1766612231568" duration="711000" />
       <workItem from="1766751455733" duration="6697000" />
       <workItem from="1767003906544" duration="1009000" />
-    </task>
-    <task id="LOCAL-00001" summary="fix(config): update API base URL for Android emulator networking&#10;&#10;- Change from 0.0.0.0:8080 to 10.0.2.2:8080 for Android emulator&#10;- Add dynamic IP selection based on platform&#10;- Support both development and production environments&quot;">
-      <option name="closed" value="true" />
-      <created>1761950419067</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950419067</updated>
-    </task>
-    <task id="LOCAL-00002" summary="fix(api): handle ApiResponse wrapper and improve error handling&#10;&#10;- Fix baseURL reference to use dynamic API_CONFIG.BASE_URL&#10;- Add enhanced request/response logging for debugging&#10;- Improve ApiResponse&lt;T&gt; wrapper handling&#10;- Add proper timeout and error handling">
-      <option name="closed" value="true" />
-      <created>1761950439089</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950439089</updated>
-    </task>
-    <task id="LOCAL-00003" summary="feat(auth): implement backend JWT authentication service&#10;&#10;- Replace local storage auth with Spring Boot API integration&#10;- Add proper LoginResponse and User type handling&#10;- Implement JWT token storage and management&#10;- Add username-based login (replacing email validation)&#10;- Include comprehensive error handling and debugging">
-      <option name="closed" value="true" />
-      <created>1761950455452</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950455452</updated>
-    </task>
-    <task id="LOCAL-00004" summary="fix(auth): update login form to use username instead of email&#10;&#10;- Change email field to username field with User icon&#10;- Remove email validation for username input&#10;- Add dev-only test credentials auto-fill&#10;- Improve error handling and user feedback">
-      <option name="closed" value="true" />
-      <created>1761950476978</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950476978</updated>
-    </task>
-    <task id="LOCAL-00005" summary="refactor(auth): replace local auth with backend API integration&#10;&#10;- Remove AsyncStorage-based authentication system&#10;- Integrate with backend AuthService for login/register&#10;- Add proper User and LoginResponse state management&#10;- Handle JWT tokens and user sessions&#10;- Add backend response format compatibility">
-      <option name="closed" value="true" />
-      <created>1761950496047</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950496047</updated>
-    </task>
-    <task id="LOCAL-00006" summary="deps: update dependencies for backend authentication&#10;&#10;- Update axios and related networking dependencies&#10;- Ensure compatibility with React Native and Expo&#10;- Lock dependency versions for stable authentication flow">
-      <option name="closed" value="true" />
-      <created>1761950513575</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1761950513575</updated>
-    </task>
-    <task id="LOCAL-00007" summary="feat: implement enriched routine folder API integration&quot; -m &quot;Add support for single-call routine folder endpoints that return complete workout plan details with exercises.&quot; -m &quot;Changes:&#10;- Add enriched routine folder endpoints (public/{id}, personal)&#10;- Create WorkoutPlanCard component with Hevy-style exercise previews&#10;- Create PlannedExerciseCard for workout plan exercise display&#10;- Update RoutineService to normalize enriched API responses&#10;- Add proper type definitions for PlannedExercise and WorkoutPlan&#10;- Update routine detail screen to use embedded workout plan data&#10;- Fix type compatibility between Exercise and PlannedExercise">
-      <option name="closed" value="true" />
-      <created>1764397890854</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1764397890854</updated>
+      <workItem from="1768709061741" duration="5741000" />
+      <workItem from="1768714902597" duration="3625000" />
+      <workItem from="1768766559740" duration="67000" />
+      <workItem from="1768769369572" duration="804000" />
+      <workItem from="1768843757460" duration="1649000" />
     </task>
     <task id="LOCAL-00008" summary="feat(home): add collapsible routine folders and workout cards&#10;&#10;- Implement expandable/collapsible routine folder sections&#10;- Display all workout plans within each folder&#10;- Add professional icons replacing emojis&#10;- Add folder options menu with remove functionality&#10;- Include Start Workout button on workout plan cards&#10;- Support both card click (details) and button click (start)">
       <option name="closed" value="true" />
@@ -502,7 +448,87 @@
       <option name="project" value="LOCAL" />
       <updated>1766426389003</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="feat(service): enhance AuthService logout with complete data cleanup&#10;&#10;- Clear auth token from AsyncStorage&#10;- Remove stored user data (muscledia_current_user)&#10;- Add comprehensive error handling and logging&#10;- Ensure all authentication data is cleared on logout&#10;&#10;This provides a clean service layer method for complete&#10;authentication cleanup.">
+      <option name="closed" value="true" />
+      <created>1768710948401</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1768710948401</updated>
+    </task>
+    <task id="LOCAL-00048" summary="feat(auth): add navigation and state cleanup to logout flow&#10;&#10;- Clear user and loginData state after logout&#10;- Redirect to sign-in screen using router.replace&#10;- Handle logout failures gracefully with fallback cleanup&#10;- Add detailed logging for logout process&#10;&#10;Ensures users are properly redirected and state is cleared&#10;even if service layer encounters errors.">
+      <option name="closed" value="true" />
+      <created>1768710965790</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1768710965790</updated>
+    </task>
+    <task id="LOCAL-00049" summary="feat(profile): add logout confirmation dialog and haptic feedback&#10;&#10;- Implement confirmation alert before logout&#10;- Add haptic warning feedback on logout action&#10;- Handle logout errors with user-friendly error messages&#10;- Improve user experience with proper feedback&#10;&#10;Provides better UX by confirming destructive actions and&#10;giving appropriate feedback.">
+      <option name="closed" value="true" />
+      <created>1768710982069</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1768710982069</updated>
+    </task>
+    <task id="LOCAL-00050" summary="feat(gamification): implement coin balance management&#10;&#10;- Implement getCoinBalance() to retrieve user's fitness coin balance&#10;- Add spendCoins() method for coin expenditure transactions&#10;- Add comprehensive error handling and timeout configuration&#10;- Include detailed logging for all gamification operations&#10;&#10;Provides service layer methods for&#10;managing fitness coin economy.">
+      <option name="closed" value="true" />
+      <created>1768711185420</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1768711185421</updated>
+    </task>
+    <task id="LOCAL-00051" summary="feat(api): add gamification and workout tracking endpoints&#10;&#10;- Add GET_ACHIEVEMENTS endpoint for fetching user achievements&#10;- Add GET_BADGES endpoint for badge retrieval&#10;- Add GET_LEADERBOARD endpoints for ranking data&#10;- Add GET_COIN_BALANCE endpoint for fitness coin tracking&#10;- Add SPEND_COINS endpoint for coin expenditure&#10;- Add workout tracking endpoints (exercises, plans, routines, sessions)&#10;- Add GET_RECOMMENDATION endpoint for AI-powered suggestions&#10;- Configure request timeout and retry settings&#10;&#10;Expands API configuration to support full gamification features&#10;and workout management capabilities.">
+      <option name="closed" value="true" />
+      <created>1768711197862</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1768711197862</updated>
+    </task>
+    <task id="LOCAL-00052" summary="feat(gamification): implement coin balance and streak tracking system&#10;&#10;- Implement coin balance retrieval and expenditure&#10;- Add API endpoints for achievements, badges, and leaderboard&#10;- Configure coin transaction endpoints (balance/spend)&#10;- Add workout tracking endpoints for exercises and sessions&#10;- Add comprehensive error handling and logging&#10;&#10;Provides complete infrastructure for fitness coin economy.">
+      <option name="closed" value="true" />
+      <created>1768711269753</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1768711269753</updated>
+    </task>
+    <task id="LOCAL-00053" summary="core: package updates">
+      <option name="closed" value="true" />
+      <created>1768711526635</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1768711526635</updated>
+    </task>
+    <task id="LOCAL-00054" summary="fix: add actual /workout-plans/create route">
+      <option name="closed" value="true" />
+      <created>1768712277416</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1768712277416</updated>
+    </task>
+    <task id="LOCAL-00055" summary="feat(api): add automatic redirect on 401 authentication errors&#10;&#10;- Redirect to login screen when receiving 401 response&#10;- Clear both auth token and user data on authentication failure&#10;- Prevent retry attempts on 401 errors (no point retrying auth failures)&#10;- Add comprehensive logging for auth error handling&#10;&#10;Response interceptor now automatically handles token expiration&#10;by clearing all auth data and redirecting users to login,&#10;providing seamless security without manual checks.">
+      <option name="closed" value="true" />
+      <created>1768714413409</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1768714413409</updated>
+    </task>
+    <task id="LOCAL-00056" summary="core(url update):Removed IP-specific logic - No longer needed with domain&#10;Changed to HTTPS - All production URLs now use secure protocol&#10;No port number - HTTPS uses standard port 443&#10;Cleaner code - Removed unnecessary port validation checks">
+      <option name="closed" value="true" />
+      <created>1768766484978</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1768766484979</updated>
+    </task>
+    <option name="localTasksCounter" value="57" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -520,16 +546,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(workout): add PR badges and timer controls to session screens&#10;&#10;Files:&#10;- app/workout-session/[planId].tsx&#10;- app/workout-plan-detail/[planId].tsx&#10;- components/workout/SetRow.tsx&#10;&#10;Changes:&#10;- Display gold PR badge with Award icon on sets achieving personal records&#10;- Add rest timer settings button with modal&#10;- Implement warmup timer controls (play/pause/reset)&#10;- Show PR types (MAX_WEIGHT, MAX_REPS, MAX_VOLUME) on set rows&#10;- Improve timer display and active state indicators" />
-    <MESSAGE value="feat(workout-plans): enhance exercise management interfaces&#10;&#10;Files:&#10;- app/workout-plans/[planId]/add-exercise.tsx&#10;- app/workout-session/add-exercise.tsx&#10;- app/workout-plans/create.tsx&#10;- app/workout-plans/[planId]/edit.tsx&#10;&#10;Changes:&#10;- Improve exercise selection and configuration flow&#10;- Update add-exercise screens for both plans and sessions&#10;- Enhance workout plan creation and editing views&#10;- Add better exercise filtering and search" />
-    <MESSAGE value="feat(services): update workout services with PR detection and timer features&#10;&#10;Files:&#10;- services/WorkoutService.ts&#10;- services/WorkoutPlanService.ts&#10;- services/index.ts&#10;&#10;Changes:&#10;- Integrate PR detection logic in workout service&#10;- Add timer control service methods&#10;- Update workout plan service with new features&#10;- Export new service methods" />
-    <MESSAGE value="feat(types): add types for PR badges and timer controls&#10;&#10;Files:&#10;- types/workout.types.ts&#10;- types/api.ts&#10;&#10;Changes:&#10;- Add PersonalRecord types and interfaces&#10;- Define timer control types&#10;- Update workout session types&#10;- Add API response types for new features" />
-    <MESSAGE value="docs: delete&#10; architecture and integration documentation&#10;&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
-    <MESSAGE value="docs: delete&#10; architecture and integration documentation&#10;feat: enhance workout session management and UI polish&#10;&#10;- Backend: Added granular exercise calculation methods to WorkoutCalculationService.&#10;- Backend: Implemented updateExerciseInWorkout and removeExerciseFromWorkout in WorkoutService to support session editing.&#10;- Backend: Fixed compilation errors in WorkoutMapper by linking to new calculation service methods.&#10;- Frontend: Refactored Edit Routine screen to match Hevy-inspired design with dark mode support.&#10;- Frontend: Fixed SafeAreaView deprecation warnings by migrating to react-native-safe-area-context.&#10;- Frontend: Implemented optimistic updates for renaming folders and removing plans to eliminate UI lag.&#10;Files:&#10;- docs/ARCHITECTURE.md&#10;- docs/BACKEND_API.md&#10;- docs/INTEGRATION.md&#10;- docs/SAVE_ROUTINE_FEATURE.md&#10;&#10;Changes:&#10;- Document new PR badge feature architecture&#10;- Add timer controls API documentation&#10;- Update integration guide with new features&#10;- Document save routine feature workflow" />
-    <MESSAGE value="fix: resolve setIdx error and optimize set type toggling&#10;&#10;- Fix 'Property setIdx doesn't exist' error (setIdx → setIndex)&#10;- Implement local-first set type toggling with optimistic updates&#10;- Remove unnecessary API calls for set type changes&#10;- Update getLocalSetKey to use correct parameter name&#10;- Improve set type persistence with localStorage&#10;&#10;Fixes crash when toggling set types during active workout sessions" />
-    <MESSAGE value="refactor: improve workout plan detail screen state management&#10;&#10;- Add proper state initialization from route params&#10;- Enhance plan data loading and error handling&#10;- Update navigation hooks for better UX" />
-    <MESSAGE value="fix: add missing variable declarations in exercise browser&#10;&#10;- Extract targetPlanId and currentWorkoutId from params&#10;- Add helper functions for difficulty and category mapping&#10;- Implement proper field mapping for session vs plan contexts&#10;- Add formatInstructions utility for array-to-string conversion&#10;&#10;Resolves TS2304 errors: Cannot find name 'targetPlanId' and 'currentWorkoutId'" />
-    <MESSAGE value="feat: enhance exercise browser with filter support&#10;&#10;- Implement exercise filtering by difficulty, equipment, and muscle group&#10;- Add filter state management with param-based updates&#10;- Improve search functionality across multiple exercise fields" />
     <MESSAGE value="refactor: update workout plan editor with proper navigation&#10;&#10;- Fix navigation state handling&#10;- Update plan editing workflows" />
     <MESSAGE value="feat: add routine detail screen with workout plan management&#10;&#10;- Implement routine folder detail view&#10;- Add workout plan listing and navigation&#10;- Handle public vs personal routine folders" />
     <MESSAGE value="fix: add complete exercise metadata to workout plan requests&#10;&#10;- Include bodyPart, equipment, targetMuscle fields in PlannedExercise&#10;- Add difficulty and category enum mapping&#10;- Format instructions array to string for backend compatibility&#10;- Update set structure to match PlannedSet schema&#10;&#10;Resolves 400 validation errors when adding exercises to plans" />
@@ -545,6 +561,16 @@
     <MESSAGE value="feat: add environment configuration files&#10;&#10;- Create .env.development for local development&#10;- Create .env.staging for staging environment&#10;- Create .env.production for production Oracle Cloud backend&#10;- Support EXPO_PUBLIC_API_URL and EXPO_PUBLIC_ENV variables" />
     <MESSAGE value="feat: update API configuration to support Oracle Cloud backend&#10;&#10;- Change production URL from https://api.muscledia.com to http://89.168.117.65&#10;- Add ENVIRONMENT property to API_CONFIG for environment tracking&#10;- Add console logging for API URL debugging&#10;- Improve fallback logic comments for clarity&#10;- Support dynamic environment switching via EXPO_PUBLIC_API_URL" />
     <MESSAGE value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(mobile): add exercise deletion to active workout sessions&#10;&#10;- Implemented `removeExercise` in `WorkoutSessionScreen` with a confirmation dialog.&#10;- Updated `refreshWorkoutSession` to accept a `reset` flag, ensuring local state (indices/timers) correctly re-initializes after structural changes like deletion.&#10;- Added `onRemoveExercise` prop and UI trigger (kebab menu) to `ExerciseCard` component.&#10;- Integrated with `WorkoutService.deleteExercise` endpoint." />
+    <MESSAGE value="feat(service): enhance AuthService logout with complete data cleanup&#10;&#10;- Clear auth token from AsyncStorage&#10;- Remove stored user data (muscledia_current_user)&#10;- Add comprehensive error handling and logging&#10;- Ensure all authentication data is cleared on logout&#10;&#10;This provides a clean service layer method for complete&#10;authentication cleanup." />
+    <MESSAGE value="feat(auth): add navigation and state cleanup to logout flow&#10;&#10;- Clear user and loginData state after logout&#10;- Redirect to sign-in screen using router.replace&#10;- Handle logout failures gracefully with fallback cleanup&#10;- Add detailed logging for logout process&#10;&#10;Ensures users are properly redirected and state is cleared&#10;even if service layer encounters errors." />
+    <MESSAGE value="feat(profile): add logout confirmation dialog and haptic feedback&#10;&#10;- Implement confirmation alert before logout&#10;- Add haptic warning feedback on logout action&#10;- Handle logout errors with user-friendly error messages&#10;- Improve user experience with proper feedback&#10;&#10;Provides better UX by confirming destructive actions and&#10;giving appropriate feedback." />
+    <MESSAGE value="feat(gamification): implement coin balance management&#10;&#10;- Implement getCoinBalance() to retrieve user's fitness coin balance&#10;- Add spendCoins() method for coin expenditure transactions&#10;- Add comprehensive error handling and timeout configuration&#10;- Include detailed logging for all gamification operations&#10;&#10;Provides service layer methods for&#10;managing fitness coin economy." />
+    <MESSAGE value="feat(api): add gamification and workout tracking endpoints&#10;&#10;- Add GET_ACHIEVEMENTS endpoint for fetching user achievements&#10;- Add GET_BADGES endpoint for badge retrieval&#10;- Add GET_LEADERBOARD endpoints for ranking data&#10;- Add GET_COIN_BALANCE endpoint for fitness coin tracking&#10;- Add SPEND_COINS endpoint for coin expenditure&#10;- Add workout tracking endpoints (exercises, plans, routines, sessions)&#10;- Add GET_RECOMMENDATION endpoint for AI-powered suggestions&#10;- Configure request timeout and retry settings&#10;&#10;Expands API configuration to support full gamification features&#10;and workout management capabilities." />
+    <MESSAGE value="feat(gamification): implement coin balance and streak tracking system&#10;&#10;- Implement coin balance retrieval and expenditure&#10;- Add API endpoints for achievements, badges, and leaderboard&#10;- Configure coin transaction endpoints (balance/spend)&#10;- Add workout tracking endpoints for exercises and sessions&#10;- Add comprehensive error handling and logging&#10;&#10;Provides complete infrastructure for fitness coin economy." />
+    <MESSAGE value="core: package updates" />
+    <MESSAGE value="fix: add actual /workout-plans/create route" />
+    <MESSAGE value="feat(api): add automatic redirect on 401 authentication errors&#10;&#10;- Redirect to login screen when receiving 401 response&#10;- Clear both auth token and user data on authentication failure&#10;- Prevent retry attempts on 401 errors (no point retrying auth failures)&#10;- Add comprehensive logging for auth error handling&#10;&#10;Response interceptor now automatically handles token expiration&#10;by clearing all auth data and redirecting users to login,&#10;providing seamless security without manual checks." />
+    <MESSAGE value="core(url update):Removed IP-specific logic - No longer needed with domain&#10;Changed to HTTPS - All production URLs now use secure protocol&#10;No port number - HTTPS uses standard port 443&#10;Cleaner code - Removed unnecessary port validation checks" />
+    <option name="LAST_COMMIT_MESSAGE" value="core(url update):Removed IP-specific logic - No longer needed with domain&#10;Changed to HTTPS - All production URLs now use secure protocol&#10;No port number - HTTPS uses standard port 443&#10;Cleaner code - Removed unnecessary port validation checks" />
   </component>
 </project>
