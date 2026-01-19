@@ -1,32 +1,24 @@
 import { Platform } from 'react-native';
 
 const getApiBaseUrl = (): string => {
-  // Check for environment variable first
   const envApiUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envApiUrl) {
-    console.log('Using API URL from environment:', envApiUrl);
     return envApiUrl;
   }
 
-  // Development URLs
   if (__DEV__) {
     if (Platform.OS === 'ios') {
-      // Use production server for remote testing on iOS device
       return 'https://api.muscledia.fitness';
     }
     if (Platform.OS === 'android') {
-      // Android emulator localhost
       return 'http://10.0.2.2:8080';
     }
-    // Web/other - your local machine
     return 'http://192.168.1.64:8080';
   }
 
-  // Production
   return 'https://api.muscledia.fitness';
 };
 
-// API Configuration
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENVIRONMENT: process.env.EXPO_PUBLIC_ENV || (__DEV__ ? 'development' : 'production'),
@@ -75,30 +67,6 @@ export const API_CONFIG = {
   },
 };
 
-// Full URL builder
 export const buildURL = (endpoint: string): string => {
-  const fullUrl = `${API_CONFIG.BASE_URL}${endpoint}`;
-  console.log('Building URL:', fullUrl);
-  return fullUrl;
+  return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
-
-// Debug information
-export const getDebugInfo = () => {
-  const info = {
-    baseUrl: API_CONFIG.BASE_URL,
-    platform: Platform.OS,
-    isDev: __DEV__,
-    environment: API_CONFIG.ENVIRONMENT,
-    loginUrl: buildURL(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
-    registerUrl: buildURL(API_CONFIG.ENDPOINTS.AUTH.REGISTER),
-    aiUrl: buildURL(API_CONFIG.ENDPOINTS.AI.GET_RECOMMENDATION),
-  };
-
-  console.log('=== API Debug Info ===');
-  console.log(JSON.stringify(info, null, 2));
-
-  return info;
-};
-
-// Log config on initialization
-console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
