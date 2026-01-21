@@ -3,30 +3,17 @@ import { API_CONFIG, buildURL } from '@/config/api';
 import { Badge, BadgeStatus, GamificationProfile } from '@/types';
 import { GamificationService } from './gamificationService';
 
-type CacheEntry<T> = {
-  value: T;
-  expiresAt: number;
-};
-
 /**
  * BadgeService
  * Handles badge related calls to an API.
+ * Caching is now handled by React Query in the useBadges hook
  */
 export class BadgeService {
-  private static readonly BADGES_TTL = 15 * 60 * 1000; // 15 minutes
-  private static readonly USER_BADGES_TTL = 5 * 60 * 1000; // 5 minutes
-
-  private static badgesCache?: CacheEntry<Badge[]>;
-  private static userBadgesCache?: CacheEntry<Badge[]>;
-
   /**
-   * Fetch the complete badge catalog from /api/badges (cached for 15 minutes).
+   * Fetch the complete badge catalog from /api/badges
+   * Caching is now handled by React Query in the useBadgeCatalog hook
    */
-  static async getAllBadges(forceRefresh = false): Promise<Badge[]> {
-    if (!forceRefresh && this.isCacheValid(this.badgesCache)) {
-      return this.badgesCache!.value;
-    }
-
+  static async getAllBadges(): Promise<Badge[]> {
     const url = buildURL('/api/badges');
 
     try {
@@ -34,28 +21,18 @@ export class BadgeService {
         timeout: API_CONFIG.REQUEST.TIMEOUT,
       });
 
-      const badges = response.data ?? [];
-      this.badgesCache = this.buildCacheEntry(badges, this.BADGES_TTL);
-      return badges;
+      return response.data ?? [];
     } catch (error) {
       console.error('Failed to fetch badge catalog:', error);
-
-      if (this.isCacheValid(this.badgesCache)) {
-        return this.badgesCache!.value;
-      }
-
       throw error;
     }
   }
 
   /**
-   * Fetch user's badges from /api/badges/my-badges (cached for 15 minutes).
+   * Fetch user's badges from /api/badges/my-badges
+   * Caching is now handled by React Query in the useUserBadges hook
    */
-  static async getUserBadges(forceRefresh = false): Promise<Badge[]> {
-    if (!forceRefresh && this.isCacheValid(this.userBadgesCache)) {
-      return this.userBadgesCache!.value;
-    }
-
+  static async getUserBadges(): Promise<Badge[]> {
     const url = buildURL('/api/badges/my-badges');
 
     try {
@@ -63,14 +40,9 @@ export class BadgeService {
         timeout: API_CONFIG.REQUEST.TIMEOUT,
       });
 
-      const badges = response.data ?? [];
-      this.userBadgesCache = this.buildCacheEntry(badges, this.USER_BADGES_TTL);
-      return badges;
+      return response.data ?? [];
     } catch (error) {
       console.error('Failed to fetch user badges:', error);
-      if (this.isCacheValid(this.userBadgesCache)) {
-        return this.userBadgesCache!.value;
-      }
       throw error;
     }
   }
@@ -81,14 +53,13 @@ export class BadgeService {
    *  - /api/badges                → full badge catalog
    *  - /api/badges/my-badges      → badges owned by current user
    *  - /api/gamification/profile  → user stats for progress calculation
+   * Caching is now handled by React Query in the useBadgeStatus hook
    */
-  static async getBadgeStatus(
-    forceRefresh = false
-  ): Promise<BadgeStatus[]> {
+  static async getBadgeStatus(): Promise<BadgeStatus[]> {
     const [allBadges, userBadges, profile] = await Promise.all([
-      this.getAllBadges(forceRefresh),
-      this.getUserBadges(forceRefresh),
-      GamificationService.getProfile(forceRefresh).catch(() => null), // Don't fail if profile fetch fails
+      this.getAllBadges(),
+      this.getUserBadges(),
+      GamificationService.getProfile().catch(() => null), // Don't fail if profile fetch fails
     ]);
 
     const ownedIds = new Set((userBadges ?? []).map((b) => b.badgeId));
@@ -160,16 +131,5 @@ export class BadgeService {
     // Calculate progress percentage (capped at 100%)
     const progress = Math.min(100, Math.round((currentValue / target) * 100));
     return progress;
-  }
-
-  private static isCacheValid<T>(entry?: CacheEntry<T>): entry is CacheEntry<T> {
-    return !!entry && entry.expiresAt > Date.now();
-  }
-
-  private static buildCacheEntry<T>(value: T, ttl: number): CacheEntry<T> {
-    return {
-      value,
-      expiresAt: Date.now() + ttl,
-    };
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BadgeService } from '@/services/badgeService';
-import { BadgeStatus } from '@/types';
+import { useBadgeStatus } from '@/hooks/useBadges';
+import { BadgeStatus } from '@/types';
 import { Colors, getThemeColors } from '@/constants/Colors';
 import { Award, Check, X, Filter, ChevronDown, Trophy, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -341,10 +341,14 @@ export default function BadgesScreen() {
   const isDark = colorScheme === 'dark';
   const theme = getThemeColors(isDark);
 
-  const [badges, setBadges] = useState<BadgeStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: badges = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    error,
+    refetch,
+  } = useBadgeStatus();
+
   const [selectedBadge, setSelectedBadge] = useState<BadgeStatus | null>(null);
 
   // Filters
@@ -352,31 +356,9 @@ export default function BadgesScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('recent');
 
-  const loadBadges = useCallback(
-    async (forceRefresh = false) => {
-      try {
-        setError(null);
-        const badgeStatuses = await BadgeService.getBadgeStatus(forceRefresh);
-        setBadges(badgeStatuses);
-      } catch (err: any) {
-        console.error('Failed to load badges:', err);
-        setError(err.message || 'Failed to load badges');
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    loadBadges();
-  }, [loadBadges]);
-
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadBadges(true);
-  }, [loadBadges]);
+    refetch();
+  }, [refetch]);
 
   // Filter and sort badges
   const filteredAndSortedBadges = useMemo(() => {
@@ -431,13 +413,15 @@ export default function BadgesScreen() {
     );
   }
 
+  const errorMessage = error ? (error as Error).message || 'Failed to load badges' : null;
+
   if (error && badges.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
+        <Text style={[styles.errorText, { color: theme.error }]}>{errorMessage}</Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: theme.accent }]}
-          onPress={() => loadBadges(true)}
+          onPress={() => refetch()}
         >
           <Text style={[styles.retryButtonText, { color: theme.cardText }]}>Retry</Text>
         </TouchableOpacity>
